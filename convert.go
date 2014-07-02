@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"github.com/idada/v8.go"
 	"github.com/realglobe-Inc/edo/edoerror"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
@@ -73,4 +74,25 @@ func ToJsMap(engine *v8.Engine, param map[string]interface{}) (map[string]*v8.Va
 		vals[key] = val
 	}
 	return vals, nil
+}
+
+// v8.Value を Go のネイティブ型にする。
+func FromJsValue(val *v8.Value) (interface{}, error) {
+	// TODO JSON を挟まない方法はあるか？
+
+	if val == nil || val.IsUndefined() || val.IsNull() {
+		return nil, nil
+	}
+
+	valJson := v8.ToJSON(val)
+	if string(valJson) == "NaN" {
+		return nil, nil
+	}
+
+	var buff interface{}
+	if err := json.Unmarshal(valJson, &buff); err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	return buff, nil
 }
