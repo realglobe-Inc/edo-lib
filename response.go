@@ -123,5 +123,5 @@ func errorToResponse(err error) interface{} {
 	}
 	res.SysStack = sysStack
 
-	return toResponseJson(res)
+	return res
 }
