@@ -4,8 +4,8 @@ import (
 	"strings"
 )
 
-// path が apiPath 以下のパスかどうか調べる。
-// path と apiPath の先頭は / であり、末尾は / ではないとする。
+// path が apiPath より下のパスかどうか調べる。
+// path と apiPath の先頭は / であり、全体が / でなければ、末尾は / ではないとする。
 func HasApiPath(path, apiPath string) bool {
 	if apiPath == "/" {
 		return len(path) >= 2
