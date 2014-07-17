@@ -80,7 +80,7 @@ type HandlerElement struct {
 	Url     string            `json:"url"`
 	Method  string            `json:"method,omitempty"`
 	Headers map[string]string `json:"headers,omitempty"`
-	Body    []byte            `json:"body,omitempty"`
+	Body    string            `json:"body,omitempty"`
 
 	Rules []*HandlerRule `json:"rules,omitempty"`
 }
