@@ -449,7 +449,7 @@ func (rout *webEventRouter) Fire(usrUuid, event string, body interface{}) error 
 	defer resp.Body.Close()
 	//logResponse(resp)
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
