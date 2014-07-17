@@ -258,37 +258,13 @@ func NewFileEventRegistry(path string) EventRegistry {
 	return &fileEventRegistry{path}
 }
 
+// イベントは区切りに / を含み、ディレクトリを掘るのは面倒なので、ユーザーごとに 1 ファイル。
 func (reg *fileEventRegistry) Handler(usrUuid, event string) (Handler, error) {
-	cont := map[string]Handler{}
+	path := filepath.Join(reg.path, usrUuid+".json")
 
-	dir := filepath.Join(reg.path, usrUuid)
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
+	var cont map[string]Handler
+	if err := readFromJson(path, &cont); err != nil {
 		return nil, erro.Wrap(err)
-	}
-
-	for _, fi := range fis {
-		if fi.IsDir() {
-			continue
-		} else if !strings.HasSuffix(fi.Name(), ".json") {
-			continue
-		}
-
-		curEvent := strings.TrimSuffix(fi.Name(), ".json")
-
-		if !strings.HasPrefix(curEvent, event) {
-			// 部分木以外はスルー。
-			continue
-		}
-
-		path := filepath.Join(dir, fi.Name())
-
-		var hndl Handler
-		if err := readFromJson(path, &hndl); err != nil {
-			return nil, erro.Wrap(err)
-		}
-
-		cont[curEvent] = hndl
 	}
 
 	tree := eventTree{}
@@ -297,25 +273,43 @@ func (reg *fileEventRegistry) Handler(usrUuid, event string) (Handler, error) {
 	return tree.handler(event), nil
 }
 func (reg *fileEventRegistry) AddHandler(usrUuid, event string, hndl Handler) error {
-	dir := filepath.Join(reg.path, usrUuid)
-	path := filepath.Join(usrUuid, event+".json")
+	path := filepath.Join(reg.path, usrUuid+".json")
 
-	if err := os.MkdirAll(dir, dirPerm); err != nil {
+	var cont map[string]Handler
+	if err := readFromJson(path, &cont); err != nil {
 		return erro.Wrap(err)
 	}
-	if err := writeToJson(path, hndl); err != nil {
+
+	if reflect.DeepEqual(cont[event], hndl) {
+		return nil
+	}
+
+	if cont == nil {
+		cont = map[string]Handler{event: hndl}
+	} else {
+		cont[event] = hndl
+	}
+	if err := writeToJson(path, cont); err != nil {
 		return erro.Wrap(err)
 	}
 
 	return nil
 }
 func (reg *fileEventRegistry) RemoveHandler(usrUuid, event string) error {
-	path := filepath.Join(reg.path, usrUuid, event+".json")
+	path := filepath.Join(reg.path, usrUuid+".json")
 
-	if err := os.Remove(path); err != nil {
-		if !os.IsNotExist(err) {
-			return erro.Wrap(err)
-		}
+	var cont map[string]Handler
+	if err := readFromJson(path, &cont); err != nil {
+		return erro.Wrap(err)
+	}
+
+	if _, ok := cont[event]; !ok {
+		return nil
+	}
+
+	delete(cont, event)
+	if err := writeToJson(path, cont); err != nil {
+		return erro.Wrap(err)
 	}
 
 	return nil

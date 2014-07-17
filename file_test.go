@@ -25,3 +25,13 @@ func TestFileUserRegistry(t *testing.T) {
 
 	testUserRegistry(t, NewFileUserRegistry(path))
 }
+
+func TestFileEventRegistry(t *testing.T) {
+	path, err := ioutil.TempDir("", "test_edo_registry_file")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(path)
+
+	testEventRegistry(t, NewFileEventRegistry(path))
+}
