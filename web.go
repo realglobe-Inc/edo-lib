@@ -314,7 +314,7 @@ func NewWebNameRegistry(addr string, ssl bool) (NameRegistry, error) {
 }
 
 func (reg *webNameRegistry) Address(name string) (addr string, err error) {
-	resp, err := reg.Get(reg.prefix + "/" + name + "/address")
+	resp, err := reg.Get(reg.prefix + "/node/" + name)
 	if err != nil {
 		return "", erro.Wrap(err)
 	}
@@ -330,7 +330,7 @@ func (reg *webNameRegistry) Address(name string) (addr string, err error) {
 	return addr, nil
 }
 func (reg *webNameRegistry) Addresses(name string) (addrs []string, err error) {
-	resp, err := reg.Get(reg.prefix + "/" + name)
+	resp, err := reg.Get(reg.prefix + "/tree/" + name)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
