@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"path"
@@ -407,6 +408,43 @@ func (reg *webEventRegistry) RemoveHandler(usrUuid, event string) error {
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return erro.New("invalid status ", resp.StatusCode, ".")
+	}
+	return nil
+}
+
+// イベントの処理。
+type webEventRouter struct {
+	*skeletalWebDriver
+}
+
+func NewWebEventRouter(addr string, ssl bool) (EventRouter, error) {
+	base, err := newSkeletalWebRegistry(addr, ssl)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return &webEventRouter{base}, nil
+}
+
+func (rout *webEventRouter) Fire(usrUuid, event string, body interface{}) error {
+	var bodyType string
+	var buff io.Reader
+	if body != nil {
+		bodyJson, err := json.Marshal(body)
+		if err != nil {
+			return erro.Wrap(err)
+		}
+		buff = bytes.NewReader(bodyJson)
+		bodyType = util.ContentTypeJson
+	}
+	resp, err := rout.Post(rout.prefix+path.Join(usrUuid, event), bodyType, buff)
+	if err != nil {
+		return erro.Wrap(err)
+	}
+	defer resp.Body.Close()
+	//logResponse(resp)
 
 	if resp.StatusCode != http.StatusOK {
 		return erro.New("invalid status ", resp.StatusCode, ".")

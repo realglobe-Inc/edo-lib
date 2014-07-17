@@ -92,3 +92,9 @@ func (elem *HandlerElement) String() string {
 // イベントの付属パラメータの扱いを記述する予定。
 type HandlerRule struct {
 }
+
+// イベントの処理。
+type EventRouter interface {
+	// イベントを発生させる。
+	Fire(usrUuid, event string, body interface{}) error
+}
