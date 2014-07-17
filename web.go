@@ -75,7 +75,7 @@ func (reg *webJsRegistry) Object(dir, objName string) (*Object, error) {
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, erro.New("invalid status ", resp.StatusCode, ".")
+		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	var obj Object
 	if err := json.NewDecoder(resp.Body).Decode(&obj); err != nil {
@@ -104,7 +104,7 @@ func (reg *webJsRegistry) AddObject(dir, objName string, obj *Object) error {
 	//logResponse(resp)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return erro.New("invalid status ", resp.StatusCode, ".")
+		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
 }
@@ -120,7 +120,7 @@ func (reg *webJsRegistry) RemoveObject(dir, objName string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return erro.New("invalid status ", resp.StatusCode, ".")
+		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
 }
@@ -147,7 +147,7 @@ func (reg *webLoginRegistry) User(accToken string) (usrUuid string, err error) {
 	if resp.StatusCode == http.StatusNotFound {
 		return "", nil
 	} else if resp.StatusCode != http.StatusOK {
-		return "", erro.New("invalid status ", resp.StatusCode, ".")
+		return "", erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&usrUuid); err != nil {
 		return "", erro.Wrap(err)
@@ -177,7 +177,7 @@ func (reg *webUserRegistry) Attributes(usrUuid string) (map[string]interface{}, 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, erro.New("invalid status ", resp.StatusCode, ".")
+		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	var attrs map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&attrs); err != nil {
@@ -194,7 +194,7 @@ func (reg *webUserRegistry) Attribute(usrUuid, attrName string) (interface{}, er
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, erro.New("invalid status ", resp.StatusCode, ".")
+		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	var attr interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&attr); err != nil {
@@ -220,7 +220,7 @@ func (reg *webUserRegistry) AddAttribute(usrUuid, attrName string, attr interfac
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return erro.New("invalid status ", resp.StatusCode, ".")
+		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
 }
@@ -236,7 +236,7 @@ func (reg *webUserRegistry) RemoveAttribute(usrUuid, attrName string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return erro.New("invalid status ", resp.StatusCode, ".")
+		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
 }
@@ -263,7 +263,7 @@ func (reg *webJobRegistry) Result(usrUuid string, jobId uint64) (interface{}, er
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, erro.New("invalid status ", resp.StatusCode, ".")
+		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	var attr interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&attr); err != nil {
@@ -295,7 +295,7 @@ func (reg *webJobRegistry) AddResult(usrUuid string, jobId uint64, res interface
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return erro.New("invalid status ", resp.StatusCode, ".")
+		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
 }
@@ -322,7 +322,7 @@ func (reg *webNameRegistry) Address(name string) (addr string, err error) {
 	if resp.StatusCode == http.StatusNotFound {
 		return "", nil
 	} else if resp.StatusCode != http.StatusOK {
-		return "", erro.New("invalid status ", resp.StatusCode, ".")
+		return "", erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&addr); err != nil {
 		return "", erro.Wrap(err)
@@ -338,7 +338,7 @@ func (reg *webNameRegistry) Addresses(name string) (addrs []string, err error) {
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, erro.New("invalid status ", resp.StatusCode, ".")
+		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&addrs); err != nil {
 		return nil, erro.Wrap(err)
@@ -368,7 +368,7 @@ func (reg *webEventRegistry) Handler(usrUuid, event string) (Handler, error) {
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
-		return nil, erro.New("invalid status ", resp.StatusCode, ".")
+		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	var hndl Handler
 	if err := json.NewDecoder(resp.Body).Decode(&hndl); err != nil {
@@ -387,14 +387,17 @@ func (reg *webEventRegistry) AddHandler(usrUuid, event string, hndl Handler) err
 		return erro.Wrap(err)
 	}
 	req.Header.Add("Content-Type", util.ContentTypeJson)
+
+	//logRequest(req)
 	resp, err := reg.Do(req)
 	if err != nil {
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
+	//logResponse(resp)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return erro.New("invalid status ", resp.StatusCode, ".")
+		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
 }
@@ -410,7 +413,7 @@ func (reg *webEventRegistry) RemoveHandler(usrUuid, event string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return erro.New("invalid status ", resp.StatusCode, ".")
+		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
 }
@@ -447,7 +450,7 @@ func (rout *webEventRouter) Fire(usrUuid, event string, body interface{}) error 
 	//logResponse(resp)
 
 	if resp.StatusCode != http.StatusOK {
-		return erro.New("invalid status ", resp.StatusCode, ".")
+		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
 }
