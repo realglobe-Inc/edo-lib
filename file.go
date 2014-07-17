@@ -163,13 +163,14 @@ func (reg *fileUserRegistry) AddAttribute(usrUuid, attrName string, attr interfa
 		attrs = map[string]interface{}{}
 	}
 
-	path := filepath.Join(reg.path, usrUuid+".json")
+	if reflect.DeepEqual(attrs[attrName], attr) {
+		return nil
+	}
 
-	if !reflect.DeepEqual(attrs[attrName], attr) {
-		attrs[attrName] = attr
-		if err := writeToJson(path, attrs); err != nil {
-			return erro.Wrap(err)
-		}
+	path := filepath.Join(reg.path, usrUuid+".json")
+	attrs[attrName] = attr
+	if err := writeToJson(path, attrs); err != nil {
+		return erro.Wrap(err)
 	}
 
 	return nil
@@ -180,13 +181,14 @@ func (reg *fileUserRegistry) RemoveAttribute(usrUuid, attrName string) error {
 		return erro.Wrap(err)
 	}
 
-	path := filepath.Join(reg.path, usrUuid+".json")
+	if _, ok := attrs[attrName]; !ok {
+		return nil
+	}
 
-	if _, ok := attrs[attrName]; ok {
-		delete(attrs, attrName)
-		if err := writeToJson(path, attrs); err != nil {
-			return erro.Wrap(err)
-		}
+	path := filepath.Join(reg.path, usrUuid+".json")
+	delete(attrs, attrName)
+	if err := writeToJson(path, attrs); err != nil {
+		return erro.Wrap(err)
 	}
 
 	return nil
