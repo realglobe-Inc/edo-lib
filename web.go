@@ -23,12 +23,12 @@ func logResponse(r *http.Response) {
 	log.Debug("Response: ", string(buff))
 }
 
-type skeletalWebRegistry struct {
+type skeletalWebDriver struct {
 	prefix string
 	*http.Client
 }
 
-func newSkeletalWebRegistry(addr string, ssl bool) (*skeletalWebRegistry, error) {
+func newSkeletalWebRegistry(addr string, ssl bool) (*skeletalWebDriver, error) {
 	var prefix string
 	if ssl {
 		prefix = "http://"
@@ -47,12 +47,12 @@ func newSkeletalWebRegistry(addr string, ssl bool) (*skeletalWebRegistry, error)
 	// }
 	// resp.Body.Close()
 
-	return &skeletalWebRegistry{prefix, client}, nil
+	return &skeletalWebDriver{prefix, client}, nil
 }
 
 // JavaScript.
 type webJsRegistry struct {
-	*skeletalWebRegistry
+	*skeletalWebDriver
 }
 
 func NewWebJsRegistry(addr string, ssl bool) (JsRegistry, error) {
@@ -126,7 +126,7 @@ func (reg *webJsRegistry) RemoveObject(dir, objName string) error {
 
 // ログイン。
 type webLoginRegistry struct {
-	*skeletalWebRegistry
+	*skeletalWebDriver
 }
 
 func NewWebLoginRegistry(addr string, ssl bool) (LoginRegistry, error) {
@@ -156,7 +156,7 @@ func (reg *webLoginRegistry) User(accToken string) (usrUuid string, err error) {
 
 // ユーザー情報。
 type webUserRegistry struct {
-	*skeletalWebRegistry
+	*skeletalWebDriver
 }
 
 func NewWebUserRegistry(addr string, ssl bool) (UserRegistry, error) {
@@ -242,7 +242,7 @@ func (reg *webUserRegistry) RemoveAttribute(usrUuid, attrName string) error {
 
 // ジョブ。
 type webJobRegistry struct {
-	*skeletalWebRegistry
+	*skeletalWebDriver
 }
 
 func NewWebJobRegistry(addr string, ssl bool) (JobRegistry, error) {
@@ -301,7 +301,7 @@ func (reg *webJobRegistry) AddResult(usrUuid string, jobId uint64, res interface
 
 // 住所。
 type webNameRegistry struct {
-	*skeletalWebRegistry
+	*skeletalWebDriver
 }
 
 func NewWebNameRegistry(addr string, ssl bool) (NameRegistry, error) {
@@ -347,7 +347,7 @@ func (reg *webNameRegistry) Addresses(name string) (addrs []string, err error) {
 
 // イベント。
 type webEventRegistry struct {
-	*skeletalWebRegistry
+	*skeletalWebDriver
 }
 
 func NewWebEventRegistry(addr string, ssl bool) (EventRegistry, error) {
