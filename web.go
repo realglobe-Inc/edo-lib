@@ -360,7 +360,7 @@ func NewWebEventRegistry(addr string, ssl bool) (EventRegistry, error) {
 }
 
 func (reg *webEventRegistry) Handler(usrUuid, event string) (Handler, error) {
-	resp, err := reg.Get(reg.prefix + "/" + usrUuid + "/" + event)
+	resp, err := reg.Get(reg.prefix + "/" + usrUuid + event)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
@@ -382,7 +382,7 @@ func (reg *webEventRegistry) AddHandler(usrUuid, event string, hndl Handler) err
 		return erro.Wrap(err)
 	}
 
-	req, err := http.NewRequest("PUT", reg.prefix+"/"+usrUuid+"/"+event, bytes.NewReader(buff))
+	req, err := http.NewRequest("PUT", reg.prefix+"/"+usrUuid+event, bytes.NewReader(buff))
 	if err != nil {
 		return erro.Wrap(err)
 	}
@@ -402,7 +402,7 @@ func (reg *webEventRegistry) AddHandler(usrUuid, event string, hndl Handler) err
 	return nil
 }
 func (reg *webEventRegistry) RemoveHandler(usrUuid, event string) error {
-	req, err := http.NewRequest("DELETE", reg.prefix+"/"+usrUuid+"/"+event, nil)
+	req, err := http.NewRequest("DELETE", reg.prefix+"/"+usrUuid+event, nil)
 	if err != nil {
 		return erro.Wrap(err)
 	}
@@ -442,7 +442,7 @@ func (rout *webEventRouter) Fire(usrUuid, event string, body interface{}) error 
 		buff = bytes.NewReader(bodyJson)
 		bodyType = util.ContentTypeJson
 	}
-	resp, err := rout.Post(rout.prefix+path.Join(usrUuid, event), bodyType, buff)
+	resp, err := rout.Post(rout.prefix+"/"+usrUuid+event, bodyType, buff)
 	if err != nil {
 		return erro.Wrap(err)
 	}
