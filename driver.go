@@ -48,10 +48,16 @@ type UserRegistry interface {
 // ジョブ管理。
 type JobRegistry interface {
 	// 実行結果を取得する。
-	Result(usrUuid string, jobId uint64) (res interface{}, err error)
+	Result(jobId string) (res *JobResult, err error)
 
 	// 実行結果を登録する。
-	AddResult(usrUuid string, jobId uint64, res interface{}, deadline time.Time) error
+	AddResult(jobId string, res *JobResult, deadline time.Time) error
+}
+
+type JobResult struct {
+	Status  int               `json:"status"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Body    string            `json:"body,omitempty"`
 }
 
 // 別名の管理。

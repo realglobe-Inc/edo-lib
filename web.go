@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"path"
-	"strconv"
 	"time"
 )
 
@@ -254,36 +253,36 @@ func NewWebJobRegistry(addr string, ssl bool) (JobRegistry, error) {
 	return &webJobRegistry{base}, nil
 }
 
-func (reg *webJobRegistry) Result(usrUuid string, jobId uint64) (interface{}, error) {
-	resp, err := reg.Get(reg.prefix + "/" + usrUuid + "/" + strconv.FormatUint(jobId, 10))
+func (reg *webJobRegistry) Result(jobId string) (*JobResult, error) {
+	resp, err := reg.Get(reg.prefix + "/" + jobId)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
+	if resp.StatusCode == http.StatusNotModified || resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
 		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
-	var attr interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&attr); err != nil {
+	var res JobResult
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return attr, nil
+	return &res, nil
 }
 
 type ResultPack struct {
-	Res     interface{} `json:"result"`
-	Timelim time.Time   `json:"deadlineit"`
+	Res      interface{} `json:"result"`
+	Deadline time.Time   `json:"deadline"`
 }
 
-func (reg *webJobRegistry) AddResult(usrUuid string, jobId uint64, res interface{}, deadline time.Time) error {
+func (reg *webJobRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
 	buff, err := json.Marshal(&ResultPack{res, deadline})
 	if err != nil {
 		return erro.Wrap(err)
 	}
 
-	req, err := http.NewRequest("PUT", reg.prefix+"/"+usrUuid+"/"+strconv.FormatUint(jobId, 10), bytes.NewReader(buff))
+	req, err := http.NewRequest("PUT", reg.prefix+"/"+jobId, bytes.NewReader(buff))
 	if err != nil {
 		return erro.Wrap(err)
 	}

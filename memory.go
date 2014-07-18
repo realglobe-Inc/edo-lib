@@ -104,27 +104,18 @@ func (reg *MemoryUserRegistry) RemoveAttribute(usrUuid, attrName string) error {
 
 // ジョブ。
 type MemoryJobRegistry struct {
-	ress map[string]map[uint64]interface{}
+	ress map[string]*JobResult
 }
 
 func NewMemoryJobRegistry() *MemoryJobRegistry {
-	return &MemoryJobRegistry{map[string]map[uint64]interface{}{}}
+	return &MemoryJobRegistry{map[string]*JobResult{}}
 }
 
-func (reg *MemoryJobRegistry) Result(usrUuid string, jobId uint64) (res interface{}, err error) {
-	jobToRes := reg.ress[usrUuid]
-	if jobToRes == nil {
-		return nil, nil
-	}
-	return jobToRes[jobId], nil
+func (reg *MemoryJobRegistry) Result(jobId string) (res *JobResult, err error) {
+	return reg.ress[jobId], nil
 }
-func (reg *MemoryJobRegistry) AddResult(usrUuid string, jobId uint64, res interface{}, deadline time.Time) error {
-	jobToRes := reg.ress[usrUuid]
-	if jobToRes == nil {
-		jobToRes = map[uint64]interface{}{}
-		reg.ress[usrUuid] = jobToRes
-	}
-	jobToRes[jobId] = res
+func (reg *MemoryJobRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
+	reg.ress[jobId] = res
 	return nil
 }
 

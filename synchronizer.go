@@ -306,16 +306,14 @@ type synchronizedJobRegistry struct {
 }
 
 type synchronizedResultRequest struct {
-	usrUuid string
-	jobId   uint64
+	jobId string
 
-	resCh chan interface{}
+	resCh chan *JobResult
 	errCh chan error
 }
 type synchronizedAddResultRequest struct {
-	usrUuid  string
-	jobId    uint64
-	res      interface{}
+	jobId    string
+	res      *JobResult
 	deadline time.Time
 
 	errCh chan error
@@ -335,10 +333,10 @@ func NewSynchronizedJobRegistry(base JobRegistry) JobRegistry {
 	return reg
 }
 
-func (reg *synchronizedJobRegistry) Result(usrUuid string, jobId uint64) (interface{}, error) {
-	resCh := make(chan interface{}, 1)
+func (reg *synchronizedJobRegistry) Result(jobId string) (*JobResult, error) {
+	resCh := make(chan *JobResult, 1)
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedResultRequest{usrUuid, jobId, resCh, errCh}
+	reg.reqCh <- &synchronizedResultRequest{jobId, resCh, errCh}
 	select {
 	case res := <-resCh:
 		return res, nil
@@ -346,9 +344,9 @@ func (reg *synchronizedJobRegistry) Result(usrUuid string, jobId uint64) (interf
 		return nil, err
 	}
 }
-func (reg *synchronizedJobRegistry) AddResult(usrUuid string, jobId uint64, res interface{}, deadline time.Time) error {
+func (reg *synchronizedJobRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedAddResultRequest{usrUuid, jobId, res, deadline, errCh}
+	reg.reqCh <- &synchronizedAddResultRequest{jobId, res, deadline, errCh}
 	return <-errCh
 }
 
@@ -373,7 +371,7 @@ func (reg *synchronizedJobRegistry) serve(base JobRegistry) {
 	switch req := (<-reg.reqCh).(type) {
 	case *synchronizedResultRequest:
 		errCh = req.errCh
-		res, err := base.Result(req.usrUuid, req.jobId)
+		res, err := base.Result(req.jobId)
 		if err != nil {
 			req.errCh <- err
 		} else {
@@ -381,7 +379,7 @@ func (reg *synchronizedJobRegistry) serve(base JobRegistry) {
 		}
 	case *synchronizedAddResultRequest:
 		errCh = req.errCh
-		req.errCh <- base.AddResult(req.usrUuid, req.jobId, req.res, req.deadline)
+		req.errCh <- base.AddResult(req.jobId, req.res, req.deadline)
 	}
 }
 

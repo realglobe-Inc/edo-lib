@@ -95,23 +95,22 @@ func testUserRegistry(t *testing.T, reg UserRegistry) {
 }
 
 func testJobRegistry(t *testing.T, reg JobRegistry) {
-	usrUuid := "a_b-c"
-	var jobId uint64 = 123
+	var jobId string = "a_b-c"
 	deadline := time.Now().Add(time.Second)
-	res := map[string]interface{}{"e": "f", "g": map[string]interface{}{"e": 1.08}}
+	res := &JobResult{Status: 200, Body: "konnnann demashita"}
 
-	res1, err := reg.Result(usrUuid, jobId)
+	res1, err := reg.Result(jobId)
 	if err != nil {
 		t.Fatal(err)
 	} else if res1 != nil {
 		t.Error(res1)
 	}
 
-	if err := reg.AddResult(usrUuid, jobId, res, deadline); err != nil {
+	if err := reg.AddResult(jobId, res, deadline); err != nil {
 		t.Fatal(err)
 	}
 
-	res2, err := reg.Result(usrUuid, jobId)
+	res2, err := reg.Result(jobId)
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(res, res2) {
