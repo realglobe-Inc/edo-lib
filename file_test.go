@@ -7,7 +7,7 @@ import (
 )
 
 func TestFileJsRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_registry_file")
+	path, err := ioutil.TempDir("", "test_edo_driver")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -17,7 +17,7 @@ func TestFileJsRegistry(t *testing.T) {
 }
 
 func TestFileUserRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_registry_file")
+	path, err := ioutil.TempDir("", "test_edo_driver")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestFileUserRegistry(t *testing.T) {
 }
 
 func TestFileEventRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_registry_file")
+	path, err := ioutil.TempDir("", "test_edo_driver")
 	if err != nil {
 		t.Fatal(err)
 	}
