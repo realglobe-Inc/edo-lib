@@ -36,8 +36,8 @@ type LoginRegistry interface {
 // ユーザー情報の管理。
 type UserRegistry interface {
 	// ユーザー情報を取得。
-	Attributes(usrUuid string) (map[string]interface{}, error)
-	Attribute(usrUuid, attrName string) (interface{}, error)
+	Attributes(usrUuid string) (attrs map[string]interface{}, err error)
+	Attribute(usrUuid, attrName string) (attr interface{}, err error)
 
 	// ユーザー情報を変更。
 	AddAttribute(usrUuid, attrName string, attr interface{}) error
@@ -48,7 +48,7 @@ type UserRegistry interface {
 // ジョブ管理。
 type JobRegistry interface {
 	// 実行結果を取得する。
-	Result(jobId string) (res *JobResult, err error)
+	Result(jobId string) (*JobResult, error)
 
 	// 実行結果を登録する。
 	AddResult(jobId string, res *JobResult, deadline time.Time) error

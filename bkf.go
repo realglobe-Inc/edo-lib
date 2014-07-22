@@ -3,7 +3,7 @@ package driver
 import ()
 
 // 中央レジストリに接続する本格的なレジストリ。
-// キャッシュの管理も行う。
+// キャッシュの管理も行う予定。
 
 func NewBkfJsRegistry(addr string, ssl bool, secretKey string) (JsRegistry, error) {
 	panic("not implemented.")

@@ -249,7 +249,7 @@ func (reg *fileNameRegistry) Addresses(name string) (addrs []string, err error) 
 	return tree.addresses(name), nil
 }
 
-// イベント.
+// イベント。
 type fileEventRegistry struct {
 	path string
 }
