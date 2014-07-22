@@ -271,13 +271,13 @@ func (reg *webJobRegistry) Result(jobId string) (*JobResult, error) {
 	return &res, nil
 }
 
-type ResultPack struct {
-	Res      interface{} `json:"result"`
-	Deadline time.Time   `json:"deadline"`
+type resultPack struct {
+	*JobResult
+	Deadline time.Time `json:"deadline"`
 }
 
 func (reg *webJobRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
-	buff, err := json.Marshal(&ResultPack{res, deadline})
+	buff, err := json.Marshal(&resultPack{res, deadline})
 	if err != nil {
 		return erro.Wrap(err)
 	}
