@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // ファイルを使うモックアップ。
@@ -188,6 +189,38 @@ func (reg *fileUserRegistry) RemoveAttribute(usrUuid, attrName string) error {
 	path := filepath.Join(reg.path, usrUuid+".json")
 	delete(attrs, attrName)
 	if err := writeToJson(path, attrs); err != nil {
+		return erro.Wrap(err)
+	}
+
+	return nil
+}
+
+// ジョブ。
+type fileJobRegistry struct {
+	path string
+}
+
+func NewFileJobRegistry(path string) JobRegistry {
+	return &fileJobRegistry{path}
+}
+
+func (reg *fileJobRegistry) Result(jobId string) (*JobResult, error) {
+	path := filepath.Join(reg.path, jobId+".json")
+
+	var res JobResult
+	if err := readFromJson(path, &res); err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	if res.Status == 0 {
+		return nil, nil
+	}
+	return &res, nil
+}
+func (reg *fileJobRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
+	path := filepath.Join(reg.path, jobId+".json")
+
+	if err := writeToJson(path, res); err != nil {
 		return erro.Wrap(err)
 	}
 

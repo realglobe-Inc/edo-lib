@@ -13,6 +13,10 @@ func NewBkfUserRegistry(addr string, ssl bool, secretKey string) (UserRegistry, 
 	panic("not implemented.")
 }
 
+func NewBkfJobRegistry(addr string, ssl bool, secretKey string) (JobRegistry, error) {
+	panic("not implemented.")
+}
+
 func NewBkfNameRegistry(addr string, ssl bool, secretKey string) (NameRegistry, error) {
 	panic("not implemented.")
 }
