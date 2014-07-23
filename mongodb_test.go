@@ -25,3 +25,21 @@ func _TestMongoJobRegistryRemoveOld(t *testing.T) {
 
 	testJobRegistryRemoveOld(t, reg)
 }
+
+func _TestMongoNameRegistry(t *testing.T) {
+	reg, err := NewMongoNameRegistry(mongoAddr, "test_driver_mongo", "name")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+
+	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("name").Insert(
+		&mongoAddress{"c.b.a", "c.localhost"},
+		&mongoAddress{"d.b.a", "d.localhost"},
+		&mongoAddress{"b.a", "localhost"},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	testNameRegistry(t, reg)
+}
