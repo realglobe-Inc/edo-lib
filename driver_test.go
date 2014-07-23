@@ -151,6 +151,32 @@ func testJobRegistryRemoveOld(t *testing.T, reg JobRegistry) {
 
 }
 
+// 事前に
+// c.b.a に c.localhost、
+// d.b.a に d.localhost、
+// b.a   に   localhost、
+// を登録しとく。
+func testNameRegistry(t *testing.T, reg NameRegistry) {
+	addr, err := reg.Address("c.b.a")
+	if err != nil {
+		t.Fatal(err)
+	} else if addr != "c.localhost" {
+		t.Error(addr)
+	}
+
+	addrs, err := reg.Addresses("a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	set := map[string]bool{}
+	for _, addr := range addrs {
+		set[addr] = true
+	}
+	if !reflect.DeepEqual(map[string]bool{"c.localhost": true, "d.localhost": true, "localhost": true}, set) {
+		t.Error(addrs)
+	}
+}
+
 func testEventRegistry(t *testing.T, reg EventRegistry) {
 	usrUuid := "a_b-c"
 	event := "/d/e"
