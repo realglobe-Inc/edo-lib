@@ -11,7 +11,7 @@ func _TestMongoJobRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoJobRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
 
 	testJobRegistry(t, reg)
 }
@@ -21,7 +21,7 @@ func _TestMongoJobRegistryRemoveOld(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoJobRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
 
 	testJobRegistryRemoveOld(t, reg)
 }

@@ -9,7 +9,8 @@ import (
 
 // mondodb を使うドライバー。
 
-type mongoJobRegistry struct {
+// ジョブ。
+type mongoRegistry struct {
 	dbName   string
 	collName string
 	*mgo.Session
@@ -38,7 +39,7 @@ func NewMongoJobRegistry(url, dbName, collName string) (JobRegistry, error) {
 		return nil, erro.Wrap(err)
 	}
 
-	return &mongoJobRegistry{dbName, collName, sess}, nil
+	return &mongoRegistry{dbName, collName, sess}, nil
 }
 
 type mongoJobResult struct {
@@ -49,7 +50,7 @@ type mongoJobResult struct {
 	Body     string            `bson:"body,omitempty"`
 }
 
-func (reg *mongoJobRegistry) Result(jobId string) (*JobResult, error) {
+func (reg *mongoRegistry) Result(jobId string) (*JobResult, error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"job_id": jobId})
 	if n, err := query.Count(); err != nil {
 		return nil, erro.Wrap(err)
@@ -63,7 +64,7 @@ func (reg *mongoJobRegistry) Result(jobId string) (*JobResult, error) {
 	return &JobResult{res.Status, res.Headers, res.Body}, nil
 }
 
-func (reg *mongoJobRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
+func (reg *mongoRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
 	mongoRes := &mongoJobResult{jobId, deadline, res.Status, res.Headers, res.Body}
 	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{"job_id": jobId}, mongoRes); err != nil {
 		return erro.Wrap(err)
