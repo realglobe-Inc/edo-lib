@@ -15,6 +15,89 @@ type mongoRegistry struct {
 	*mgo.Session
 }
 
+// ユーザー情報。
+func NewMongoUserRegistry(url, dbName, collName string) (UserRegistry, error) {
+	sess, err := mgo.Dial(url)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	usrUuidIdx := mgo.Index{
+		Key:      []string{"user_uuid"},
+		Unique:   true,
+		DropDups: true,
+		Sparse:   true,
+	}
+	if err := sess.DB(dbName).C(collName).EnsureIndex(usrUuidIdx); err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	keyIdx := mgo.Index{
+		Key:      []string{"user_uuid", "key"},
+		Unique:   true,
+		DropDups: true,
+		Sparse:   true,
+	}
+	if err := sess.DB(dbName).C(collName).EnsureIndex(keyIdx); err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	return &mongoRegistry{dbName, collName, sess}, nil
+}
+
+type mongoAttribute struct {
+	UsrUuid  string      `bson:"user_uuid"`
+	AttrName string      `bson:"key"`
+	Attr     interface{} `bson:"value"`
+}
+
+func (reg *mongoRegistry) Attributes(usrUuid string) (attrs map[string]interface{}, err error) {
+	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"user_uuid": usrUuid})
+	if n, err := query.Count(); err != nil {
+		return nil, erro.Wrap(err)
+	} else if n == 0 {
+		return nil, nil
+	}
+	mongoAttrs := []mongoAttribute{}
+	if err := query.Iter().All(&mongoAttrs); err != nil {
+		return nil, erro.Wrap(err)
+	}
+	attrs = map[string]interface{}{}
+	for _, mongoAttr := range mongoAttrs {
+		attrs[mongoAttr.AttrName] = mongoAttr.Attr
+	}
+	return attrs, nil
+}
+
+func (reg *mongoRegistry) Attribute(usrUuid, attrName string) (attr interface{}, err error) {
+	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"user_uuid": usrUuid, "key": attrName})
+	if n, err := query.Count(); err != nil {
+		return nil, erro.Wrap(err)
+	} else if n == 0 {
+		return nil, nil
+	}
+	var mongoAttr mongoAttribute
+	if err := query.One(&mongoAttr); err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return mongoAttr.Attr, nil
+}
+
+func (reg *mongoRegistry) AddAttribute(usrUuid, attrName string, attr interface{}) error {
+	mongoAttr := &mongoAttribute{usrUuid, attrName, attr}
+	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{"user_uuid": usrUuid, "key": attrName}, mongoAttr); err != nil {
+		return erro.Wrap(err)
+	}
+	return nil
+}
+
+func (reg *mongoRegistry) RemoveAttribute(usrUuid, attrName string) error {
+	if err := reg.DB(reg.dbName).C(reg.collName).Remove(bson.M{"user_uuid": usrUuid, "key": attrName}); err != nil {
+		return erro.Wrap(err)
+	}
+	return nil
+}
+
 // ジョブ。
 func NewMongoJobRegistry(url, dbName, collName string) (JobRegistry, error) {
 	sess, err := mgo.Dial(url)

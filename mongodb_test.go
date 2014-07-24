@@ -6,6 +6,16 @@ import (
 
 var mongoAddr string = "localhost"
 
+func _TestMongoUserRegistry(t *testing.T) {
+	reg, err := NewMongoUserRegistry(mongoAddr, "test_driver_mongo", "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+
+	testUserRegistry(t, reg)
+}
+
 func _TestMongoJobRegistry(t *testing.T) {
 	reg, err := NewMongoJobRegistry(mongoAddr, "test_driver_mongo", "job")
 	if err != nil {
