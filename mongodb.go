@@ -166,13 +166,13 @@ func NewMongoNameRegistry(url, dbName, collName string) (NameRegistry, error) {
 		return nil, erro.Wrap(err)
 	}
 
-	jobIdIdx := mgo.Index{
+	nameIdx := mgo.Index{
 		Key:      []string{"name"},
 		Unique:   true,
 		DropDups: true,
 		Sparse:   true,
 	}
-	if err := sess.DB(dbName).C(collName).EnsureIndex(jobIdIdx); err != nil {
+	if err := sess.DB(dbName).C(collName).EnsureIndex(nameIdx); err != nil {
 		return nil, erro.Wrap(err)
 	}
 
