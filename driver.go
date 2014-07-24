@@ -83,12 +83,11 @@ type EventRegistry interface {
 type Handler []*HandlerElement
 
 type HandlerElement struct {
-	Url     string            `json:"url"`
-	Method  string            `json:"method,omitempty"`
-	Headers map[string]string `json:"headers,omitempty"`
-	Body    string            `json:"body,omitempty"`
-
-	Rules []*HandlerRule `json:"rules,omitempty"`
+	Url     string            `json:"url"               bson:"url"`
+	Method  string            `json:"method,omitempty"  bson:"method,omitempty"`
+	Headers map[string]string `json:"headers,omitempty" bson:"headers,omitempty"`
+	Body    string            `json:"body,omitempty"    bson:"body,omitempty"`
+	Rules   []*HandlerRule    `json:"rules,omitempty"   bson:"rules,omitempty"`
 }
 
 func (elem *HandlerElement) String() string {

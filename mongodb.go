@@ -209,3 +209,58 @@ func (reg *mongoRegistry) Addresses(name string) (addrs []string, err error) {
 	}
 	return addrs, nil
 }
+
+// イベント。
+func NewMongoEventRegistry(url, dbName, collName string) (EventRegistry, error) {
+	sess, err := mgo.Dial(url)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	eventIdx := mgo.Index{
+		Key:      []string{"user_uuid", "event"},
+		Unique:   true,
+		DropDups: true,
+		Sparse:   true,
+	}
+	if err := sess.DB(dbName).C(collName).EnsureIndex(eventIdx); err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	return &mongoRegistry{dbName, collName, sess}, nil
+}
+
+type mongoHandler struct {
+	UsrUuid string  `bson:"user_uuid"`
+	Event   string  `bson:"event"`
+	Hndl    Handler `bson:"handler"`
+}
+
+func (reg *mongoRegistry) Handler(usrUuid, event string) (Handler, error) {
+	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"user_uuid": usrUuid, "event": event})
+	if n, err := query.Count(); err != nil {
+		return nil, erro.Wrap(err)
+	} else if n == 0 {
+		return nil, nil
+	}
+	var res mongoHandler
+	if err := query.One(&res); err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return res.Hndl, nil
+}
+
+func (reg *mongoRegistry) AddHandler(usrUuid, event string, hndl Handler) error {
+	mongoHndl := &mongoHandler{usrUuid, event, hndl}
+	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{"user_uuid": usrUuid, "event": event}, mongoHndl); err != nil {
+		return erro.Wrap(err)
+	}
+	return nil
+}
+
+func (reg *mongoRegistry) RemoveHandler(usrUuid, event string) error {
+	if err := reg.DB(reg.dbName).C(reg.collName).Remove(bson.M{"user_uuid": usrUuid, "event": event}); err != nil {
+		return erro.Wrap(err)
+	}
+	return nil
+}

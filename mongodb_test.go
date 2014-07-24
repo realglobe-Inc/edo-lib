@@ -53,3 +53,13 @@ func _TestMongoNameRegistry(t *testing.T) {
 
 	testNameRegistry(t, reg)
 }
+
+func _TestMongoEventRegistry(t *testing.T) {
+	reg, err := NewMongoEventRegistry(mongoAddr, "test_driver_mongo", "event")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+
+	testEventRegistry(t, reg)
+}
