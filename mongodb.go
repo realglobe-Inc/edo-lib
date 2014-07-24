@@ -9,13 +9,13 @@ import (
 
 // mondodb を使うドライバー。
 
-// ジョブ。
 type mongoRegistry struct {
 	dbName   string
 	collName string
 	*mgo.Session
 }
 
+// ジョブ。
 func NewMongoJobRegistry(url, dbName, collName string) (JobRegistry, error) {
 	sess, err := mgo.Dial(url)
 	if err != nil {
