@@ -92,7 +92,7 @@ type HandlerElement struct {
 }
 
 func (elem *HandlerElement) String() string {
-	return fmt.Sprint("{"+elem.Url+" "+elem.Method+" ", elem.Headers, " ", len(elem.Body), "}")
+	return fmt.Sprint("{"+elem.Url+" "+elem.Method+" ", elem.Headers, " ", len(elem.Body), " ", len(elem.Rules), "}")
 }
 
 // イベントの付属パラメータの扱いを記述する予定。

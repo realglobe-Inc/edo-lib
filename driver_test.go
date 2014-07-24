@@ -73,7 +73,7 @@ func testUserRegistry(t *testing.T, reg UserRegistry) {
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(attr, attr2) {
-		t.Error(attr2)
+		t.Error(attr, attr2)
 	}
 
 	if err = reg.RemoveAttribute(usrUuid, attrName); err != nil {
