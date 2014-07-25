@@ -7,21 +7,12 @@ import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"io"
 	"net/http"
-	"net/http/httputil"
+	"net/url"
 	"path"
 	"time"
 )
 
 // Web API を提供するレジストリから取ってくる。
-
-func logRequest(r *http.Request) {
-	buff, _ := httputil.DumpRequest(r, true)
-	log.Debug("Request: ", string(buff))
-}
-func logResponse(r *http.Response) {
-	buff, _ := httputil.DumpResponse(r, true)
-	log.Debug("Response: ", string(buff))
-}
 
 type skeletalWebDriver struct {
 	prefix string
@@ -69,7 +60,7 @@ func (reg *webJsRegistry) Object(dir, objName string) (*Object, error) {
 		return nil, erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	//logResponse(resp)
+	//util.LogResponse(resp, true)
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
@@ -94,13 +85,13 @@ func (reg *webJsRegistry) AddObject(dir, objName string, obj *Object) error {
 	}
 	req.Header.Add("Content-Type", util.ContentTypeJson)
 
-	//logRequest(req)
+	//util.LogRequest(req, ture)
 	resp, err := reg.Do(req)
 	if err != nil {
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	//logResponse(resp)
+	//util.LogResponse(resp, ture)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
@@ -387,13 +378,13 @@ func (reg *webEventRegistry) AddHandler(usrUuid, event string, hndl Handler) err
 	}
 	req.Header.Add("Content-Type", util.ContentTypeJson)
 
-	//logRequest(req)
+	//util.LogRequest(req, ture)
 	resp, err := reg.Do(req)
 	if err != nil {
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	//logResponse(resp)
+	//util.LogResponse(resp, ture)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
@@ -446,7 +437,7 @@ func (rout *webEventRouter) Fire(usrUuid, event string, body interface{}) error 
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	//logResponse(resp)
+	//util.LogResponse(resp, ture)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
