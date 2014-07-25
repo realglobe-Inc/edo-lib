@@ -574,3 +574,71 @@ func (reg *synchronizedEventRegistry) serve(base EventRegistry) {
 		req.errCh <- base.RemoveHandler(req.usrUuid, req.event)
 	}
 }
+
+// サービス。
+type synchronizedServiceRegistry struct {
+	reqCh chan interface{}
+}
+
+type synchronizedServiceRequest struct {
+	addr string
+
+	servCh chan string
+	errCh  chan error
+}
+
+func NewSynchronizedServiceRegistry(base ServiceRegistry) ServiceRegistry {
+	reg := &synchronizedServiceRegistry{
+		make(chan interface{}, defChCap),
+	}
+
+	go func() {
+		for {
+			reg.serve(base)
+		}
+	}()
+
+	return reg
+}
+
+func (reg *synchronizedServiceRegistry) Service(addr string) (servUuid string, err error) {
+	servCh := make(chan string, 1)
+	errCh := make(chan error, 1)
+	reg.reqCh <- &synchronizedServiceRequest{addr, servCh, errCh}
+	select {
+	case servUuid := <-servCh:
+		return servUuid, nil
+	case err := <-errCh:
+		return "", err
+	}
+}
+
+func (reg *synchronizedServiceRegistry) serve(base ServiceRegistry) {
+	var errCh chan error
+	defer func() {
+		if rcv := recover(); rcv != nil {
+			buff := make([]byte, 8192)
+			stackLen := runtime.Stack(buff, false)
+			stack := string(buff[:stackLen])
+			err := erro.Wrap(util.NewPanicWrapper(rcv, stack))
+
+			if errCh != nil {
+				errCh <- err
+			} else {
+				log.Err(erro.Unwrap(err))
+				log.Debug(err)
+			}
+		}
+	}()
+
+	switch req := (<-reg.reqCh).(type) {
+	case *synchronizedServiceRequest:
+		errCh = req.errCh
+		servUuid, err := base.Service(req.addr)
+		if err != nil {
+			req.errCh <- err
+		} else {
+			req.servCh <- servUuid
+		}
+	}
+}

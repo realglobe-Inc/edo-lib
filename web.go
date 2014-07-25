@@ -444,3 +444,33 @@ func (rout *webEventRouter) Fire(usrUuid, event string, body interface{}) error 
 	}
 	return nil
 }
+
+// サービス。
+type webServiceRegistry struct {
+	*skeletalWebDriver
+}
+
+func NewWebServiceRegistry(addr string, ssl bool) (ServiceRegistry, error) {
+	base, err := newSkeletalWebRegistry(addr, ssl)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return &webServiceRegistry{base}, nil
+}
+
+func (reg *webServiceRegistry) Service(addr string) (servUuid string, err error) {
+	resp, err := reg.Get(reg.prefix + "?address=" + url.QueryEscape(addr))
+	if err != nil {
+		return "", erro.Wrap(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return "", nil
+	} else if resp.StatusCode != http.StatusOK {
+		return "", erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&servUuid); err != nil {
+		return "", erro.Wrap(err)
+	}
+	return servUuid, nil
+}

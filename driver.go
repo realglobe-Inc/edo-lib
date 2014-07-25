@@ -98,6 +98,12 @@ func (elem *HandlerElement) String() string {
 type HandlerRule struct {
 }
 
+// サービス UUID の管理。
+type ServiceRegistry interface {
+	// EDO に登録されたサービスの管轄外向けアドレスから UUID を引く。
+	Service(addr string) (servUuid string, err error)
+}
+
 // イベントの処理。
 type EventRouter interface {
 	// イベントを発生させる。

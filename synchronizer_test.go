@@ -33,3 +33,9 @@ func TestSynchronizedNameRegistry(t *testing.T) {
 func TestSynchronizedEventRegistry(t *testing.T) {
 	testEventRegistry(t, NewSynchronizedEventRegistry(NewMemoryEventRegistry()))
 }
+
+func TestSynchronizedServiceRegistry(t *testing.T) {
+	reg := NewMemoryServiceRegistry()
+	reg.AddService("localhost:1234", "a_b-c")
+	testServiceRegistry(t, NewSynchronizedServiceRegistry(reg))
+}

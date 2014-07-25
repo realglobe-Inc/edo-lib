@@ -223,3 +223,15 @@ func testEventRegistry(t *testing.T, reg EventRegistry) {
 		t.Error(hndl3)
 	}
 }
+
+// 事前に、
+// localhost:1234 に a_b-c、
+// を登録しとく。
+func testServiceRegistry(t *testing.T, reg ServiceRegistry) {
+	servUuid, err := reg.Service("localhost:1234")
+	if err != nil {
+		t.Fatal(err)
+	} else if servUuid != "a_b-c" {
+		t.Error(servUuid)
+	}
+}
