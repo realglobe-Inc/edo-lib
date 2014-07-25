@@ -41,6 +41,18 @@ func testJsRegistry(t *testing.T, reg JsRegistry) {
 	}
 }
 
+// 事前に、
+// abc-012 に a_b-c、
+// を登録しとく。
+func testLoginRegistry(t *testing.T, reg LoginRegistry) {
+	usrUuid, err := reg.User("abc-012")
+	if err != nil {
+		t.Fatal(err)
+	} else if usrUuid != "a_b-c" {
+		t.Error(usrUuid)
+	}
+}
+
 func testUserRegistry(t *testing.T, reg UserRegistry) {
 	usrUuid := "a_b-c"
 	attrName := "a b*c/d"
@@ -151,7 +163,7 @@ func testJobRegistryRemoveOld(t *testing.T, reg JobRegistry) {
 
 }
 
-// 事前に
+// 事前に、
 // c.b.a に c.localhost、
 // d.b.a に d.localhost、
 // b.a   に   localhost、
