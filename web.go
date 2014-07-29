@@ -85,13 +85,13 @@ func (reg *webJsRegistry) AddObject(dir, objName string, obj *Object) error {
 	}
 	req.Header.Add("Content-Type", util.ContentTypeJson)
 
-	//util.LogRequest(req, ture)
+	//util.LogRequest(req, true)
 	resp, err := reg.Do(req)
 	if err != nil {
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	//util.LogResponse(resp, ture)
+	//util.LogResponse(resp, true)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
@@ -181,6 +181,8 @@ func (reg *webUserRegistry) Attribute(usrUuid, attrName string) (interface{}, er
 		return nil, erro.Wrap(err)
 	}
 	defer resp.Body.Close()
+	//util.LogResponse(resp, true)
+
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
@@ -203,11 +205,14 @@ func (reg *webUserRegistry) AddAttribute(usrUuid, attrName string, attr interfac
 		return erro.Wrap(err)
 	}
 	req.Header.Add("Content-Type", util.ContentTypeJson)
+
+	//util.LogRequest(req, true)
 	resp, err := reg.Do(req)
 	if err != nil {
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
+	//util.LogResponse(resp, true)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
@@ -378,13 +383,13 @@ func (reg *webEventRegistry) AddHandler(usrUuid, event string, hndl Handler) err
 	}
 	req.Header.Add("Content-Type", util.ContentTypeJson)
 
-	//util.LogRequest(req, ture)
+	//util.LogRequest(req, true)
 	resp, err := reg.Do(req)
 	if err != nil {
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	//util.LogResponse(resp, ture)
+	//util.LogResponse(resp, true)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
@@ -437,7 +442,7 @@ func (rout *webEventRouter) Fire(usrUuid, event string, body interface{}) error 
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	//util.LogResponse(resp, ture)
+	//util.LogResponse(resp, true)
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
