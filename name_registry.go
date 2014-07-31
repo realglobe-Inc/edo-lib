@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+type NameRegistry interface {
+	// アドレスを引く。
+	Address(name string) (addr string, err error)
+	// name はドメイン形式（. 区切りで後ろが親）の木構造のノードを表し、そのノード以下の部分木に含まれる全てのアドレスを返す。
+	Addresses(name string) (addrs []string, err error)
+}
+
 // NameRegistry の内部データ。
 
 type nameTree map[string]*nameNode

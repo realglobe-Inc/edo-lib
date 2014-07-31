@@ -1,7 +1,6 @@
 package driver
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -61,51 +60,13 @@ type JobResult struct {
 }
 
 // 別名の管理。
-type NameRegistry interface {
-	// アドレスを引く。
-	Address(name string) (addr string, err error)
-	// name はドメイン形式（. 区切りで後ろが親）の木構造のノードを表し、そのノード以下の部分木に含まれる全てのアドレスを返す。
-	Addresses(name string) (addrs []string, err error)
-}
+// name_registry 参照。
 
 // イベントの管理。
-type EventRegistry interface {
-	// ハンドラを取得する。
-	// イベントは / 区切りで木構造のノードを表し、そのノード以下の部分木に含まれる全てのハンドラを返す。
-	Handler(usrUuid, event string) (Handler, error)
-
-	// ハンドラを登録する。
-	AddHandler(usrUuid, event string, hndl Handler) error
-	// ハンドラを削除する。
-	RemoveHandler(usrUuid, event string) error
-}
-
-type Handler []*HandlerElement
-
-type HandlerElement struct {
-	Url     string            `json:"url"               bson:"url"`
-	Method  string            `json:"method,omitempty"  bson:"method,omitempty"`
-	Headers map[string]string `json:"headers,omitempty" bson:"headers,omitempty"`
-	Body    string            `json:"body,omitempty"    bson:"body,omitempty"`
-	Rules   []*HandlerRule    `json:"rules,omitempty"   bson:"rules,omitempty"`
-}
-
-func (elem *HandlerElement) String() string {
-	return fmt.Sprint("{"+elem.Url+" "+elem.Method+" ", elem.Headers, " ", len(elem.Body), " ", len(elem.Rules), "}")
-}
-
-// イベントの付属パラメータの扱いを記述する予定。
-type HandlerRule struct {
-}
+// event_registry 参照。
 
 // サービス UUID の管理。
 type ServiceRegistry interface {
 	// EDO に登録されたサービスの管轄外向けアドレスから UUID を引く。
 	Service(addr string) (servUuid string, err error)
-}
-
-// イベントの処理。
-type EventRouter interface {
-	// イベントを発生させる。
-	Fire(usrUuid, event string, body interface{}) error
 }

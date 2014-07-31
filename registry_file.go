@@ -19,6 +19,14 @@ const (
 	filePerm = 0644
 )
 
+type fileRegistry struct {
+	path string
+}
+
+func newFileRegistry(path string) *fileRegistry {
+	return &fileRegistry{path}
+}
+
 func readFromJson(path string, v interface{}) error {
 	buff, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -45,12 +53,8 @@ func writeToJson(path string, v interface{}) error {
 }
 
 // JavaScript.
-type fileJsRegistry struct {
-	path string
-}
-
 func NewFileJsRegistry(path string) JsRegistry {
-	return &fileJsRegistry{path}
+	return newFileRegistry(path)
 }
 
 type objectHeader struct {
@@ -59,7 +63,7 @@ type objectHeader struct {
 	Include []string `json:"include,omitempty"`
 }
 
-func (reg *fileJsRegistry) Object(dir, objName string) (*Object, error) {
+func (reg *fileRegistry) Object(dir, objName string) (*Object, error) {
 	headPath := filepath.Join(reg.path, dir, objName+".json")
 	codePath := filepath.Join(reg.path, dir, objName+".js")
 
@@ -77,7 +81,7 @@ func (reg *fileJsRegistry) Object(dir, objName string) (*Object, error) {
 
 	return &Object{head.Service, head.Library, head.Include, string(code)}, nil
 }
-func (reg *fileJsRegistry) AddObject(dir, objName string, obj *Object) error {
+func (reg *fileRegistry) AddObject(dir, objName string, obj *Object) error {
 	headPath := filepath.Join(reg.path, dir, objName+".json")
 	codePath := filepath.Join(reg.path, dir, objName+".js")
 
@@ -93,7 +97,7 @@ func (reg *fileJsRegistry) AddObject(dir, objName string, obj *Object) error {
 
 	return nil
 }
-func (reg *fileJsRegistry) RemoveObject(dir, objName string) error {
+func (reg *fileRegistry) RemoveObject(dir, objName string) error {
 	headPath := filepath.Join(reg.path, dir, objName+".json")
 	codePath := filepath.Join(reg.path, dir, objName+".js")
 
@@ -112,15 +116,11 @@ func (reg *fileJsRegistry) RemoveObject(dir, objName string) error {
 }
 
 // ログイン。
-type fileLoginRegistry struct {
-	path string
-}
-
 func NewFileLoginRegistry(path string) LoginRegistry {
-	return &fileLoginRegistry{path}
+	return newFileRegistry(path)
 }
 
-func (reg *fileLoginRegistry) User(accToken string) (usrUuid string, err error) {
+func (reg *fileRegistry) User(accToken string) (usrUuid string, err error) {
 	path := filepath.Join(reg.path, accToken+".json")
 
 	if err := readFromJson(path, &usrUuid); err != nil {
@@ -130,16 +130,12 @@ func (reg *fileLoginRegistry) User(accToken string) (usrUuid string, err error) 
 }
 
 // ユーザー情報。
-type fileUserRegistry struct {
-	path string
-}
-
 func NewFileUserRegistry(path string) UserRegistry {
-	return &fileUserRegistry{path}
+	return newFileRegistry(path)
 }
 
 // 属性名は任意の文字列でファイル名にしづらいのでユーザーごとに 1 ファイル。
-func (reg *fileUserRegistry) Attributes(usrUuid string) (map[string]interface{}, error) {
+func (reg *fileRegistry) Attributes(usrUuid string) (map[string]interface{}, error) {
 	path := filepath.Join(reg.path, usrUuid+".json")
 
 	var attrs map[string]interface{}
@@ -149,14 +145,14 @@ func (reg *fileUserRegistry) Attributes(usrUuid string) (map[string]interface{},
 
 	return attrs, nil
 }
-func (reg *fileUserRegistry) Attribute(usrUuid, attrName string) (interface{}, error) {
+func (reg *fileRegistry) Attribute(usrUuid, attrName string) (interface{}, error) {
 	attrs, err := reg.Attributes(usrUuid)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 	return attrs[attrName], nil
 }
-func (reg *fileUserRegistry) AddAttribute(usrUuid, attrName string, attr interface{}) error {
+func (reg *fileRegistry) AddAttribute(usrUuid, attrName string, attr interface{}) error {
 	attrs, err := reg.Attributes(usrUuid)
 	if err != nil {
 		return erro.Wrap(err)
@@ -176,7 +172,7 @@ func (reg *fileUserRegistry) AddAttribute(usrUuid, attrName string, attr interfa
 
 	return nil
 }
-func (reg *fileUserRegistry) RemoveAttribute(usrUuid, attrName string) error {
+func (reg *fileRegistry) RemoveAttribute(usrUuid, attrName string) error {
 	attrs, err := reg.Attributes(usrUuid)
 	if err != nil {
 		return erro.Wrap(err)
@@ -196,15 +192,11 @@ func (reg *fileUserRegistry) RemoveAttribute(usrUuid, attrName string) error {
 }
 
 // ジョブ。
-type fileJobRegistry struct {
-	path string
-}
-
 func NewFileJobRegistry(path string) JobRegistry {
-	return &fileJobRegistry{path}
+	return newFileRegistry(path)
 }
 
-func (reg *fileJobRegistry) Result(jobId string) (*JobResult, error) {
+func (reg *fileRegistry) Result(jobId string) (*JobResult, error) {
 	path := filepath.Join(reg.path, jobId+".json")
 
 	var res JobResult
@@ -217,7 +209,7 @@ func (reg *fileJobRegistry) Result(jobId string) (*JobResult, error) {
 	}
 	return &res, nil
 }
-func (reg *fileJobRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
+func (reg *fileRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
 	path := filepath.Join(reg.path, jobId+".json")
 
 	if err := writeToJson(path, res); err != nil {
@@ -228,15 +220,11 @@ func (reg *fileJobRegistry) AddResult(jobId string, res *JobResult, deadline tim
 }
 
 // 別名。
-type fileNameRegistry struct {
-	path string
-}
-
 func NewFileNameRegistry(path string) NameRegistry {
-	return &fileNameRegistry{path}
+	return newFileRegistry(path)
 }
 
-func (reg *fileNameRegistry) Address(name string) (addr string, err error) {
+func (reg *fileRegistry) Address(name string) (addr string, err error) {
 	path := filepath.Join(reg.path, name+".json")
 
 	if err := readFromJson(path, &addr); err != nil { // 改行とかに煩わされないので JSON 文字列で。
@@ -244,7 +232,7 @@ func (reg *fileNameRegistry) Address(name string) (addr string, err error) {
 	}
 	return addr, nil
 }
-func (reg *fileNameRegistry) Addresses(name string) (addrs []string, err error) {
+func (reg *fileRegistry) Addresses(name string) (addrs []string, err error) {
 	cont := map[string]string{}
 
 	fis, err := ioutil.ReadDir(reg.path)
@@ -283,16 +271,12 @@ func (reg *fileNameRegistry) Addresses(name string) (addrs []string, err error) 
 }
 
 // イベント。
-type fileEventRegistry struct {
-	path string
-}
-
 func NewFileEventRegistry(path string) EventRegistry {
-	return &fileEventRegistry{path}
+	return newFileRegistry(path)
 }
 
 // イベントは区切りに / を含み、ディレクトリを掘るのは面倒なので、ユーザーごとに 1 ファイル。
-func (reg *fileEventRegistry) Handler(usrUuid, event string) (Handler, error) {
+func (reg *fileRegistry) Handler(usrUuid, event string) (Handler, error) {
 	path := filepath.Join(reg.path, usrUuid+".json")
 
 	var cont map[string]Handler
@@ -305,7 +289,7 @@ func (reg *fileEventRegistry) Handler(usrUuid, event string) (Handler, error) {
 
 	return tree.handler(event), nil
 }
-func (reg *fileEventRegistry) AddHandler(usrUuid, event string, hndl Handler) error {
+func (reg *fileRegistry) AddHandler(usrUuid, event string, hndl Handler) error {
 	path := filepath.Join(reg.path, usrUuid+".json")
 
 	var cont map[string]Handler
@@ -328,7 +312,7 @@ func (reg *fileEventRegistry) AddHandler(usrUuid, event string, hndl Handler) er
 
 	return nil
 }
-func (reg *fileEventRegistry) RemoveHandler(usrUuid, event string) error {
+func (reg *fileRegistry) RemoveHandler(usrUuid, event string) error {
 	path := filepath.Join(reg.path, usrUuid+".json")
 
 	var cont map[string]Handler
