@@ -10,15 +10,15 @@ type Cache interface {
 	// 入れる。
 	Put(key, val, prio interface{})
 	// 取り出す。
-	Get(key interface{}) (val interface{})
+	Get(key interface{}) (val, prio interface{})
 	// 優先度を変えつつ取り出す。
 	Update(key, prio interface{}) (val interface{})
 	// 基準以下を削除。
 	CleanLesser(prioThres interface{})
 }
 
-func NewCache(compare func(interface{}, interface{}) bool) Cache {
-	ca := &cache{compare, []*cacheElement{}, map[interface{}]int{}}
+func NewCache(less func(interface{}, interface{}) bool) Cache {
+	ca := &cache{less, []*cacheElement{}, map[interface{}]int{}}
 	heap.Init(ca)
 	return ca
 }
@@ -36,12 +36,13 @@ func (ca *cache) Put(key, val, prio interface{}) {
 	ca.Push(&cacheElement{key, val, prio})
 }
 
-func (ca *cache) Get(key interface{}) (val interface{}) {
+func (ca *cache) Get(key interface{}) (val, prio interface{}) {
 	idx, ok := ca.keyToIdx[key]
 	if !ok {
-		return nil
+		return nil, nil
 	}
-	return ca.prioQueue[idx].val
+	elem := ca.prioQueue[idx]
+	return elem.val, elem.prio
 }
 
 func (ca *cache) Update(key, prio interface{}) (val interface{}) {
