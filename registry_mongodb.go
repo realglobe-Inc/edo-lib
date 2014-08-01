@@ -15,6 +15,45 @@ type mongoRegistry struct {
 	*mgo.Session
 }
 
+// ログイン。
+func NewMongoLoginRegistry(url, dbName, collName string) (LoginRegistry, error) {
+	sess, err := mgo.Dial(url)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	accTokenIdx := mgo.Index{
+		Key:      []string{"access_token"},
+		Unique:   true,
+		DropDups: true,
+		Sparse:   true,
+	}
+	if err := sess.DB(dbName).C(collName).EnsureIndex(accTokenIdx); err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	return &mongoRegistry{dbName, collName, sess}, nil
+}
+
+type mongoUser struct {
+	AccToken string `bson:"access_token"`
+	UsrUuid  string `bson:"user_uuid"`
+}
+
+func (reg *mongoRegistry) User(accToken string) (usrUuid string, err error) {
+	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"access_token": accToken})
+	if n, err := query.Count(); err != nil {
+		return "", erro.Wrap(err)
+	} else if n == 0 {
+		return "", nil
+	}
+	var res mongoUser
+	if err := query.One(&res); err != nil {
+		return "", erro.Wrap(err)
+	}
+	return res.UsrUuid, nil
+}
+
 // ユーザー情報。
 func NewMongoUserRegistry(url, dbName, collName string) (UserRegistry, error) {
 	sess, err := mgo.Dial(url)
