@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+// ユーザーの管理。
+type LoginRegistry interface {
+	User(accToken string) (usrUuid string, err error)
+}
+
 // JavaScript 管理。
 type JsRegistry interface {
 	// オブジェクトのソースを取得する。
@@ -25,11 +30,6 @@ type Object struct {
 	Include []string `json:"include,omitempty"`
 
 	Code string `json:"code"`
-}
-
-// ユーザーの管理。
-type LoginRegistry interface {
-	User(accToken string) (usrUuid string, err error)
 }
 
 // ユーザー情報の管理。

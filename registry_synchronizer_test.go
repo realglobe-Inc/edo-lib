@@ -4,14 +4,14 @@ import (
 	"testing"
 )
 
-func TestSynchronizedJsRegistry(t *testing.T) {
-	testJsRegistry(t, NewSynchronizedJsRegistry(NewMemoryJsRegistry()))
-}
-
 func TestSynchronizedLoginRegistry(t *testing.T) {
 	reg := NewMemoryLoginRegistry()
 	reg.AddUser("abc-012", "a_b-c")
 	testLoginRegistry(t, NewSynchronizedLoginRegistry(reg))
+}
+
+func TestSynchronizedJsRegistry(t *testing.T) {
+	testJsRegistry(t, NewSynchronizedJsRegistry(NewMemoryJsRegistry()))
 }
 
 func TestSynchronizedUserRegistry(t *testing.T) {

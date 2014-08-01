@@ -61,6 +61,39 @@ func (reg *synchronizedRegistry) serve(hndls map[reflect.Type]func(interface{}, 
 	}
 }
 
+// ログイン。
+func NewSynchronizedLoginRegistry(reg LoginRegistry) LoginRegistry {
+	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+		reflect.TypeOf(&synchronizedUserRequest{}): func(r interface{}, errCh chan<- error) {
+			req := r.(*synchronizedUserRequest)
+			usrUuid, err := reg.User(req.accToken)
+			if err != nil {
+				errCh <- err
+			} else {
+				req.usrCh <- usrUuid
+			}
+		},
+	})
+}
+
+type synchronizedUserRequest struct {
+	accToken string
+
+	usrCh chan string
+}
+
+func (reg *synchronizedRegistry) User(accToken string) (usrUuid string, err error) {
+	usrCh := make(chan string, 1)
+	errCh := make(chan error, 1)
+	reg.reqCh <- &synchronizedRequest{&synchronizedUserRequest{accToken, usrCh}, errCh}
+	select {
+	case usrUuid := <-usrCh:
+		return usrUuid, nil
+	case err := <-errCh:
+		return "", err
+	}
+}
+
 // JavaScript.
 func NewSynchronizedJsRegistry(reg JsRegistry) JsRegistry {
 	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
@@ -120,39 +153,6 @@ func (reg *synchronizedRegistry) RemoveObject(dir, objName string) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedRemoveObjectRequest{dir, objName}, errCh}
 	return <-errCh
-}
-
-// ログイン。
-func NewSynchronizedLoginRegistry(reg LoginRegistry) LoginRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
-		reflect.TypeOf(&synchronizedUserRequest{}): func(r interface{}, errCh chan<- error) {
-			req := r.(*synchronizedUserRequest)
-			usrUuid, err := reg.User(req.accToken)
-			if err != nil {
-				errCh <- err
-			} else {
-				req.usrCh <- usrUuid
-			}
-		},
-	})
-}
-
-type synchronizedUserRequest struct {
-	accToken string
-
-	usrCh chan string
-}
-
-func (reg *synchronizedRegistry) User(accToken string) (usrUuid string, err error) {
-	usrCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&synchronizedUserRequest{accToken, usrCh}, errCh}
-	select {
-	case usrUuid := <-usrCh:
-		return usrUuid, nil
-	case err := <-errCh:
-		return "", err
-	}
 }
 
 // ユーザー情報。

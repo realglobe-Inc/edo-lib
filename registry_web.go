@@ -40,6 +40,28 @@ func newWebDriver(addr string, ssl bool) (*webDriver, error) {
 	return &webDriver{prefix, client}, nil
 }
 
+// ログイン。
+func NewWebLoginRegistry(addr string, ssl bool) (LoginRegistry, error) {
+	return newWebDriver(addr, ssl)
+}
+
+func (reg *webDriver) User(accToken string) (usrUuid string, err error) {
+	resp, err := reg.Get(reg.prefix + "/" + accToken)
+	if err != nil {
+		return "", erro.Wrap(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return "", nil
+	} else if resp.StatusCode != http.StatusOK {
+		return "", erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&usrUuid); err != nil {
+		return "", erro.Wrap(err)
+	}
+	return usrUuid, nil
+}
+
 // JavaScript.
 func NewWebJsRegistry(addr string, ssl bool) (JsRegistry, error) {
 	return newWebDriver(addr, ssl)
@@ -104,28 +126,6 @@ func (reg *webDriver) RemoveObject(dir, objName string) error {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
-}
-
-// ログイン。
-func NewWebLoginRegistry(addr string, ssl bool) (LoginRegistry, error) {
-	return newWebDriver(addr, ssl)
-}
-
-func (reg *webDriver) User(accToken string) (usrUuid string, err error) {
-	resp, err := reg.Get(reg.prefix + "/" + accToken)
-	if err != nil {
-		return "", erro.Wrap(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return "", nil
-	} else if resp.StatusCode != http.StatusOK {
-		return "", erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&usrUuid); err != nil {
-		return "", erro.Wrap(err)
-	}
-	return usrUuid, nil
 }
 
 // ユーザー情報。

@@ -6,6 +6,18 @@ import (
 	"time"
 )
 
+// 事前に、
+// abc-012 に a_b-c、
+// を登録しとく。
+func testLoginRegistry(t *testing.T, reg LoginRegistry) {
+	usrUuid, err := reg.User("abc-012")
+	if err != nil {
+		t.Fatal(err)
+	} else if usrUuid != "a_b-c" {
+		t.Error(usrUuid)
+	}
+}
+
 func testJsRegistry(t *testing.T, reg JsRegistry) {
 	dir := "/a/b"
 	objName := "a_b"
@@ -38,18 +50,6 @@ func testJsRegistry(t *testing.T, reg JsRegistry) {
 		t.Fatal(err)
 	} else if obj3 != nil {
 		t.Error(obj3)
-	}
-}
-
-// 事前に、
-// abc-012 に a_b-c、
-// を登録しとく。
-func testLoginRegistry(t *testing.T, reg LoginRegistry) {
-	usrUuid, err := reg.User("abc-012")
-	if err != nil {
-		t.Fatal(err)
-	} else if usrUuid != "a_b-c" {
-		t.Error(usrUuid)
 	}
 }
 

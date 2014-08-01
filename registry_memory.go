@@ -6,6 +6,25 @@ import (
 
 // メモリ上のモックアップ。
 
+// ログイン。
+type MemoryLoginRegistry struct {
+	usrs map[string]string
+}
+
+func NewMemoryLoginRegistry() *MemoryLoginRegistry {
+	return &MemoryLoginRegistry{map[string]string{}}
+}
+
+func (reg *MemoryLoginRegistry) User(accToken string) (addr string, err error) {
+	return reg.usrs[accToken], nil
+}
+func (reg *MemoryLoginRegistry) AddUser(accToken string, addr string) {
+	reg.usrs[accToken] = addr
+}
+func (reg *MemoryLoginRegistry) RemoveUser(accToken string) {
+	delete(reg.usrs, accToken)
+}
+
 // JavaScript.
 type MemoryJsRegistry struct {
 	objs map[string]map[string]*Object
@@ -38,25 +57,6 @@ func (reg *MemoryJsRegistry) RemoveObject(dir, objName string) error {
 	}
 	delete(nameToObj, objName)
 	return nil
-}
-
-// ログイン。
-type MemoryLoginRegistry struct {
-	usrs map[string]string
-}
-
-func NewMemoryLoginRegistry() *MemoryLoginRegistry {
-	return &MemoryLoginRegistry{map[string]string{}}
-}
-
-func (reg *MemoryLoginRegistry) User(accToken string) (addr string, err error) {
-	return reg.usrs[accToken], nil
-}
-func (reg *MemoryLoginRegistry) AddUser(accToken string, addr string) {
-	reg.usrs[accToken] = addr
-}
-func (reg *MemoryLoginRegistry) RemoveUser(accToken string) {
-	delete(reg.usrs, accToken)
 }
 
 // ユーザー情報。

@@ -52,6 +52,20 @@ func writeToJson(path string, v interface{}) error {
 	return nil
 }
 
+// ログイン。
+func NewFileLoginRegistry(path string) LoginRegistry {
+	return newFileRegistry(path)
+}
+
+func (reg *fileRegistry) User(accToken string) (usrUuid string, err error) {
+	path := filepath.Join(reg.path, accToken+".json")
+
+	if err := readFromJson(path, &usrUuid); err != nil {
+		return "", erro.Wrap(err)
+	}
+	return usrUuid, nil
+}
+
 // JavaScript.
 func NewFileJsRegistry(path string) JsRegistry {
 	return newFileRegistry(path)
@@ -113,20 +127,6 @@ func (reg *fileRegistry) RemoveObject(dir, objName string) error {
 	}
 
 	return nil
-}
-
-// ログイン。
-func NewFileLoginRegistry(path string) LoginRegistry {
-	return newFileRegistry(path)
-}
-
-func (reg *fileRegistry) User(accToken string) (usrUuid string, err error) {
-	path := filepath.Join(reg.path, accToken+".json")
-
-	if err := readFromJson(path, &usrUuid); err != nil {
-		return "", erro.Wrap(err)
-	}
-	return usrUuid, nil
 }
 
 // ユーザー情報。
