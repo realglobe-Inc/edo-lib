@@ -74,7 +74,7 @@ func (reg *webDriver) AddObject(dir, objName string, obj *Object) error {
 	if err != nil {
 		return erro.Wrap(err)
 	}
-	req.Header.Add("Content-Type", util.ContentTypeJson)
+	req.Header.Set("Content-Type", util.ContentTypeJson)
 
 	//util.LogRequest(req, true)
 	resp, err := reg.Do(req)
@@ -179,7 +179,7 @@ func (reg *webDriver) AddAttribute(usrUuid, attrName string, attr interface{}) e
 	if err != nil {
 		return erro.Wrap(err)
 	}
-	req.Header.Add("Content-Type", util.ContentTypeJson)
+	req.Header.Set("Content-Type", util.ContentTypeJson)
 
 	//util.LogRequest(req, true)
 	resp, err := reg.Do(req)
@@ -249,7 +249,7 @@ func (reg *webDriver) AddResult(jobId string, res *JobResult, deadline time.Time
 	if err != nil {
 		return erro.Wrap(err)
 	}
-	req.Header.Add("Content-Type", util.ContentTypeJson)
+	req.Header.Set("Content-Type", util.ContentTypeJson)
 	resp, err := reg.Do(req)
 	if err != nil {
 		return erro.Wrap(err)
@@ -332,7 +332,7 @@ func (reg *webDriver) AddHandler(usrUuid, event string, hndl Handler) error {
 	if err != nil {
 		return erro.Wrap(err)
 	}
-	req.Header.Add("Content-Type", util.ContentTypeJson)
+	req.Header.Set("Content-Type", util.ContentTypeJson)
 
 	//util.LogRequest(req, true)
 	resp, err := reg.Do(req)
