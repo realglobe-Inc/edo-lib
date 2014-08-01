@@ -121,11 +121,11 @@ func (reg *MemoryJobRegistry) AddResult(jobId string, res *JobResult, deadline t
 
 // 別名。
 type MemoryNameRegistry struct {
-	tree nameTree
+	tree *nameTree
 }
 
 func NewMemoryNameRegistry() *MemoryNameRegistry {
-	return &MemoryNameRegistry{nameTree{}}
+	return &MemoryNameRegistry{newNameTree()}
 }
 
 func (reg *MemoryNameRegistry) Address(name string) (addr string, err error) {
@@ -143,11 +143,11 @@ func (reg *MemoryNameRegistry) RemoveAddress(name string) {
 
 // イベント。
 type MemoryEventRegistry struct {
-	trees map[string]eventTree
+	trees map[string]*eventTree
 }
 
 func NewMemoryEventRegistry() *MemoryEventRegistry {
-	return &MemoryEventRegistry{map[string]eventTree{}}
+	return &MemoryEventRegistry{map[string]*eventTree{}}
 }
 
 func (reg *MemoryEventRegistry) Handler(usrUuid, event string) (Handler, error) {
@@ -160,7 +160,7 @@ func (reg *MemoryEventRegistry) Handler(usrUuid, event string) (Handler, error) 
 func (reg *MemoryEventRegistry) AddHandler(usrUuid, event string, hndl Handler) error {
 	tree := reg.trees[usrUuid]
 	if tree == nil {
-		tree = eventTree{}
+		tree = newEventTree()
 		reg.trees[usrUuid] = tree
 	}
 	tree.add(event, hndl)

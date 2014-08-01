@@ -264,7 +264,7 @@ func (reg *fileRegistry) Addresses(name string) (addrs []string, err error) {
 		cont[curName] = addr
 	}
 
-	tree := nameTree{}
+	tree := newNameTree()
 	tree.fromContainer(cont)
 
 	return tree.addresses(name), nil
@@ -284,7 +284,7 @@ func (reg *fileRegistry) Handler(usrUuid, event string) (Handler, error) {
 		return nil, erro.Wrap(err)
 	}
 
-	tree := eventTree{}
+	tree := newEventTree()
 	tree.fromContainer(cont)
 
 	return tree.handler(event), nil

@@ -67,6 +67,6 @@ type JobResult struct {
 
 // サービス UUID の管理。
 type ServiceRegistry interface {
-	// EDO に登録されたサービスの管轄外向けアドレスから UUID を引く。
+	// EDO に登録されたサービスの管轄外向けエンドポイントから UUID を引く。
 	Service(addr string) (servUuid string, err error)
 }
