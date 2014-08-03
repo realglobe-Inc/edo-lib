@@ -80,3 +80,17 @@ func TestFileEventRegistry(t *testing.T) {
 
 	testEventRegistry(t, NewFileEventRegistry(path))
 }
+
+func TestFileServiceRegistry(t *testing.T) {
+	path, err := ioutil.TempDir("", "test_edo_driver")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(path)
+
+	if err := writeToJson(filepath.Join(path, "uuid.json"), map[string]string{"localhost:1234": "a_b-c"}); err != nil {
+		t.Fatal(err)
+	}
+
+	testServiceRegistry(t, NewFileServiceRegistry(path))
+}

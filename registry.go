@@ -66,7 +66,4 @@ type JobResult struct {
 // event_registry 参照。
 
 // サービス UUID の管理。
-type ServiceRegistry interface {
-	// EDO に登録されたサービスの管轄外向けエンドポイントから UUID を引く。
-	Service(addr string) (servUuid string, err error)
-}
+// service_registry 参照。

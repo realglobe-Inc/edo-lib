@@ -303,3 +303,37 @@ func (reg *mongoRegistry) RemoveHandler(usrUuid, event string) error {
 	}
 	return nil
 }
+
+// ログイン。
+// エンドポイントごとに保存しても親を辿るのが面倒なので 1 エントリで。
+// TODO エンドポイントごとにして、任意の親を列挙する方法があるか？
+func NewMongoServiceRegistry(url, dbName, collName string) (ServiceRegistry, error) {
+	sess, err := mgo.Dial(url)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	return &mongoRegistry{dbName, collName, sess}, nil
+}
+
+type mongoService struct {
+	Cont map[string]string `bson:"container"`
+}
+
+func (reg *mongoRegistry) Service(endPt string) (usrUuid string, err error) {
+	query := reg.DB(reg.dbName).C(reg.collName).Find(nil)
+	if n, err := query.Count(); err != nil {
+		return "", erro.Wrap(err)
+	} else if n == 0 {
+		return "", nil
+	}
+	var res mongoService
+	if err := query.One(&res); err != nil {
+		return "", erro.Wrap(err)
+	}
+
+	tree := newServiceTree()
+	tree.fromContainer(res.Cont)
+
+	return tree.service(endPt), nil
+}

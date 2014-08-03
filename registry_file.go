@@ -331,3 +331,22 @@ func (reg *fileRegistry) RemoveHandler(usrUuid, event string) error {
 
 	return nil
 }
+
+// サービス。
+func NewFileServiceRegistry(path string) ServiceRegistry {
+	return newFileRegistry(path)
+}
+
+func (reg *fileRegistry) Service(endPt string) (servUuid string, err error) {
+	path := filepath.Join(reg.path, "uuid.json")
+
+	var cont map[string]string
+	if err := readFromJson(path, &cont); err != nil {
+		return "", erro.Wrap(err)
+	}
+
+	tree := newServiceTree()
+	tree.fromContainer(cont)
+
+	return tree.service(endPt), nil
+}

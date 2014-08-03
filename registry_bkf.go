@@ -28,3 +28,7 @@ func NewBkfNameRegistry(addr string, ssl bool, secretKey string) (NameRegistry, 
 func NewBkfEventRegistry(addr string, ssl bool, secretKey string) (EventRegistry, error) {
 	panic("not implemented.")
 }
+
+func NewBkfServiceRegistry(addr string, ssl bool, secretKey string) (ServiceRegistry, error) {
+	panic("not implemented.")
+}

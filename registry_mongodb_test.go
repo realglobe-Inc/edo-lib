@@ -79,3 +79,21 @@ func _TestMongoEventRegistry(t *testing.T) {
 
 	testEventRegistry(t, reg)
 }
+
+func _TestMongoServiceRegistry(t *testing.T) {
+	reg, err := NewMongoServiceRegistry(mongoAddr, "test_driver_mongo", "service")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+
+	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("service").Insert(
+		&mongoService{map[string]string{
+			"localhost:1234": "a_b-c",
+		}},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	testServiceRegistry(t, reg)
+}
