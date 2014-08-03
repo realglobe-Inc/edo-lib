@@ -35,15 +35,15 @@ func newNameTree() *nameTree {
 	)}
 }
 
-func (tree nameTree) add(name string, addr string) {
+func (tree *nameTree) add(name string, addr string) {
 	tree.Add(name, addr)
 }
 
-func (tree nameTree) remove(name string) {
+func (tree *nameTree) remove(name string) {
 	tree.Remove(name)
 }
 
-func (tree nameTree) address(name string) (addr string) {
+func (tree *nameTree) address(name string) (addr string) {
 	val := tree.Value(name)
 	if val == nil {
 		return ""
@@ -51,7 +51,7 @@ func (tree nameTree) address(name string) (addr string) {
 	return val.(string)
 }
 
-func (tree nameTree) addresses(name string) (addrs []string) {
+func (tree *nameTree) addresses(name string) (addrs []string) {
 	vals := tree.Values(name)
 	if vals == nil {
 		return nil
