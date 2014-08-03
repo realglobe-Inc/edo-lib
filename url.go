@@ -2,6 +2,7 @@ package util
 
 import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"regexp"
 	"strings"
 )
 
@@ -23,4 +24,14 @@ func SplitUrl(url string) (scheme, host, remain string, err error) {
 	}
 
 	return scheme, host, remain, nil
+}
+
+var slashes *regexp.Regexp
+
+func init() {
+	slashes = regexp.MustCompile("/+")
+}
+
+func MergeSlash(str string) string {
+	return slashes.ReplaceAllString(str, "/")
 }
