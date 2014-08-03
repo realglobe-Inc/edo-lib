@@ -149,3 +149,20 @@ func (tree *Tree) _subTree(vals *[]interface{}, label string) {
 		tree._subTree(vals, child)
 	}
 }
+
+// 自分か直近の親の値を取り出す。
+func (tree *Tree) ParentValue(label string) (val interface{}) {
+	for curLabel := label; ; {
+		node := tree.nodes[curLabel]
+		if node != nil && node.val != nil {
+			return node.val
+		}
+
+		if tree.isRoot(curLabel) {
+			break
+		}
+
+		curLabel = tree.parent(curLabel)
+	}
+	return nil
+}
