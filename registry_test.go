@@ -228,7 +228,7 @@ func testEventRegistry(t *testing.T, reg EventRegistry) {
 // localhost:1234 に a_b-c、
 // を登録しとく。
 func testServiceRegistry(t *testing.T, reg ServiceRegistry) {
-	servUuid, err := reg.Service("localhost:1234")
+	servUuid, err := reg.Service("localhost:1234/api/hoge")
 	if err != nil {
 		t.Fatal(err)
 	} else if servUuid != "a_b-c" {
