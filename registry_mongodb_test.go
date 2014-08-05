@@ -4,6 +4,8 @@ import (
 	"testing"
 )
 
+// テストするなら、ローカルにデフォルトポートで mongodb をたてる必要あり。
+
 var mongoAddr string = "localhost"
 
 func _TestMongoLoginRegistry(t *testing.T) {
@@ -20,6 +22,16 @@ func _TestMongoLoginRegistry(t *testing.T) {
 	}
 
 	testLoginRegistry(t, reg)
+}
+
+func _TestMongoJsRegistry(t *testing.T) {
+	reg, err := NewMongoJsRegistry(mongoAddr, "test_driver_mongo", "js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+
+	testJsRegistry(t, reg)
 }
 
 func _TestMongoUserRegistry(t *testing.T) {
