@@ -22,7 +22,7 @@ type Stamp struct {
 
 type JsBackend interface {
 	// オブジェクトのソースを取得する。
-	StampedObject(dir, objName string, cacheStmp *Stamp) (*Object, *Stamp, error)
+	StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error)
 }
 
 type JsBackendRegistry interface {
