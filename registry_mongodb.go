@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"path"
+	"reflect"
 	"time"
 )
 
@@ -17,24 +18,76 @@ type mongoRegistry struct {
 	*mgo.Session
 }
 
-// ログイン。
-func NewMongoLoginRegistry(url, dbName, collName string) (LoginRegistry, error) {
+func newMongoRegistry(url, dbName, collName string, indices []mgo.Index) (*mongoRegistry, error) {
 	sess, err := mgo.Dial(url)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	accTokenIdx := mgo.Index{
-		Key:      []string{"access_token"},
-		Unique:   true,
-		DropDups: true,
-		Sparse:   true,
-	}
-	if err := sess.DB(dbName).C(collName).EnsureIndex(accTokenIdx); err != nil {
+	curIndices, err := sess.DB(dbName).C(collName).Indexes()
+	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
+	// 既存の要らない索引を消す。
+	for _, curIdx := range curIndices {
+		if len(curIdx.Key) == 1 && curIdx.Key[0] == "_id" {
+			continue
+		}
+
+		ok := false
+		for _, idx := range indices {
+			if reflect.DeepEqual(curIdx, idx) {
+				ok = true
+				break
+			}
+		}
+		if ok {
+			continue
+		}
+
+		// 要らない。
+		if err := sess.DB(dbName).C(collName).DropIndex(curIdx.Key...); err != nil {
+			return nil, erro.Wrap(err)
+		}
+	}
+
+	curIndices, err = sess.DB(dbName).C(collName).Indexes()
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	for _, idx := range indices {
+		ok := true
+		for _, curIdx := range curIndices {
+			if reflect.DeepEqual(idx, curIdx) {
+				ok = false
+				break
+			}
+		}
+		if !ok {
+			// もうある。
+			continue
+		}
+
+		if err := sess.DB(dbName).C(collName).EnsureIndex(idx); err != nil {
+			return nil, erro.Wrap(err)
+		}
+	}
+
 	return &mongoRegistry{dbName, collName, sess}, nil
+}
+
+// ログイン。
+func NewMongoLoginRegistry(url, dbName, collName string) (LoginRegistry, error) {
+	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+		mgo.Index{
+			Key:      []string{"access_token"},
+			Unique:   true,
+			DropDups: true,
+			Sparse:   true,
+		},
+	})
 }
 
 type mongoUser struct {
@@ -59,22 +112,14 @@ func (reg *mongoRegistry) User(accToken string) (usrUuid string, err error) {
 
 // JavaScript.
 func NewMongoJsRegistry(url, dbName, collName string) (JsRegistry, error) {
-	sess, err := mgo.Dial(url)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	pathIdx := mgo.Index{
-		Key:      []string{"path"},
-		Unique:   true,
-		DropDups: true,
-		Sparse:   true,
-	}
-	if err := sess.DB(dbName).C(collName).EnsureIndex(pathIdx); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	return &mongoRegistry{dbName, collName, sess}, nil
+	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+		mgo.Index{
+			Key:      []string{"path"},
+			Unique:   true,
+			DropDups: true,
+			Sparse:   true,
+		},
+	})
 }
 
 type mongoObject struct {
@@ -133,32 +178,18 @@ func (reg *mongoRegistry) RemoveObject(dir, objName string) error {
 
 // ユーザー情報。
 func NewMongoUserRegistry(url, dbName, collName string) (UserRegistry, error) {
-	sess, err := mgo.Dial(url)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	usrUuidIdx := mgo.Index{
-		Key:      []string{"user_uuid"},
-		Unique:   true,
-		DropDups: true,
-		Sparse:   true,
-	}
-	if err := sess.DB(dbName).C(collName).EnsureIndex(usrUuidIdx); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	keyIdx := mgo.Index{
-		Key:      []string{"user_uuid", "key"},
-		Unique:   true,
-		DropDups: true,
-		Sparse:   true,
-	}
-	if err := sess.DB(dbName).C(collName).EnsureIndex(keyIdx); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	return &mongoRegistry{dbName, collName, sess}, nil
+	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+		mgo.Index{
+			Key:    []string{"user_uuid"},
+			Sparse: true,
+		},
+		mgo.Index{
+			Key:      []string{"user_uuid", "key"},
+			Unique:   true,
+			DropDups: true,
+			Sparse:   true,
+		},
+	})
 }
 
 type mongoAttribute struct {
@@ -216,29 +247,17 @@ func (reg *mongoRegistry) RemoveAttribute(usrUuid, attrName string) error {
 
 // ジョブ。
 func NewMongoJobRegistry(url, dbName, collName string) (JobRegistry, error) {
-	sess, err := mgo.Dial(url)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	jobIdIdx := mgo.Index{
-		Key:      []string{"job_id"},
-		Unique:   true,
-		DropDups: true,
-		Sparse:   true,
-	}
-	if err := sess.DB(dbName).C(collName).EnsureIndex(jobIdIdx); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	deadlineIdx := mgo.Index{
-		Key: []string{"deadline"},
-	}
-	if err := sess.DB(dbName).C(collName).EnsureIndex(deadlineIdx); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	return &mongoRegistry{dbName, collName, sess}, nil
+	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+		mgo.Index{
+			Key:      []string{"job_id"},
+			Unique:   true,
+			DropDups: true,
+			Sparse:   true,
+		},
+		mgo.Index{
+			Key: []string{"deadline"},
+		},
+	})
 }
 
 type mongoJobResult struct {
@@ -328,22 +347,14 @@ func (reg *mongoRegistry) Addresses(name string) (addrs []string, err error) {
 
 // イベント。
 func NewMongoEventRegistry(url, dbName, collName string) (EventRegistry, error) {
-	sess, err := mgo.Dial(url)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	eventIdx := mgo.Index{
-		Key:      []string{"user_uuid", "event"},
-		Unique:   true,
-		DropDups: true,
-		Sparse:   true,
-	}
-	if err := sess.DB(dbName).C(collName).EnsureIndex(eventIdx); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	return &mongoRegistry{dbName, collName, sess}, nil
+	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+		mgo.Index{
+			Key:      []string{"user_uuid", "event"},
+			Unique:   true,
+			DropDups: true,
+			Sparse:   true,
+		},
+	})
 }
 
 type mongoHandler struct {
@@ -385,12 +396,7 @@ func (reg *mongoRegistry) RemoveHandler(usrUuid, event string) error {
 // エンドポイントごとに保存しても親を辿るのが面倒なので 1 エントリで。
 // TODO エンドポイントごとにして、任意の親を列挙する方法があるか？
 func NewMongoServiceRegistry(url, dbName, collName string) (ServiceRegistry, error) {
-	sess, err := mgo.Dial(url)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	return &mongoRegistry{dbName, collName, sess}, nil
+	return newMongoRegistry(url, dbName, collName, nil)
 }
 
 type mongoService struct {
