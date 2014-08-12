@@ -370,7 +370,7 @@ func NewWebServiceRegistry(addr string, ssl bool) (ServiceRegistry, error) {
 }
 
 func (reg *webDriver) Service(addr string) (servUuid string, err error) {
-	resp, err := reg.Get(reg.prefix + "?address=" + url.QueryEscape(addr))
+	resp, err := reg.Get(reg.prefix + "?end_point=" + url.QueryEscape(addr))
 	if err != nil {
 		return "", erro.Wrap(err)
 	}
