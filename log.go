@@ -34,15 +34,21 @@ func InitLog(root string) handler.Handler {
 }
 
 func InitFileLog(root string, lv level.Level, path string) error {
-	_, err := initLog(root, lv, func() (handler.Handler, error) {
+	if _, err := initLog(root, lv, func() (handler.Handler, error) {
 		return handler.NewRotateHandler(path, 10*(1<<20), 10)
-	})
-	return err
+	}); err != nil {
+		return erro.Wrap(err)
+	}
+	log.Debug("Logging into file " + path + ".")
+	return nil
 }
 
 func InitFluentdLog(root string, lv level.Level, addr, tag string) error {
-	_, err := initLog(root, lv, func() (handler.Handler, error) {
+	if _, err := initLog(root, lv, func() (handler.Handler, error) {
 		return handler.NewFluentdHandler(addr, tag)
-	})
-	return err
+	}); err != nil {
+		return erro.Wrap(err)
+	}
+	log.Debug("Logging into fluentd " + addr + ".")
+	return nil
 }
