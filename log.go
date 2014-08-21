@@ -5,8 +5,6 @@ import (
 	"github.com/realglobe-Inc/go-lib-rg/rglog"
 	"github.com/realglobe-Inc/go-lib-rg/rglog/handler"
 	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
-	"os"
-	"path/filepath"
 )
 
 var log rglog.Logger
@@ -15,30 +13,36 @@ func init() {
 	log = rglog.GetLogger("github.com/realglobe-Inc/edo/util")
 }
 
-const dirPerm = 0755
-
-func InitLog(root string) handler.Handler {
+func initLog(root string, lv level.Level, hndlGenerate func() (handler.Handler, error)) (handler.Handler, error) {
 	rootLog := rglog.GetLogger(root)
 	rootLog.SetLevel(level.ALL)
 	rootLog.SetUseParent(false)
-	hndl := handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter)
-	hndl.SetLevel(level.INFO)
+	hndl, err := hndlGenerate()
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	hndl.SetLevel(lv)
 	rootLog.AddHandler(hndl)
+	return hndl, nil
+}
+
+func InitLog(root string) handler.Handler {
+	hndl, _ := initLog(root, level.INFO, func() (handler.Handler, error) {
+		return handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter), nil
+	})
 	return hndl
 }
 
 func InitFileLog(root string, lv level.Level, path string) error {
-	if err := os.MkdirAll(filepath.Dir(path), dirPerm); err != nil {
-		return erro.Wrap(err)
-	}
-	rootLog := rglog.GetLogger(root)
-	rootLog.SetLevel(level.ALL)
-	rootLog.SetUseParent(false)
-	hndl, err := handler.NewRotateHandler(path, 10*(1<<20), 10)
-	if err != nil {
-		return erro.Wrap(err)
-	}
-	hndl.SetLevel(lv)
-	rootLog.AddHandler(hndl)
-	return nil
+	_, err := initLog(root, lv, func() (handler.Handler, error) {
+		return handler.NewRotateHandler(path, 10*(1<<20), 10)
+	})
+	return err
+}
+
+func InitFluentdLog(root string, lv level.Level, addr, tag string) error {
+	_, err := initLog(root, lv, func() (handler.Handler, error) {
+		return handler.NewFluentdHandler(addr, tag)
+	})
+	return err
 }
