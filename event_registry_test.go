@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func _TestEventTree(t *testing.T) {
+func TestEventTree(t *testing.T) {
 	tree := newEventTree()
 	tree.add("/", Handler{&HandlerElement{Url: "a"}})
 	tree.add("/a", Handler{&HandlerElement{Url: "b"}})

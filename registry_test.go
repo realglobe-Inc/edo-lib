@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -85,7 +86,13 @@ func testUserRegistry(t *testing.T, reg UserRegistry) {
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(attr, attr2) {
-		t.Error(attr, attr2)
+		// mgo で mongodb から取ってくると json の形式と違うことがあるけど、JSON 経由で同じなら許す。
+		buff, _ := json.Marshal(attr2)
+		var attr2_ interface{}
+		json.Unmarshal(buff, &attr2_)
+		if !reflect.DeepEqual(attr, attr2_) {
+			t.Error(attr, attr2)
+		}
 	}
 
 	if err = reg.RemoveAttribute(usrUuid, attrName); err != nil {
