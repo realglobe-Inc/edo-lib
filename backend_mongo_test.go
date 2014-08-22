@@ -6,7 +6,11 @@ import (
 
 // テストするなら、ローカルにデフォルトポートで mongodb をたてる必要あり。
 
-func _TestMongoJsBackendRegistry(t *testing.T) {
+func TestMongoJsBackendRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoJsBackendRegistry(mongoAddr, "test_driver_mongo", "js")
 	if err != nil {
 		t.Fatal(err)

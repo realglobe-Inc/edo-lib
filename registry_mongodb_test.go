@@ -1,14 +1,31 @@
 package driver
 
 import (
+	"gopkg.in/mgo.v2"
 	"testing"
 )
 
 // テストするなら、ローカルにデフォルトポートで mongodb をたてる必要あり。
+var mongoAddr = "localhost"
 
-var mongoAddr string = "localhost"
+func init() {
+	if mongoAddr != "" {
+		// 実際にサーバーが立っているかどうか調べる。
+		// 立ってなかったらテストはスキップ。
+		conn, err := mgo.Dial(mongoAddr)
+		if err != nil {
+			mongoAddr = ""
+		} else {
+			conn.Close()
+		}
+	}
+}
 
-func _TestMongoLoginRegistry(t *testing.T) {
+func TestMongoLoginRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoLoginRegistry(mongoAddr, "test_driver_mongo", "login")
 	if err != nil {
 		t.Fatal(err)
@@ -24,7 +41,11 @@ func _TestMongoLoginRegistry(t *testing.T) {
 	testLoginRegistry(t, reg)
 }
 
-func _TestMongoJsRegistry(t *testing.T) {
+func TestMongoJsRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoJsRegistry(mongoAddr, "test_driver_mongo", "js")
 	if err != nil {
 		t.Fatal(err)
@@ -34,7 +55,11 @@ func _TestMongoJsRegistry(t *testing.T) {
 	testJsRegistry(t, reg)
 }
 
-func _TestMongoUserRegistry(t *testing.T) {
+func TestMongoUserRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoUserRegistry(mongoAddr, "test_driver_mongo", "user")
 	if err != nil {
 		t.Fatal(err)
@@ -44,7 +69,11 @@ func _TestMongoUserRegistry(t *testing.T) {
 	testUserRegistry(t, reg)
 }
 
-func _TestMongoJobRegistry(t *testing.T) {
+func TestMongoJobRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoJobRegistry(mongoAddr, "test_driver_mongo", "job")
 	if err != nil {
 		t.Fatal(err)
@@ -54,7 +83,11 @@ func _TestMongoJobRegistry(t *testing.T) {
 	testJobRegistry(t, reg)
 }
 
-func _TestMongoJobRegistryRemoveOld(t *testing.T) {
+func TestMongoJobRegistryRemoveOld(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoJobRegistry(mongoAddr, "test_driver_mongo", "job")
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +97,11 @@ func _TestMongoJobRegistryRemoveOld(t *testing.T) {
 	testJobRegistryRemoveOld(t, reg)
 }
 
-func _TestMongoNameRegistry(t *testing.T) {
+func TestMongoNameRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoNameRegistry(mongoAddr, "test_driver_mongo", "name")
 	if err != nil {
 		t.Fatal(err)
@@ -82,7 +119,11 @@ func _TestMongoNameRegistry(t *testing.T) {
 	testNameRegistry(t, reg)
 }
 
-func _TestMongoEventRegistry(t *testing.T) {
+func TestMongoEventRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoEventRegistry(mongoAddr, "test_driver_mongo", "event")
 	if err != nil {
 		t.Fatal(err)
@@ -92,7 +133,11 @@ func _TestMongoEventRegistry(t *testing.T) {
 	testEventRegistry(t, reg)
 }
 
-func _TestMongoServiceRegistry(t *testing.T) {
+func TestMongoServiceRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
 	reg, err := NewMongoServiceRegistry(mongoAddr, "test_driver_mongo", "service")
 	if err != nil {
 		t.Fatal(err)
