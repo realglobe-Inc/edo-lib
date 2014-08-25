@@ -17,26 +17,27 @@ type serviceTree struct {
 }
 
 func newServiceTree() *serviceTree {
-	return &serviceTree{util.NewTree(
-		func(label string) bool {
-			return label == ""
-		},
-		func(label string) string {
-			if idx := strings.LastIndex(label, "/"); idx < 0 {
-				// localhost とか。
-				return ""
-			} else if sepIdx := strings.Index(label, "://"); sepIdx < 0 {
-				// localhost/api/hoge とか。
-				return label[:idx]
-			} else if idx <= sepIdx+3 {
-				// https:// とか
-				return ""
-			} else {
-				// https://localhost/api/hoge とか。
-				return label[:idx]
-			}
-		},
-	)}
+	return &serviceTree{util.NewTree(serviceTreeIsRoot, serviceTreeParent)}
+}
+
+func serviceTreeIsRoot(label string) bool {
+	return label == ""
+}
+
+func serviceTreeParent(label string) string {
+	if idx := strings.LastIndex(label, "/"); idx < 0 {
+		// localhost とか。
+		return ""
+	} else if sepIdx := strings.Index(label, "://"); sepIdx < 0 {
+		// localhost/api/hoge とか。
+		return label[:idx]
+	} else if idx <= sepIdx+3 {
+		// https:// とか
+		return ""
+	} else {
+		// https://localhost/api/hoge とか。
+		return label[:idx]
+	}
 }
 
 func (tree *serviceTree) add(endPt string, servUuid string) {

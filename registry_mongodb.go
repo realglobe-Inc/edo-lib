@@ -387,7 +387,6 @@ func (reg *mongoRegistry) RemoveHandler(usrUuid, event string) error {
 
 // サービス。
 // エンドポイントごとに保存しても親を辿るのが面倒なので 1 エントリで。
-// TODO エンドポイントごとにして、任意の親を列挙する方法があるか？
 func NewMongoServiceRegistry(url, dbName, collName string) (ServiceRegistry, error) {
 	return newMongoRegistry(url, dbName, collName, nil)
 }
@@ -412,4 +411,49 @@ func (reg *mongoRegistry) Service(endPt string) (servUuid string, err error) {
 	tree.fromContainer(res.Cont)
 
 	return tree.service(endPt), nil
+}
+
+// インデックスすればそれなりに速いので、エンドポイントごとに保存して親を探す。
+func NewMongoLargeServiceRegistry(url, dbName, collName string) (ServiceRegistry, error) {
+	reg, err := newMongoRegistry(url, dbName, collName, []mgo.Index{
+		mgo.Index{
+			Key:      []string{"end_point"},
+			Unique:   true,
+			DropDups: true,
+		},
+	})
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return (*mongoLargeServiceRegistry)(reg), nil
+}
+
+type mongoLargeService struct {
+	EndPt    string `bson:"end_point"`
+	ServUuid string `bson:"service_uuid"`
+}
+
+type mongoLargeServiceRegistry mongoRegistry
+
+func (reg *mongoLargeServiceRegistry) Service(endPt string) (servUuid string, err error) {
+	// TODO 二分探索。
+	for curEndPt := endPt; ; {
+		query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"end_point": curEndPt})
+		if n, err := query.Count(); err != nil {
+			return "", erro.Wrap(err)
+		} else if n > 0 {
+			var res mongoLargeService
+			if err := query.One(&res); err != nil {
+				return "", erro.Wrap(err)
+			}
+			return res.ServUuid, nil
+		}
+
+		if serviceTreeIsRoot(curEndPt) {
+			break
+		}
+
+		curEndPt = serviceTreeParent(curEndPt)
+	}
+	return "", nil
 }

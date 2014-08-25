@@ -154,3 +154,26 @@ func TestMongoServiceRegistry(t *testing.T) {
 
 	testServiceRegistry(t, reg)
 }
+
+func TestMongoLargeServiceRegistry(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
+	reg, err := NewMongoLargeServiceRegistry(mongoAddr, "test_driver_mongo", "service")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reg.(*mongoLargeServiceRegistry).DB("test_driver_mongo").DropDatabase()
+
+	if err := reg.(*mongoLargeServiceRegistry).DB("test_driver_mongo").C("service").Insert(
+		&mongoLargeService{
+			EndPt:    "localhost:1234",
+			ServUuid: "a_b-c",
+		},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	testServiceRegistry(t, reg)
+}
