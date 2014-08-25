@@ -385,7 +385,7 @@ func (reg *mongoRegistry) RemoveHandler(usrUuid, event string) error {
 	return nil
 }
 
-// ログイン。
+// サービス。
 // エンドポイントごとに保存しても親を辿るのが面倒なので 1 エントリで。
 // TODO エンドポイントごとにして、任意の親を列挙する方法があるか？
 func NewMongoServiceRegistry(url, dbName, collName string) (ServiceRegistry, error) {
@@ -396,7 +396,7 @@ type mongoService struct {
 	Cont map[string]string `bson:"container"`
 }
 
-func (reg *mongoRegistry) Service(endPt string) (usrUuid string, err error) {
+func (reg *mongoRegistry) Service(endPt string) (servUuid string, err error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(nil)
 	if n, err := query.Count(); err != nil {
 		return "", erro.Wrap(err)
