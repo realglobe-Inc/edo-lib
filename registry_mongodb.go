@@ -85,7 +85,6 @@ func NewMongoLoginRegistry(url, dbName, collName string) (LoginRegistry, error) 
 			Key:      []string{"access_token"},
 			Unique:   true,
 			DropDups: true,
-			Sparse:   true,
 		},
 	})
 }
@@ -117,7 +116,6 @@ func NewMongoJsRegistry(url, dbName, collName string) (JsRegistry, error) {
 			Key:      []string{"path"},
 			Unique:   true,
 			DropDups: true,
-			Sparse:   true,
 		},
 	})
 }
@@ -180,14 +178,12 @@ func (reg *mongoRegistry) RemoveObject(dir, objName string) error {
 func NewMongoUserRegistry(url, dbName, collName string) (UserRegistry, error) {
 	return newMongoRegistry(url, dbName, collName, []mgo.Index{
 		mgo.Index{
-			Key:    []string{"user_uuid"},
-			Sparse: true,
+			Key: []string{"user_uuid"},
 		},
 		mgo.Index{
 			Key:      []string{"user_uuid", "key"},
 			Unique:   true,
 			DropDups: true,
-			Sparse:   true,
 		},
 	})
 }
@@ -252,7 +248,6 @@ func NewMongoJobRegistry(url, dbName, collName string) (JobRegistry, error) {
 			Key:      []string{"job_id"},
 			Unique:   true,
 			DropDups: true,
-			Sparse:   true,
 		},
 		mgo.Index{
 			Key: []string{"deadline"},
@@ -305,7 +300,6 @@ func NewMongoNameRegistry(url, dbName, collName string) (NameRegistry, error) {
 		Key:      []string{"name"},
 		Unique:   true,
 		DropDups: true,
-		Sparse:   true,
 	}
 	if err := sess.DB(dbName).C(collName).EnsureIndex(nameIdx); err != nil {
 		return nil, erro.Wrap(err)
@@ -352,7 +346,6 @@ func NewMongoEventRegistry(url, dbName, collName string) (EventRegistry, error) 
 			Key:      []string{"user_uuid", "event"},
 			Unique:   true,
 			DropDups: true,
-			Sparse:   true,
 		},
 	})
 }
