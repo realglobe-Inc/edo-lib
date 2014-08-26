@@ -241,4 +241,18 @@ func testServiceRegistry(t *testing.T, reg ServiceRegistry) {
 	} else if servUuid != "a_b-c" {
 		t.Error(servUuid)
 	}
+
+	servUuid, err = reg.Service("localhost:1234")
+	if err != nil {
+		t.Fatal(err)
+	} else if servUuid != "a_b-c" {
+		t.Error(servUuid)
+	}
+
+	servUuid, err = reg.Service("localhost:123")
+	if err != nil {
+		t.Fatal(err)
+	} else if servUuid != "" {
+		t.Error(servUuid)
+	}
 }
