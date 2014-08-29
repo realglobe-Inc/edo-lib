@@ -457,3 +457,17 @@ func (reg *mongoLargeServiceRegistry) Service(endPt string) (servUuid string, er
 	}
 	return "", nil
 }
+
+// ID プロバイダ。
+func NewMongoIdProviderRegistry(url, dbName, collName string) (IdProviderRegistry, error) {
+	return newMongoRegistry(url, dbName, collName, nil)
+}
+
+func (reg *mongoRegistry) IdProviders() ([]*IdProvider, error) {
+	query := reg.DB(reg.dbName).C(reg.collName).Find(nil)
+	var idps []*IdProvider
+	if err := query.Iter().All(&idps); err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return idps, nil
+}

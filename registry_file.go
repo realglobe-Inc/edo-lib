@@ -350,3 +350,19 @@ func (reg *fileRegistry) Service(endPt string) (servUuid string, err error) {
 
 	return tree.service(endPt), nil
 }
+
+// サービス。
+func NewFileIdProviderRegistry(path string) IdProviderRegistry {
+	return newFileRegistry(path)
+}
+
+func (reg *fileRegistry) IdProviders() ([]*IdProvider, error) {
+	path := filepath.Join(reg.path, "idp.json")
+
+	var cont []*IdProvider
+	if err := readFromJson(path, &cont); err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	return cont, nil
+}

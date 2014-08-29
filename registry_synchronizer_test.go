@@ -39,3 +39,13 @@ func TestSynchronizedServiceRegistry(t *testing.T) {
 	reg.AddService("localhost:1234", "a_b-c")
 	testServiceRegistry(t, NewSynchronizedServiceRegistry(reg))
 }
+
+func TestSynchronizedIdProviderRegistry(t *testing.T) {
+	reg := NewMemoryIdProviderRegistry()
+	reg.AddIdProvider(&IdProvider{
+		IdpUuid: "a_b-c",
+		Name:    "ABC",
+		Uri:     "https://localhost:1234",
+	})
+	testIdProviderRegistry(t, NewSynchronizedIdProviderRegistry(reg))
+}

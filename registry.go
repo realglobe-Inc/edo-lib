@@ -67,3 +67,14 @@ type JobResult struct {
 
 // サービス UUID の管理。
 // service_registry 参照。
+
+// ID プロバイダの管理。
+type IdProviderRegistry interface {
+	IdProviders() ([]*IdProvider, error)
+}
+
+type IdProvider struct {
+	IdpUuid string `json:"id_provider_uuid"`
+	Name    string `json:"name"`
+	Uri     string `json:"uri"`
+}

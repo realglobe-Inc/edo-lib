@@ -193,3 +193,26 @@ func (reg *MemoryServiceRegistry) AddService(endPt string, servUuid string) {
 func (reg *MemoryServiceRegistry) RemoveService(endPt string) {
 	reg.remove(endPt)
 }
+
+// ID プロバイダ。
+type MemoryIdProviderRegistry struct {
+	idps map[string]*IdProvider
+}
+
+func NewMemoryIdProviderRegistry() *MemoryIdProviderRegistry {
+	return &MemoryIdProviderRegistry{map[string]*IdProvider{}}
+}
+
+func (reg *MemoryIdProviderRegistry) IdProviders() ([]*IdProvider, error) {
+	idps := []*IdProvider{}
+	for _, idp := range reg.idps {
+		idps = append(idps, idp)
+	}
+	return idps, nil
+}
+func (reg *MemoryIdProviderRegistry) AddIdProvider(idp *IdProvider) {
+	reg.idps[idp.IdpUuid] = idp
+}
+func (reg *MemoryIdProviderRegistry) RemoveIdProvider(idpUuid string) {
+	delete(reg.idps, idpUuid)
+}

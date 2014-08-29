@@ -256,3 +256,17 @@ func testServiceRegistry(t *testing.T, reg ServiceRegistry) {
 		t.Error(servUuid)
 	}
 }
+
+// 事前に、UUID a_b-c、名前 ABC、URI https://localhost:1234 で登録しとく。
+func testIdProviderRegistry(t *testing.T, reg IdProviderRegistry) {
+	idps, err := reg.IdProviders()
+	if err != nil {
+		t.Fatal(err)
+	} else if len(idps) == 0 {
+		t.Error("No id providers.")
+	} else if idps[0].IdpUuid != "a_b-c" ||
+		idps[0].Name != "ABC" ||
+		idps[0].Uri != "https://localhost:1234" {
+		t.Error(idps[0])
+	}
+}
