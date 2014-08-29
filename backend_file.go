@@ -58,10 +58,9 @@ func (reg *fileBackend) StampedObject(dir, objName string, caStmp *Stamp) (*Obje
 
 	// 対象のスタンプを取得。
 
-	newCaStmp := &Stamp{Date: time.Now(), Digest: stmp.Digest}
-	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
+	newCaStmp := &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
 
-	if caStmp != nil && caStmp.Date.After(stmp.Date) && caStmp.Digest == stmp.Digest {
+	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, newCaStmp, nil
 	}
 
@@ -95,10 +94,9 @@ func (reg *fileBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp
 
 	// 対象のスタンプを取得。
 
-	newCaStmp := &Stamp{Date: time.Now(), Digest: stmp.Digest}
-	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
+	newCaStmp := &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
 
-	if caStmp != nil && caStmp.Date.After(stmp.Date) && caStmp.Digest == stmp.Digest {
+	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, newCaStmp, nil
 	}
 

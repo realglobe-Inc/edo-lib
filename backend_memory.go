@@ -33,10 +33,9 @@ func (reg *MemoryJsBackendRegistry) StampedObject(dir, objName string, caStmp *S
 
 	// 対象のスタンプを取得。
 
-	newCaStmp := &Stamp{Date: time.Now(), Digest: stmp.Digest}
-	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
+	newCaStmp := &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
 
-	if caStmp != nil && caStmp.Date.After(stmp.Date) && caStmp.Digest == stmp.Digest {
+	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, newCaStmp, nil
 	}
 
@@ -80,8 +79,7 @@ func NewMemoryIdProviderBackend(expiDur time.Duration) *MemoryIdProviderBackend 
 }
 
 func (reg *MemoryIdProviderBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
-	newCaStmp := &Stamp{Date: time.Now(), Digest: reg.stmp.Digest}
-	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
+	newCaStmp := &Stamp{Date: reg.stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: reg.stmp.Digest}
 
 	if caStmp == nil || caStmp.Date.Before(reg.stmp.Date) || caStmp.Digest != reg.stmp.Digest {
 		idps, _ := reg.IdProviders()

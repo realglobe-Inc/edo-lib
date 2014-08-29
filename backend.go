@@ -16,7 +16,7 @@ import (
 
 // キャッシュの情報。
 type Stamp struct {
-	Date     time.Time `json:"date"                      bson:"date"`                      // キャッシュの作成日時。
+	Date     time.Time `json:"date"                      bson:"date"`                      // 元データの更新日時。
 	ExpiDate time.Time `json:"expiration_date,omitempty" bson:"expiration_date,omitempty"` // 有効期限。
 	Digest   string    `json:"digest"                    bson:"digest"`                    // ハッシュ値とか。
 }

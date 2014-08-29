@@ -33,17 +33,12 @@ func (reg *webDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object
 	case http.StatusNotFound:
 		return nil, nil, nil
 	case http.StatusNotModified, http.StatusOK:
-		date := resp.Header.Get("Date")
-		if date == "" {
-			date = resp.Header.Get("Last-Modified")
-		}
+		date := resp.Header.Get("Last-Modified")
 		expiDate := resp.Header.Get("Expires")
 		etag := resp.Header.Get("ETag")
 
 		newCaStmp := &Stamp{Digest: etag}
-		if date == "" {
-			newCaStmp.Date = time.Now()
-		} else {
+		if date != "" {
 			newCaStmp.Date, err = time.Parse(time.RFC1123, date)
 			if err != nil {
 				return nil, nil, erro.Wrap(err)
@@ -97,17 +92,12 @@ func (reg *webDriver) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, 
 	case http.StatusNotFound:
 		return nil, nil, nil
 	case http.StatusNotModified, http.StatusOK:
-		date := resp.Header.Get("Date")
-		if date == "" {
-			date = resp.Header.Get("Last-Modified")
-		}
+		date := resp.Header.Get("Last-Modified")
 		expiDate := resp.Header.Get("Expires")
 		etag := resp.Header.Get("ETag")
 
 		stmp := &Stamp{Digest: etag}
-		if date == "" {
-			stmp.Date = time.Now()
-		} else {
+		if date != "" {
 			stmp.Date, err = time.Parse(time.RFC1123, date)
 			if err != nil {
 				return nil, nil, erro.Wrap(err)

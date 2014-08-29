@@ -43,8 +43,7 @@ func (reg *mongoBackend) StampedObject(dir, objName string, caStmp *Stamp) (*Obj
 
 	// 対象のスタンプを取得。
 
-	newCaStmp := &Stamp{Date: time.Now(), Digest: stmp.Digest}
-	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
+	newCaStmp := &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
 
 	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, newCaStmp, nil
@@ -83,10 +82,11 @@ func (reg *mongoBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stam
 
 	// 対象のスタンプを取得。
 
-	newCaStmp := &Stamp{Date: time.Now()}
-	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
+	var newCaStmp *Stamp
 	if stmp != nil {
-		newCaStmp.Digest = stmp.Digest
+		newCaStmp = &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
+	} else {
+		newCaStmp = &Stamp{ExpiDate: time.Now().Add(reg.expiDur)}
 	}
 
 	if caStmp != nil && stmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {

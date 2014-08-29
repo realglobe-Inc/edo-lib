@@ -83,7 +83,9 @@ func testIdProviderBackend(t *testing.T, reg IdProviderBackend) {
 	}
 
 	// キャッシュと同じだから返らない。
+	log.Debug("Aho")
 	idps2, stmp2, err := reg.StampedIdProviders(stmp1)
+	log.Debug("Baka")
 	if err != nil {
 		t.Fatal(err)
 	} else if idps2 != nil || stmp2 == nil {
