@@ -8,12 +8,21 @@ import (
 	"time"
 )
 
-// JavaScript.
-func NewFileJsBackendRegistry(path string) JsBackendRegistry {
-	return newFileRegistry(path)
+type fileBackend struct {
+	*fileRegistry
+	expiDur time.Duration
 }
 
-func (reg *fileRegistry) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
+func newFileBackend(path string, expiDur time.Duration) *fileBackend {
+	return &fileBackend{newFileRegistry(path), expiDur}
+}
+
+// JavaScript.
+func NewFileJsBackendRegistry(path string, expiDur time.Duration) JsBackendRegistry {
+	return newFileBackend(path, expiDur)
+}
+
+func (reg *fileBackend) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
 	headPath := filepath.Join(reg.path, dir, objName+".json")
 	codePath := filepath.Join(reg.path, dir, objName+".js")
 
@@ -50,6 +59,7 @@ func (reg *fileRegistry) StampedObject(dir, objName string, caStmp *Stamp) (*Obj
 	// 対象のスタンプを取得。
 
 	newCaStmp := &Stamp{Date: time.Now(), Digest: stmp.Digest}
+	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
 
 	if caStmp != nil && caStmp.Date.After(stmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, newCaStmp, nil
@@ -65,11 +75,11 @@ func (reg *fileRegistry) StampedObject(dir, objName string, caStmp *Stamp) (*Obj
 }
 
 // ID プロバイダ。
-func NewFileIdProviderBackend(path string) IdProviderBackend {
-	return newFileRegistry(path)
+func NewFileIdProviderBackend(path string, expiDur time.Duration) IdProviderBackend {
+	return newFileBackend(path, expiDur)
 }
 
-func (reg *fileRegistry) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
+func (reg *fileBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	path := filepath.Join(reg.path, "idp.json")
 
 	fi, err := os.Stat(path)
@@ -86,6 +96,7 @@ func (reg *fileRegistry) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stam
 	// 対象のスタンプを取得。
 
 	newCaStmp := &Stamp{Date: time.Now(), Digest: stmp.Digest}
+	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
 
 	if caStmp != nil && caStmp.Date.After(stmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, newCaStmp, nil

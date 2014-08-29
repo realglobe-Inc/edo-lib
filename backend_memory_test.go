@@ -5,11 +5,11 @@ import (
 )
 
 func TestMemoryJsBackendRegistry(t *testing.T) {
-	testJsBackendRegistry(t, NewMemoryJsBackendRegistry())
+	testJsBackendRegistry(t, NewMemoryJsBackendRegistry(0))
 }
 
 func TestMemoryIdProviderBackend(t *testing.T) {
-	reg := NewMemoryIdProviderBackend()
+	reg := NewMemoryIdProviderBackend(0)
 	reg.AddIdProvider(&IdProvider{"a_b-c", "ABC", "https://localhost:1234"})
 	testIdProviderBackend(t, reg)
 }

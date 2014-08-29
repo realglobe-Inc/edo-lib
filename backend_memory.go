@@ -9,13 +9,15 @@ import (
 // JavaScript.
 type MemoryJsBackendRegistry struct {
 	*MemoryJsRegistry
-	stmps map[string]map[string]*Stamp
+	stmps   map[string]map[string]*Stamp
+	expiDur time.Duration
 }
 
-func NewMemoryJsBackendRegistry() *MemoryJsBackendRegistry {
+func NewMemoryJsBackendRegistry(expiDur time.Duration) *MemoryJsBackendRegistry {
 	return &MemoryJsBackendRegistry{
 		NewMemoryJsRegistry(),
 		map[string]map[string]*Stamp{},
+		expiDur,
 	}
 }
 
@@ -32,6 +34,7 @@ func (reg *MemoryJsBackendRegistry) StampedObject(dir, objName string, caStmp *S
 	// 対象のスタンプを取得。
 
 	newCaStmp := &Stamp{Date: time.Now(), Digest: stmp.Digest}
+	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
 
 	if caStmp != nil && caStmp.Date.After(stmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, newCaStmp, nil
@@ -65,18 +68,20 @@ func (reg *MemoryJsBackendRegistry) RemoveObject(dir, objName string) error {
 // ID プロバイダ。
 type MemoryIdProviderBackend struct {
 	*MemoryIdProviderRegistry
-	stmp *Stamp
+	stmp    *Stamp
+	expiDur time.Duration
 }
 
-func NewMemoryIdProviderBackend() *MemoryIdProviderBackend {
-	return &MemoryIdProviderBackend{
-		NewMemoryIdProviderRegistry(),
-		&Stamp{Date: time.Now(), Digest: strconv.Itoa(0)},
-	}
+func NewMemoryIdProviderBackend(expiDur time.Duration) *MemoryIdProviderBackend {
+	stmp := &Stamp{Date: time.Now(), Digest: strconv.Itoa(0)}
+	stmp.ExpiDate = stmp.Date.Add(expiDur)
+
+	return &MemoryIdProviderBackend{NewMemoryIdProviderRegistry(), stmp, expiDur}
 }
 
 func (reg *MemoryIdProviderBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	newCaStmp := &Stamp{Date: time.Now(), Digest: reg.stmp.Digest}
+	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
 
 	if caStmp == nil || caStmp.Date.Before(reg.stmp.Date) || caStmp.Digest != reg.stmp.Digest {
 		idps, _ := reg.IdProviders()

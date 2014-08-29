@@ -9,16 +9,25 @@ import (
 	"time"
 )
 
+type mongoBackend struct {
+	*mongoRegistry
+	expiDur time.Duration
+}
+
+func newMongoBackend(base *mongoRegistry, expiDur time.Duration) *mongoBackend {
+	return &mongoBackend{base, expiDur}
+}
+
 // JavaScript.
-func NewMongoJsBackendRegistry(url, dbName, collName string) (JsBackendRegistry, error) {
+func NewMongoJsBackendRegistry(url, dbName, collName string, expiDur time.Duration) (JsBackendRegistry, error) {
 	reg, err := NewMongoJsRegistry(url, dbName, collName)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return reg.(*mongoRegistry), nil
+	return newMongoBackend(reg.(*mongoRegistry), expiDur), nil
 }
 
-func (reg *mongoRegistry) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
+func (reg *mongoBackend) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"path": path.Join(dir, objName)})
 	if n, err := query.Count(); err != nil {
 		return nil, nil, erro.Wrap(err)
@@ -35,6 +44,7 @@ func (reg *mongoRegistry) StampedObject(dir, objName string, caStmp *Stamp) (*Ob
 	// 対象のスタンプを取得。
 
 	newCaStmp := &Stamp{Date: time.Now(), Digest: stmp.Digest}
+	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
 
 	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, newCaStmp, nil
@@ -46,7 +56,7 @@ func (reg *mongoRegistry) StampedObject(dir, objName string, caStmp *Stamp) (*Ob
 }
 
 // ID プロバイダ。
-func NewMongoIdProviderBackend(url, dbName, collName string) (IdProviderBackend, error) {
+func NewMongoIdProviderBackend(url, dbName, collName string, expiDur time.Duration) (IdProviderBackend, error) {
 	reg, err := newMongoRegistry(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:    []string{"date"},
@@ -56,10 +66,10 @@ func NewMongoIdProviderBackend(url, dbName, collName string) (IdProviderBackend,
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return reg, nil
+	return newMongoBackend(reg, expiDur), nil
 }
 
-func (reg *mongoRegistry) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
+func (reg *mongoBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	var stmp *Stamp
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"date": bson.M{"$exists": true}})
 	if n, err := query.Count(); err != nil {
@@ -74,6 +84,7 @@ func (reg *mongoRegistry) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Sta
 	// 対象のスタンプを取得。
 
 	newCaStmp := &Stamp{Date: time.Now()}
+	newCaStmp.ExpiDate = newCaStmp.Date.Add(reg.expiDur)
 	if stmp != nil {
 		newCaStmp.Digest = stmp.Digest
 	}

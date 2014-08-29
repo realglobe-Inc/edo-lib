@@ -14,7 +14,7 @@ func TestFileJsBackendRegistry(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testJsBackendRegistry(t, NewFileJsBackendRegistry(path))
+	testJsBackendRegistry(t, NewFileJsBackendRegistry(path, 0))
 }
 
 func TestFileIdProviderBackend(t *testing.T) {
@@ -28,5 +28,5 @@ func TestFileIdProviderBackend(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testIdProviderBackend(t, NewFileIdProviderBackend(path))
+	testIdProviderBackend(t, NewFileIdProviderBackend(path, 0))
 }

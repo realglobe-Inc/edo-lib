@@ -10,11 +10,11 @@ func TestMongoJsBackendRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoJsBackendRegistry(mongoAddr, "test_driver_mongo", "js")
+	reg, err := NewMongoJsBackendRegistry(mongoAddr, "test_driver_mongo", "js", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoBackend).DB("test_driver_mongo").DropDatabase()
 
 	testJsBackendRegistry(t, reg)
 }
@@ -24,13 +24,13 @@ func TestMongoIdProviderBackend(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoIdProviderBackend(mongoAddr, "test_driver_mongo_id_provider_backend", "idp")
+	reg, err := NewMongoIdProviderBackend(mongoAddr, "test_driver_mongo_id_provider_backend", "idp", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo_id_provider_backend").DropDatabase()
+	defer reg.(*mongoBackend).DB("test_driver_mongo_id_provider_backend").DropDatabase()
 
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo_id_provider_backend").C("idp").Insert(
+	if err := reg.(*mongoBackend).DB("test_driver_mongo_id_provider_backend").C("idp").Insert(
 		&IdProvider{
 			IdpUuid: "a_b-c",
 			Name:    "ABC",
@@ -39,7 +39,7 @@ func TestMongoIdProviderBackend(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo_id_provider_backend").C("idp").Insert(
+	if err := reg.(*mongoBackend).DB("test_driver_mongo_id_provider_backend").C("idp").Insert(
 		&Stamp{
 			Date:   time.Now(),
 			Digest: "0",

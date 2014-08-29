@@ -24,18 +24,18 @@ func (reg *cachingIdProviderRegistry) IdProviders() ([]*IdProvider, error) {
 
 	// キャッシュは有効期限切れ。
 
-	idps, stmp, err := reg.StampedIdProviders(reg.caStmp)
+	idps, newCaStmp, err := reg.StampedIdProviders(reg.caStmp)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	if stmp == nil {
+	if newCaStmp == nil {
 		return nil, nil
 	}
 
 	// あった。
 
-	reg.caStmp = stmp
+	reg.caStmp = newCaStmp
 
 	if idps == nil {
 		return reg.cache, nil

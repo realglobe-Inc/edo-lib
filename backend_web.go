@@ -40,17 +40,17 @@ func (reg *webDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object
 		expiDate := resp.Header.Get("Expires")
 		etag := resp.Header.Get("ETag")
 
-		stmp := &Stamp{Digest: etag}
+		newCaStmp := &Stamp{Digest: etag}
 		if date == "" {
-			stmp.Date = time.Now()
+			newCaStmp.Date = time.Now()
 		} else {
-			stmp.Date, err = time.Parse(time.RFC1123, date)
+			newCaStmp.Date, err = time.Parse(time.RFC1123, date)
 			if err != nil {
 				return nil, nil, erro.Wrap(err)
 			}
 		}
 		if expiDate != "" {
-			stmp.ExpiDate, err = time.Parse(time.RFC1123, expiDate)
+			newCaStmp.ExpiDate, err = time.Parse(time.RFC1123, expiDate)
 			if err != nil {
 				return nil, nil, erro.Wrap(err)
 			}
@@ -58,13 +58,13 @@ func (reg *webDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object
 
 		switch resp.StatusCode {
 		case http.StatusNotModified:
-			return nil, stmp, nil
+			return nil, newCaStmp, nil
 		case http.StatusOK:
 			var obj Object
 			if err := json.NewDecoder(resp.Body).Decode(&obj); err != nil {
 				return nil, nil, erro.Wrap(err)
 			}
-			return &obj, stmp, nil
+			return &obj, newCaStmp, nil
 		default:
 			panic("implementation error.")
 		}
