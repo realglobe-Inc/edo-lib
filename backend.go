@@ -14,10 +14,11 @@ import (
 //
 // 更新操作の場合、対象がキャッシュと等しい場合のみ操作が行われ、新しいスタンプが返る。
 
+// キャッシュの情報。
 type Stamp struct {
-	Date     time.Time
-	ExpiTime time.Time
-	Digest   string
+	Date     time.Time `json:"date"                      bson:"date"`                      // キャッシュの作成日時。
+	ExpiDate time.Time `json:"expiration_date,omitempty" bson:"expiration_date,omitempty"` // 有効期限。使わないかも。
+	Digest   string    `json:"digest"                    bson:"digest"`                    // ハッシュ値とか。
 }
 
 type JsBackend interface {
@@ -32,4 +33,8 @@ type JsBackendRegistry interface {
 
 func newFileJsBackendRegistry(path string) JsBackendRegistry {
 	return &fileRegistry{path}
+}
+
+type IdProviderBackend interface {
+	StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error)
 }

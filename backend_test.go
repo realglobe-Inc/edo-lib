@@ -68,3 +68,41 @@ func testJsBackendRegistry(t *testing.T, reg JsBackendRegistry) {
 		t.Error(obj6, stmp6)
 	}
 }
+
+// 事前に、UUID a_b-c、名前 ABC、URI https://localhost:1234 で登録しとく。
+func testIdProviderBackend(t *testing.T, reg IdProviderBackend) {
+	idps := []*IdProvider{
+		&IdProvider{IdpUuid: "a_b-c", Name: "ABC", Uri: "https://localhost:1234"},
+	}
+
+	idps1, stmp1, err := reg.StampedIdProviders(nil)
+	if err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(idps, idps1) || stmp1 == nil {
+		t.Error(idps, idps1, stmp1)
+	}
+
+	// キャッシュと同じだから返らない。
+	idps2, stmp2, err := reg.StampedIdProviders(stmp1)
+	if err != nil {
+		t.Fatal(err)
+	} else if idps2 != nil || stmp2 == nil {
+		t.Error(idps2, stmp2)
+	}
+
+	// キャッシュが古いから返る。
+	idps3, stmp3, err := reg.StampedIdProviders(&Stamp{Date: stmp1.Date.Add(-time.Second), Digest: stmp1.Digest})
+	if err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(idps, idps3) || stmp3 == nil {
+		t.Error(idps, idps3, stmp3)
+	}
+
+	// ダイジェストが違うから返る。
+	idps4, stmp4, err := reg.StampedIdProviders(&Stamp{Date: stmp1.Date, Digest: stmp1.Digest + "a"})
+	if err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(idps, idps4) || stmp4 == nil {
+		t.Error(idps, idps4, stmp4)
+	}
+}
