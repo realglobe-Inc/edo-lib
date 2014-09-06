@@ -13,6 +13,6 @@ func LogRequest(r *http.Request, body bool) {
 }
 
 func LogResponse(r *http.Response, body bool) {
-	buff, _ := httputil.DumpResponse(r, true)
+	buff, _ := httputil.DumpResponse(r, body)
 	log.Debug("Response: " + string(buff))
 }
