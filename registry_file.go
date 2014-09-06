@@ -352,7 +352,7 @@ func (reg *fileRegistry) Service(endPt string) (servUuid string, err error) {
 }
 
 // サービス。
-func NewFileIdProviderRegistry(path string) IdProviderRegistry {
+func NewFileIdProviderLister(path string) IdProviderLister {
 	return newFileRegistry(path)
 }
 

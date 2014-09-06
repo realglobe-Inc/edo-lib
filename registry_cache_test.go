@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestCachingIdProviderRegistry(t *testing.T) {
-	reg := NewMemoryIdProviderBackend(0)
+func TestCachingIdProviderLister(t *testing.T) {
+	reg := NewMemoryDatedIdProviderLister(0)
 	reg.AddIdProvider(&IdProvider{"a_b-c", "ABC", "https://localhost:1234"})
-	testIdProviderRegistry(t, NewCachingIdProviderRegistry(reg))
+	testIdProviderLister(t, NewCachingIdProviderLister(reg))
 }

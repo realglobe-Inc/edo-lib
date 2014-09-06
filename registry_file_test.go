@@ -95,7 +95,7 @@ func TestFileServiceRegistry(t *testing.T) {
 	testServiceRegistry(t, NewFileServiceRegistry(path))
 }
 
-func TestFileIdProviderRegistry(t *testing.T) {
+func TestFileIdProviderLister(t *testing.T) {
 	path, err := ioutil.TempDir("", "test_edo_driver")
 	if err != nil {
 		t.Fatal(err)
@@ -106,5 +106,5 @@ func TestFileIdProviderRegistry(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testIdProviderRegistry(t, NewFileIdProviderRegistry(path))
+	testIdProviderLister(t, NewFileIdProviderLister(path))
 }

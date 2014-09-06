@@ -459,7 +459,7 @@ func (reg *mongoLargeServiceRegistry) Service(endPt string) (servUuid string, er
 }
 
 // ID プロバイダ。
-func NewMongoIdProviderRegistry(url, dbName, collName string) (IdProviderRegistry, error) {
+func NewMongoIdProviderLister(url, dbName, collName string) (IdProviderLister, error) {
 	return newMongoRegistry(url, dbName, collName, nil)
 }
 

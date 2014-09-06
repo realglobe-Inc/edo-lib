@@ -387,7 +387,7 @@ func (reg *webDriver) Service(addr string) (servUuid string, err error) {
 }
 
 // ID プロバイダ。
-func NewWebIdProviderRegistry(addr string, ssl bool) (IdProviderRegistry, error) {
+func NewWebIdProviderLister(addr string, ssl bool) (IdProviderLister, error) {
 	return newWebDriver(addr, ssl)
 }
 

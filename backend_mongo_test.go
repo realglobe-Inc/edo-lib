@@ -19,12 +19,12 @@ func TestMongoJsBackendRegistry(t *testing.T) {
 	testJsBackendRegistry(t, reg)
 }
 
-func TestMongoIdProviderBackend(t *testing.T) {
+func TestMongoDatedIdProviderLister(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoIdProviderBackend(mongoAddr, "test_driver_mongo_id_provider_backend", "idp", 0)
+	reg, err := NewMongoDatedIdProviderLister(mongoAddr, "test_driver_mongo_id_provider_backend", "idp", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,9 +32,9 @@ func TestMongoIdProviderBackend(t *testing.T) {
 
 	if err := reg.(*mongoBackend).DB("test_driver_mongo_id_provider_backend").C("idp").Insert(
 		&IdProvider{
-			IdpUuid: "a_b-c",
-			Name:    "ABC",
-			Uri:     "https://localhost:1234",
+			Uuid: "a_b-c",
+			Name: "ABC",
+			Uri:  "https://localhost:1234",
 		},
 	); err != nil {
 		t.Fatal(err)
@@ -48,5 +48,5 @@ func TestMongoIdProviderBackend(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testIdProviderBackend(t, reg)
+	testDatedIdProviderLister(t, reg)
 }

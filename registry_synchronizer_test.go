@@ -40,12 +40,12 @@ func TestSynchronizedServiceRegistry(t *testing.T) {
 	testServiceRegistry(t, NewSynchronizedServiceRegistry(reg))
 }
 
-func TestSynchronizedIdProviderRegistry(t *testing.T) {
-	reg := NewMemoryIdProviderRegistry()
+func TestSynchronizedIdProviderLister(t *testing.T) {
+	reg := NewMemoryIdProviderLister()
 	reg.AddIdProvider(&IdProvider{
-		IdpUuid: "a_b-c",
-		Name:    "ABC",
-		Uri:     "https://localhost:1234",
+		Uuid: "a_b-c",
+		Name: "ABC",
+		Uri:  "https://localhost:1234",
 	})
-	testIdProviderRegistry(t, NewSynchronizedIdProviderRegistry(reg))
+	testIdProviderLister(t, NewSynchronizedIdProviderLister(reg))
 }

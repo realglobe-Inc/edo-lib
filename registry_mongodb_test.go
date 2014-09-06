@@ -178,12 +178,12 @@ func TestMongoLargeServiceRegistry(t *testing.T) {
 	testServiceRegistry(t, reg)
 }
 
-func TestMongoIdProviderRegistry(t *testing.T) {
+func TestMongoIdProviderLister(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoIdProviderRegistry(mongoAddr, "test_driver_mongo", "idp")
+	reg, err := NewMongoIdProviderLister(mongoAddr, "test_driver_mongo", "idp")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -191,13 +191,13 @@ func TestMongoIdProviderRegistry(t *testing.T) {
 
 	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("idp").Insert(
 		&IdProvider{
-			IdpUuid: "a_b-c",
-			Name:    "ABC",
-			Uri:     "https://localhost:1234",
+			Uuid: "a_b-c",
+			Name: "ABC",
+			Uri:  "https://localhost:1234",
 		},
 	); err != nil {
 		t.Fatal(err)
 	}
 
-	testIdProviderRegistry(t, reg)
+	testIdProviderLister(t, reg)
 }

@@ -69,7 +69,7 @@ func (reg *webDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object
 }
 
 // ID プロバイダ.
-func NewWebIdProviderBackend(addr string, ssl bool) (IdProviderBackend, error) {
+func NewWebDatedIdProviderLister(addr string, ssl bool) (DatedIdProviderLister, error) {
 	return newWebDriver(addr, ssl)
 }
 

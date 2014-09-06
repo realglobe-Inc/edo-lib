@@ -4,6 +4,17 @@ import (
 	"time"
 )
 
+// ID プロバイダの管理。
+type IdProviderLister interface {
+	IdProviders() ([]*IdProvider, error)
+}
+
+type IdProvider struct {
+	Uuid string `json:"id_provider_uuid" bson:"id_provider_uuid"`
+	Name string `json:"id_provider_name" bson:"id_provider_name"`
+	Uri  string `json:"id_provider_uri"  bson:"id_provider_uri"`
+}
+
 // ユーザーの管理。
 type LoginRegistry interface {
 	User(accToken string) (usrUuid string, err error)
@@ -67,14 +78,3 @@ type JobResult struct {
 
 // サービス UUID の管理。
 // service_registry 参照。
-
-// ID プロバイダの管理。
-type IdProviderRegistry interface {
-	IdProviders() ([]*IdProvider, error)
-}
-
-type IdProvider struct {
-	IdpUuid string `json:"id_provider_uuid" bson:"id_provider_uuid"`
-	Name    string `json:"id_provider_name" bson:"id_provider_name"`
-	Uri     string `json:"id_provider_uri"  bson:"id_provider_uri"`
-}

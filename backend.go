@@ -21,6 +21,10 @@ type Stamp struct {
 	Digest   string    `json:"digest"                    bson:"digest"`                    // ハッシュ値とか。
 }
 
+type DatedIdProviderLister interface {
+	StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error)
+}
+
 type JsBackend interface {
 	// オブジェクトのソースを取得する。
 	StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error)
@@ -29,8 +33,4 @@ type JsBackend interface {
 type JsBackendRegistry interface {
 	JsRegistry
 	JsBackend
-}
-
-type IdProviderBackend interface {
-	StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error)
 }

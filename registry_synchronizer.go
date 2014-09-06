@@ -442,7 +442,7 @@ func (reg *synchronizedRegistry) Service(addr string) (servUuid string, err erro
 }
 
 // ID プロバイダ。
-func NewSynchronizedIdProviderRegistry(reg IdProviderRegistry) IdProviderRegistry {
+func NewSynchronizedIdProviderLister(reg IdProviderLister) IdProviderLister {
 	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedIdProvidersRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedIdProvidersRequest)

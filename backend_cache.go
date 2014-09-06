@@ -7,24 +7,24 @@ import (
 
 // backend をキャッシュでラップする。
 
-type cachingIdProviderBackend struct {
-	IdProviderBackend
+type cachingDatedIdProviderLister struct {
+	DatedIdProviderLister
 	cache  []*IdProvider
 	caStmp *Stamp
 }
 
-func NewCachingIdProviderBackend(backend IdProviderBackend) IdProviderBackend {
-	return &cachingIdProviderBackend{IdProviderBackend: backend}
+func NewCachingDatedIdProviderLister(backend DatedIdProviderLister) DatedIdProviderLister {
+	return &cachingDatedIdProviderLister{DatedIdProviderLister: backend}
 }
 
-func (reg *cachingIdProviderBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
+func (reg *cachingDatedIdProviderLister) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	if reg.caStmp != nil && !time.Now().After(reg.caStmp.ExpiDate) {
 		return reg.cache, reg.caStmp, nil
 	}
 
 	// キャッシュは有効期限切れ。
 
-	idps, newCaStmp, err := reg.IdProviderBackend.StampedIdProviders(reg.caStmp)
+	idps, newCaStmp, err := reg.DatedIdProviderLister.StampedIdProviders(reg.caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}

@@ -17,7 +17,7 @@ func TestFileJsBackendRegistry(t *testing.T) {
 	testJsBackendRegistry(t, NewFileJsBackendRegistry(path, 0))
 }
 
-func TestFileIdProviderBackend(t *testing.T) {
+func TestFileDatedIdProviderLister(t *testing.T) {
 	path, err := ioutil.TempDir("", "test_edo_driver")
 	if err != nil {
 		t.Fatal(err)
@@ -28,5 +28,5 @@ func TestFileIdProviderBackend(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testIdProviderBackend(t, NewFileIdProviderBackend(path, 0))
+	testDatedIdProviderLister(t, NewFileDatedIdProviderLister(path, 0))
 }

@@ -70,9 +70,9 @@ func testJsBackendRegistry(t *testing.T, reg JsBackendRegistry) {
 }
 
 // 事前に、UUID a_b-c、名前 ABC、URI https://localhost:1234 で登録しとく。
-func testIdProviderBackend(t *testing.T, reg IdProviderBackend) {
+func testDatedIdProviderLister(t *testing.T, reg DatedIdProviderLister) {
 	idps := []*IdProvider{
-		&IdProvider{IdpUuid: "a_b-c", Name: "ABC", Uri: "https://localhost:1234"},
+		&IdProvider{Uuid: "a_b-c", Name: "ABC", Uri: "https://localhost:1234"},
 	}
 
 	idps1, stmp1, err := reg.StampedIdProviders(nil)

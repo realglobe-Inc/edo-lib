@@ -7,17 +7,17 @@ import (
 
 // backend をキャッシュでラップする。
 
-type cachingIdProviderRegistry struct {
-	IdProviderBackend
+type cachingIdProviderLister struct {
+	DatedIdProviderLister
 	cache  []*IdProvider
 	caStmp *Stamp
 }
 
-func NewCachingIdProviderRegistry(backend IdProviderBackend) IdProviderRegistry {
-	return &cachingIdProviderRegistry{IdProviderBackend: backend}
+func NewCachingIdProviderLister(backend DatedIdProviderLister) IdProviderLister {
+	return &cachingIdProviderLister{DatedIdProviderLister: backend}
 }
 
-func (reg *cachingIdProviderRegistry) IdProviders() ([]*IdProvider, error) {
+func (reg *cachingIdProviderLister) IdProviders() ([]*IdProvider, error) {
 	if reg.caStmp != nil && reg.caStmp.ExpiDate.After(time.Now()) {
 		return reg.cache, nil
 	}

@@ -55,7 +55,7 @@ func (reg *mongoBackend) StampedObject(dir, objName string, caStmp *Stamp) (*Obj
 }
 
 // ID プロバイダ。
-func NewMongoIdProviderBackend(url, dbName, collName string, expiDur time.Duration) (IdProviderBackend, error) {
+func NewMongoDatedIdProviderLister(url, dbName, collName string, expiDur time.Duration) (DatedIdProviderLister, error) {
 	reg, err := newMongoRegistry(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:    []string{"date"},

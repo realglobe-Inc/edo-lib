@@ -65,20 +65,20 @@ func (reg *MemoryJsBackendRegistry) RemoveObject(dir, objName string) error {
 }
 
 // ID プロバイダ。
-type MemoryIdProviderBackend struct {
-	*MemoryIdProviderRegistry
+type MemoryDatedIdProviderLister struct {
+	*MemoryIdProviderLister
 	stmp    *Stamp
 	expiDur time.Duration
 }
 
-func NewMemoryIdProviderBackend(expiDur time.Duration) *MemoryIdProviderBackend {
+func NewMemoryDatedIdProviderLister(expiDur time.Duration) *MemoryDatedIdProviderLister {
 	stmp := &Stamp{Date: time.Now(), Digest: strconv.Itoa(0)}
 	stmp.ExpiDate = stmp.Date.Add(expiDur)
 
-	return &MemoryIdProviderBackend{NewMemoryIdProviderRegistry(), stmp, expiDur}
+	return &MemoryDatedIdProviderLister{NewMemoryIdProviderLister(), stmp, expiDur}
 }
 
-func (reg *MemoryIdProviderBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
+func (reg *MemoryDatedIdProviderLister) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	newCaStmp := &Stamp{Date: reg.stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: reg.stmp.Digest}
 
 	if caStmp == nil || caStmp.Date.Before(reg.stmp.Date) || caStmp.Digest != reg.stmp.Digest {
@@ -88,13 +88,13 @@ func (reg *MemoryIdProviderBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProv
 
 	return nil, newCaStmp, nil
 }
-func (reg *MemoryIdProviderBackend) AddIdProvider(idp *IdProvider) {
-	reg.MemoryIdProviderRegistry.AddIdProvider(idp)
+func (reg *MemoryDatedIdProviderLister) AddIdProvider(idp *IdProvider) {
+	reg.MemoryIdProviderLister.AddIdProvider(idp)
 	dig, _ := strconv.Atoi(reg.stmp.Digest)
 	reg.stmp = &Stamp{Date: time.Now(), Digest: strconv.Itoa(dig + 1)}
 }
-func (reg *MemoryIdProviderBackend) RemoveIdProvider(idpUuid string) {
-	reg.MemoryIdProviderRegistry.RemoveIdProvider(idpUuid)
+func (reg *MemoryDatedIdProviderLister) RemoveIdProvider(idpUuid string) {
+	reg.MemoryIdProviderLister.RemoveIdProvider(idpUuid)
 	dig, _ := strconv.Atoi(reg.stmp.Digest)
 	reg.stmp = &Stamp{Date: time.Now(), Digest: strconv.Itoa(dig + 1)}
 }

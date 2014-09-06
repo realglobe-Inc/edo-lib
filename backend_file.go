@@ -74,7 +74,7 @@ func (reg *fileBackend) StampedObject(dir, objName string, caStmp *Stamp) (*Obje
 }
 
 // ID プロバイダ。
-func NewFileIdProviderBackend(path string, expiDur time.Duration) IdProviderBackend {
+func NewFileDatedIdProviderLister(path string, expiDur time.Duration) DatedIdProviderLister {
 	return newFileBackend(path, expiDur)
 }
 

@@ -60,7 +60,7 @@ func (reg *synchronizedRegistry) StampedObject(dir, objName string, caStmp *Stam
 }
 
 // ID プロバイダ。
-func NewSynchronizedIdProviderBackend(reg IdProviderBackend) IdProviderBackend {
+func NewSynchronizedDatedIdProviderLister(reg DatedIdProviderLister) DatedIdProviderLister {
 	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedStampedIdProvidersRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedStampedIdProvidersRequest)
