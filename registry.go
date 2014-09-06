@@ -75,6 +75,6 @@ type IdProviderRegistry interface {
 
 type IdProvider struct {
 	IdpUuid string `json:"id_provider_uuid" bson:"id_provider_uuid"`
-	Name    string `json:"name"             bson:"name"`
-	Uri     string `json:"uri"              bson:"uri"`
+	Name    string `json:"id_provider_name" bson:"id_provider_name"`
+	Uri     string `json:"id_provider_uri"  bson:"id_provider_uri"`
 }
