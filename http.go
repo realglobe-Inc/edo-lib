@@ -7,12 +7,12 @@ import (
 
 const ContentTypeJson string = "application/json"
 
-func LogRequest(r *http.Request, body bool) {
-	buff, _ := httputil.DumpRequest(r, body)
+func LogRequest(r *http.Request, useBody bool) {
+	buff, _ := httputil.DumpRequest(r, useBody)
 	log.Debug("Request: " + string(buff))
 }
 
-func LogResponse(r *http.Response, body bool) {
-	buff, _ := httputil.DumpResponse(r, body)
+func LogResponse(r *http.Response, useBody bool) {
+	buff, _ := httputil.DumpResponse(r, useBody)
 	log.Debug("Response: " + string(buff))
 }
