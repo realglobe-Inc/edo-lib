@@ -95,7 +95,7 @@ func (reg *mongoBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stam
 
 	// 無効なキャッシュだった。
 
-	query = reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"id_provider_uuid": bson.M{"$exists": true}})
+	query = reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"uuid": bson.M{"$exists": true}})
 	var idps []*IdProvider
 	if err := query.Iter().All(&idps); err != nil {
 		return nil, nil, erro.Wrap(err)
