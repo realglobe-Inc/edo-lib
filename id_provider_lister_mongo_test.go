@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"gopkg.in/mgo.v2/bson"
 	"testing"
 	"time"
 )
@@ -17,13 +18,13 @@ func TestMongoIdProviderLister(t *testing.T) {
 	}
 	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("idp").Insert(
-		&IdProvider{
-			Uuid: "a_b-c",
-			Name: "ABC",
-			Uri:  "https://localhost:1234",
+	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("idp").Insert(bson.M{
+		"id_provider": &IdProvider{
+			Uuid:     "a_b-c",
+			Name:     "ABC",
+			LoginUri: "https://localhost:1234",
 		},
-	); err != nil {
+	}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -36,25 +37,25 @@ func TestMongoDatedIdProviderLister(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoDatedIdProviderLister(mongoAddr, "test_driver_mongo_id_provider_backend", "idp", 0)
+	reg, err := NewMongoDatedIdProviderLister(mongoAddr, "test_driver_mongo", "idp", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoBackend).DB("test_driver_mongo_id_provider_backend").DropDatabase()
+	defer reg.(*mongoBackend).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoBackend).DB("test_driver_mongo_id_provider_backend").C("idp").Insert(
-		&IdProvider{
-			Uuid: "a_b-c",
-			Name: "ABC",
-			Uri:  "https://localhost:1234",
+	if err := reg.(*mongoBackend).DB("test_driver_mongo").C("idp").Insert(
+		bson.M{
+			"id_provider": &IdProvider{
+				Uuid:     "a_b-c",
+				Name:     "ABC",
+				LoginUri: "https://localhost:1234",
+			},
 		},
-	); err != nil {
-		t.Fatal(err)
-	}
-	if err := reg.(*mongoBackend).DB("test_driver_mongo_id_provider_backend").C("idp").Insert(
-		&Stamp{
-			Date:   time.Now(),
-			Digest: "0",
+		bson.M{
+			"stamp": &Stamp{
+				Date:   time.Now(),
+				Digest: "0",
+			},
 		},
 	); err != nil {
 		t.Fatal(err)

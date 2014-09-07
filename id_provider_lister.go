@@ -4,9 +4,9 @@ import ()
 
 // ID プロバイダ選択時に列挙する情報。
 type IdProvider struct {
-	Uuid string `json:"uuid" bson:"uuid"`
-	Name string `json:"name" bson:"name"`
-	Uri  string `json:"uri"  bson:"uri"`
+	Uuid     string `json:"uuid"       bson:"uuid"`
+	Name     string `json:"name"       bson:"name"`
+	LoginUri string `json:"login_uri"  bson:"login_uri"`
 }
 
 // ID プロバイダの列挙。

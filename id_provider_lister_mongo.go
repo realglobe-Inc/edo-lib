@@ -10,24 +10,44 @@ import (
 // mongodb をバックエンドに使う。
 
 // 非キャッシュ用。
+// {
+//   "id_provider": {
+//     "uuid": "aaaa-bbbb-cccc",
+//     "name": "realglobe",
+//     "login_uri":  "https://realglobe.jp/login"
+//   }
+// }
 func NewMongoIdProviderLister(url, dbName, collName string) (IdProviderLister, error) {
 	return newMongoRegistry(url, dbName, collName, nil)
 }
 
 func (reg *mongoRegistry) IdProviders() ([]*IdProvider, error) {
-	query := reg.DB(reg.dbName).C(reg.collName).Find(nil)
-	var idps []*IdProvider
-	if err := query.Iter().All(&idps); err != nil {
+	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"id_provider": bson.M{"$exists": true}})
+	var buff []struct {
+		*IdProvider `bson:"id_provider"`
+	}
+	if err := query.Iter().All(&buff); err != nil {
 		return nil, erro.Wrap(err)
+	}
+	idps := []*IdProvider{}
+	for _, idp := range buff {
+		idps = append(idps, idp.IdProvider)
 	}
 	return idps, nil
 }
 
 // キャッシュ用。
+// 非キャッシュ用のドキュメントに加えて、
+// {
+//   "stamp": {
+//     "date": "XXXXX",
+//     "digest": "YYYYY"
+//   }
+// }
 func NewMongoDatedIdProviderLister(url, dbName, collName string, expiDur time.Duration) (DatedIdProviderLister, error) {
 	reg, err := newMongoRegistry(url, dbName, collName, []mgo.Index{
 		mgo.Index{
-			Key:    []string{"date"},
+			Key:    []string{"stamp"},
 			Sparse: true,
 		},
 	})
@@ -39,14 +59,17 @@ func NewMongoDatedIdProviderLister(url, dbName, collName string, expiDur time.Du
 
 func (reg *mongoBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	var stmp *Stamp
-	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"date": bson.M{"$exists": true}})
+	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"stamp": bson.M{"$exists": true}})
 	if n, err := query.Count(); err != nil {
 		return nil, nil, erro.Wrap(err)
-	} else if n != 0 {
-		stmp = &Stamp{}
-		if err := query.One(stmp); err != nil {
+	} else if n > 0 {
+		var buff struct {
+			*Stamp
+		}
+		if err := query.One(&buff); err != nil {
 			return nil, nil, erro.Wrap(err)
 		}
+		stmp = buff.Stamp
 	}
 
 	// 対象のスタンプを取得。
@@ -64,10 +87,16 @@ func (reg *mongoBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stam
 
 	// 無効なキャッシュだった。
 
-	query = reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"uuid": bson.M{"$exists": true}})
-	var idps []*IdProvider
-	if err := query.Iter().All(&idps); err != nil {
+	query = reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"id_provider": bson.M{"$exists": true}})
+	var buff []struct {
+		*IdProvider `bson:"id_provider"`
+	}
+	if err := query.Iter().All(&buff); err != nil {
 		return nil, nil, erro.Wrap(err)
+	}
+	idps := []*IdProvider{}
+	for _, idp := range buff {
+		idps = append(idps, idp.IdProvider)
 	}
 	return idps, newCaStmp, nil
 }

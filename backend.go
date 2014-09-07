@@ -23,26 +23,55 @@ type Stamp struct {
 	Digest   string    `json:"digest"                    bson:"digest"`                    // ハッシュ値とか。
 }
 
+func WriteStampToRequestHeader(stmp *Stamp, h http.Header) {
+	h.Set("If-Modified-Since", stmp.Date.Format(time.RFC1123))
+	h.Set("If-None-Match", stmp.Digest)
+}
 func ParseStampFromRequestHeader(h http.Header) (*Stamp, error) {
-	dig, dateStr := h.Get("If-None-Match"), h.Get("If-Modified-Since")
+	dateStr, dig := h.Get("If-Modified-Since"), h.Get("If-None-Match")
 	if dig == "" && dateStr == "" {
 		return nil, nil
 	}
-	stmp := &Stamp{}
-	stmp.Digest = dig
+
+	stmp := &Stamp{Digest: dig}
 	if dateStr != "" {
-		date, err := time.Parse(time.RFC1123, dateStr)
+		var err error
+		stmp.Date, err = time.Parse(time.RFC1123, dateStr)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		stmp.Date = date
 	}
+
 	return stmp, nil
 }
 func WriteStampToResponseHeader(stmp *Stamp, h http.Header) {
 	h.Set("Last-Modified", stmp.Date.Format(time.RFC1123))
 	h.Set("Expires", stmp.ExpiDate.Format(time.RFC1123))
 	h.Set("ETag", stmp.Digest)
+}
+func ParseStampFromResponseHeader(h http.Header) (*Stamp, error) {
+	dateStr, expiDateStr, dig := h.Get("Last-Modified"), h.Get("Expires"), h.Get("ETag")
+	if dig == "" && dateStr == "" {
+		return nil, nil
+	}
+
+	stmp := &Stamp{Digest: dig}
+	if dateStr != "" {
+		var err error
+		stmp.Date, err = time.Parse(time.RFC1123, dateStr)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+	}
+	if expiDateStr != "" {
+		var err error
+		stmp.ExpiDate, err = time.Parse(time.RFC1123, expiDateStr)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+	}
+
+	return stmp, nil
 }
 
 type JsBackend interface {

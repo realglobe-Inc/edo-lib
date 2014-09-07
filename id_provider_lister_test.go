@@ -17,7 +17,7 @@ func testIdProviderLister(t *testing.T, reg IdProviderLister) {
 		t.Error("No id providers.")
 	} else if idps[0].Uuid != "a_b-c" ||
 		idps[0].Name != "ABC" ||
-		idps[0].Uri != "https://localhost:1234" {
+		idps[0].LoginUri != "https://localhost:1234" {
 		t.Error(idps[0])
 	}
 }
@@ -26,7 +26,7 @@ func testIdProviderLister(t *testing.T, reg IdProviderLister) {
 func testDatedIdProviderLister(t *testing.T, reg DatedIdProviderLister) {
 
 	idps := []*IdProvider{
-		&IdProvider{Uuid: "a_b-c", Name: "ABC", Uri: "https://localhost:1234"},
+		&IdProvider{Uuid: "a_b-c", Name: "ABC", LoginUri: "https://localhost:1234"},
 	}
 
 	idps1, stmp1, err := reg.StampedIdProviders(nil)
@@ -37,13 +37,11 @@ func testDatedIdProviderLister(t *testing.T, reg DatedIdProviderLister) {
 	}
 
 	// キャッシュと同じだから返らない。
-	log.Debug("Aho")
 	idps2, stmp2, err := reg.StampedIdProviders(stmp1)
-	log.Debug("Baka")
 	if err != nil {
 		t.Fatal(err)
 	} else if idps2 != nil || stmp2 == nil {
-		t.Error(idps2, stmp2)
+		t.Error(stmp1, idps2, stmp2)
 	}
 
 	// キャッシュが古いから返る。
