@@ -385,24 +385,3 @@ func (reg *webDriver) Service(addr string) (servUuid string, err error) {
 	}
 	return servUuid, nil
 }
-
-// ID プロバイダ。
-func NewWebIdProviderLister(addr string, ssl bool) (IdProviderLister, error) {
-	return newWebDriver(addr, ssl)
-}
-
-func (reg *webDriver) IdProviders() ([]*IdProvider, error) {
-	resp, err := reg.Get(reg.prefix)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
-	}
-	var idps []*IdProvider
-	if err := json.NewDecoder(resp.Body).Decode(&idps); err != nil {
-		return nil, erro.Wrap(err)
-	}
-	return idps, nil
-}

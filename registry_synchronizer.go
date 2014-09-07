@@ -440,34 +440,3 @@ func (reg *synchronizedRegistry) Service(addr string) (servUuid string, err erro
 		return "", err
 	}
 }
-
-// ID プロバイダ。
-func NewSynchronizedIdProviderLister(reg IdProviderLister) IdProviderLister {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
-		reflect.TypeOf(&synchronizedIdProvidersRequest{}): func(r interface{}, errCh chan<- error) {
-			req := r.(*synchronizedIdProvidersRequest)
-			idps, err := reg.IdProviders()
-			if err != nil {
-				errCh <- err
-			} else {
-				req.idpsCh <- idps
-			}
-		},
-	})
-}
-
-type synchronizedIdProvidersRequest struct {
-	idpsCh chan []*IdProvider
-}
-
-func (reg *synchronizedRegistry) IdProviders() ([]*IdProvider, error) {
-	idpsCh := make(chan []*IdProvider, 1)
-	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&synchronizedIdProvidersRequest{idpsCh}, errCh}
-	select {
-	case idps := <-idpsCh:
-		return idps, nil
-	case err := <-errCh:
-		return nil, err
-	}
-}

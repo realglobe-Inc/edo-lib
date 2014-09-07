@@ -39,9 +39,3 @@ func TestMemoryServiceRegistry(t *testing.T) {
 	reg.AddService("localhost:1234", "a_b-c")
 	testServiceRegistry(t, reg)
 }
-
-func TestMemoryIdProviderLister(t *testing.T) {
-	reg := NewMemoryIdProviderLister()
-	reg.AddIdProvider(&IdProvider{"a_b-c", "ABC", "https://localhost:1234"})
-	testIdProviderLister(t, reg)
-}

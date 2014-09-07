@@ -45,10 +45,6 @@ func WriteStampToResponseHeader(stmp *Stamp, h http.Header) {
 	h.Set("ETag", stmp.Digest)
 }
 
-type DatedIdProviderLister interface {
-	StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error)
-}
-
 type JsBackend interface {
 	// オブジェクトのソースを取得する。
 	StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error)

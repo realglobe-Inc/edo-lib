@@ -4,17 +4,6 @@ import (
 	"time"
 )
 
-// ID プロバイダの管理。
-type IdProviderLister interface {
-	IdProviders() ([]*IdProvider, error)
-}
-
-type IdProvider struct {
-	Uuid string `json:"uuid" bson:"uuid"`
-	Name string `json:"name" bson:"name"`
-	Uri  string `json:"uri"  bson:"uri"`
-}
-
 // ユーザーの管理。
 type LoginRegistry interface {
 	User(accToken string) (usrUuid string, err error)

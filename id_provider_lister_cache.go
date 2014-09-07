@@ -5,8 +5,9 @@ import (
 	"time"
 )
 
-// backend をキャッシュでラップする。
+// キャッシュする。
 
+// キャッシュ用。
 type cachingDatedIdProviderLister struct {
 	DatedIdProviderLister
 	cache  []*IdProvider
@@ -35,17 +36,14 @@ func (reg *cachingDatedIdProviderLister) StampedIdProviders(caStmp *Stamp) ([]*I
 
 	// あった。
 
-	log.Err("China ", newCaStmp)
 	reg.caStmp = newCaStmp
 
 	if idps != nil {
 		reg.cache = idps
 	}
 
-	log.Err("Debu ", caStmp)
 	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
 		return nil, newCaStmp, nil
 	}
-	log.Err("Ero ", reg.cache)
 	return reg.cache, newCaStmp, nil
 }

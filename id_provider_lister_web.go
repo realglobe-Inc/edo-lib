@@ -5,17 +5,37 @@ import (
 	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"net/http"
-	"path"
 	"time"
 )
 
-// JavaScript.
-func NewWebJsBackendRegistry(addr string, ssl bool) (JsBackendRegistry, error) {
+// 非キャッシュ用。
+func NewWebIdProviderLister(addr string, ssl bool) (IdProviderLister, error) {
 	return newWebDriver(addr, ssl)
 }
 
-func (reg *webDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
-	req, err := http.NewRequest("GET", reg.prefix+path.Join(dir, objName), nil)
+func (reg *webDriver) IdProviders() ([]*IdProvider, error) {
+	resp, err := reg.Get(reg.prefix)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
+	}
+	var idps []*IdProvider
+	if err := json.NewDecoder(resp.Body).Decode(&idps); err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return idps, nil
+}
+
+// キャッシュ用。
+func NewWebDatedIdProviderLister(addr string, ssl bool) (DatedIdProviderLister, error) {
+	return newWebDriver(addr, ssl)
+}
+
+func (reg *webDriver) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
+	req, err := http.NewRequest("GET", reg.prefix, nil)
 	if caStmp != nil {
 		req.Header.Set("If-None-Match", caStmp.Digest)
 		req.Header.Set("If-Modified-Since", caStmp.Date.Format(time.RFC1123))
@@ -37,15 +57,15 @@ func (reg *webDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object
 		expiDate := resp.Header.Get("Expires")
 		etag := resp.Header.Get("ETag")
 
-		newCaStmp := &Stamp{Digest: etag}
+		stmp := &Stamp{Digest: etag}
 		if date != "" {
-			newCaStmp.Date, err = time.Parse(time.RFC1123, date)
+			stmp.Date, err = time.Parse(time.RFC1123, date)
 			if err != nil {
 				return nil, nil, erro.Wrap(err)
 			}
 		}
 		if expiDate != "" {
-			newCaStmp.ExpiDate, err = time.Parse(time.RFC1123, expiDate)
+			stmp.ExpiDate, err = time.Parse(time.RFC1123, expiDate)
 			if err != nil {
 				return nil, nil, erro.Wrap(err)
 			}
@@ -53,13 +73,13 @@ func (reg *webDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object
 
 		switch resp.StatusCode {
 		case http.StatusNotModified:
-			return nil, newCaStmp, nil
+			return nil, stmp, nil
 		case http.StatusOK:
-			var obj Object
-			if err := json.NewDecoder(resp.Body).Decode(&obj); err != nil {
+			var idps []*IdProvider
+			if err := json.NewDecoder(resp.Body).Decode(&idps); err != nil {
 				return nil, nil, erro.Wrap(err)
 			}
-			return &obj, newCaStmp, nil
+			return idps, stmp, nil
 		default:
 			panic("implementation error.")
 		}
