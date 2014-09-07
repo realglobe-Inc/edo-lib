@@ -1,6 +1,8 @@
 package driver
 
 import (
+	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"net/http"
 	"time"
 )
 
@@ -19,6 +21,28 @@ type Stamp struct {
 	Date     time.Time `json:"date"                      bson:"date"`                      // 元データの更新日時。
 	ExpiDate time.Time `json:"expiration_date,omitempty" bson:"expiration_date,omitempty"` // 有効期限。
 	Digest   string    `json:"digest"                    bson:"digest"`                    // ハッシュ値とか。
+}
+
+func ParseStampFromRequestHeader(h http.Header) (*Stamp, error) {
+	dig, dateStr := h.Get("If-None-Match"), h.Get("If-Modified-Since")
+	if dig == "" && dateStr == "" {
+		return nil, nil
+	}
+	stmp := &Stamp{}
+	stmp.Digest = dig
+	if dateStr != "" {
+		date, err := time.Parse(time.RFC1123, dateStr)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		stmp.Date = date
+	}
+	return stmp, nil
+}
+func WriteStampToResponseHeader(stmp *Stamp, h http.Header) {
+	h.Set("Last-Modified", stmp.Date.Format(time.RFC1123))
+	h.Set("Expires", stmp.ExpiDate.Format(time.RFC1123))
+	h.Set("ETag", stmp.Digest)
 }
 
 type DatedIdProviderLister interface {
