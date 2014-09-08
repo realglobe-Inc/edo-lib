@@ -6,7 +6,6 @@ import (
 	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"net/http"
-	"net/url"
 	"path"
 	"time"
 )
@@ -362,26 +361,4 @@ func (reg *webDriver) RemoveHandler(usrUuid, event string) error {
 		return erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
 	return nil
-}
-
-// サービス。
-func NewWebServiceRegistry(addr string, ssl bool) (ServiceRegistry, error) {
-	return newWebDriver(addr, ssl)
-}
-
-func (reg *webDriver) Service(addr string) (servUuid string, err error) {
-	resp, err := reg.Get(reg.prefix + "?end_point=" + url.QueryEscape(addr))
-	if err != nil {
-		return "", erro.Wrap(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return "", nil
-	} else if resp.StatusCode != http.StatusOK {
-		return "", erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&servUuid); err != nil {
-		return "", erro.Wrap(err)
-	}
-	return servUuid, nil
 }

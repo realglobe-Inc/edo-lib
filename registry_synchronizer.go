@@ -407,36 +407,3 @@ func (reg *synchronizedRegistry) RemoveHandler(usrUuid, event string) error {
 	reg.reqCh <- &synchronizedRequest{&synchronizedRemoveHandlerRequest{usrUuid, event}, errCh}
 	return <-errCh
 }
-
-// サービス。
-func NewSynchronizedServiceRegistry(reg ServiceRegistry) ServiceRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
-		reflect.TypeOf(&synchronizedServiceRequest{}): func(r interface{}, errCh chan<- error) {
-			req := r.(*synchronizedServiceRequest)
-			servUuid, err := reg.Service(req.addr)
-			if err != nil {
-				errCh <- err
-			} else {
-				req.servCh <- servUuid
-			}
-		},
-	})
-}
-
-type synchronizedServiceRequest struct {
-	addr string
-
-	servCh chan string
-}
-
-func (reg *synchronizedRegistry) Service(addr string) (servUuid string, err error) {
-	servCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&synchronizedServiceRequest{addr, servCh}, errCh}
-	select {
-	case servUuid := <-servCh:
-		return servUuid, nil
-	case err := <-errCh:
-		return "", err
-	}
-}

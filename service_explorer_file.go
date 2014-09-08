@@ -11,27 +11,31 @@ import (
 // バックエンドにファイルシステムを使う。
 
 // 非キャッシュ用。
-func NewFileIdProviderRegistry(path string) IdProviderRegistry {
+func NewFileServiceExplorer(path string) ServiceExplorer {
 	return newFileRegistry(path)
 }
 
-func (reg *fileRegistry) IdProviderQueryUri(idpUuid string) (queryUri string, err error) {
-	path := filepath.Join(reg.path, idpUuid+".json")
+func (reg *fileRegistry) ServiceUuid(servUri string) (servUuid string, err error) {
+	path := filepath.Join(reg.path, "uuid.json")
 
-	if err := readFromJson(path, &queryUri); err != nil {
+	var cont map[string]string
+	if err := readFromJson(path, &cont); err != nil {
 		return "", erro.Wrap(err)
 	}
 
-	return queryUri, nil
+	tree := newServiceExplorerTree()
+	tree.fromContainer(cont)
+
+	return tree.get(servUri), nil
 }
 
 // キャッシュ用。
-func NewFileDatedIdProviderRegistry(path string, expiDur time.Duration) DatedIdProviderRegistry {
+func NewFileDatedServiceExplorer(path string, expiDur time.Duration) DatedServiceExplorer {
 	return newFileBackend(path, expiDur)
 }
 
-func (reg *fileBackend) StampedIdProviderQueryUri(idpUuid string, caStmp *Stamp) (queryUri string, newCaStmp *Stamp, err error) {
-	path := filepath.Join(reg.path, idpUuid+".json")
+func (reg *fileBackend) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
+	path := filepath.Join(reg.path, "uuid.json")
 
 	fi, err := os.Stat(path)
 	if err != nil {
@@ -52,9 +56,13 @@ func (reg *fileBackend) StampedIdProviderQueryUri(idpUuid string, caStmp *Stamp)
 
 	// 無効なキャッシュだった。
 
-	if err := readFromJson(path, &queryUri); err != nil {
+	var cont map[string]string
+	if err := readFromJson(path, &cont); err != nil {
 		return "", nil, erro.Wrap(err)
 	}
 
-	return queryUri, newCaStmp, nil
+	tree := newServiceExplorerTree()
+	tree.fromContainer(cont)
+
+	return tree.get(servUri), newCaStmp, nil
 }

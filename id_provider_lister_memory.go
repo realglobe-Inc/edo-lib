@@ -38,10 +38,7 @@ type MemoryDatedIdProviderLister struct {
 }
 
 func NewMemoryDatedIdProviderLister(expiDur time.Duration) *MemoryDatedIdProviderLister {
-	stmp := &Stamp{Date: time.Now(), Digest: strconv.Itoa(0)}
-	stmp.ExpiDate = stmp.Date.Add(expiDur)
-
-	return &MemoryDatedIdProviderLister{NewMemoryIdProviderLister(), stmp, expiDur}
+	return &MemoryDatedIdProviderLister{NewMemoryIdProviderLister(), &Stamp{Date: time.Now(), Digest: strconv.Itoa(0)}, expiDur}
 }
 
 func (reg *MemoryDatedIdProviderLister) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {

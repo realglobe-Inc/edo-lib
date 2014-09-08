@@ -33,9 +33,3 @@ func TestMemoryNameRegistry(t *testing.T) {
 func TestMemoryEventRegistry(t *testing.T) {
 	testEventRegistry(t, NewMemoryEventRegistry())
 }
-
-func TestMemoryServiceRegistry(t *testing.T) {
-	reg := NewMemoryServiceRegistry()
-	reg.AddService("localhost:1234", "a_b-c")
-	testServiceRegistry(t, reg)
-}

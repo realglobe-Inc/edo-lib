@@ -174,22 +174,3 @@ func (reg *MemoryEventRegistry) RemoveHandler(usrUuid, event string) error {
 	tree.remove(event)
 	return nil
 }
-
-// サービス。
-type MemoryServiceRegistry struct {
-	*serviceTree
-}
-
-func NewMemoryServiceRegistry() *MemoryServiceRegistry {
-	return &MemoryServiceRegistry{newServiceTree()}
-}
-
-func (reg *MemoryServiceRegistry) Service(endPt string) (servUuid string, err error) {
-	return reg.service(endPt), nil
-}
-func (reg *MemoryServiceRegistry) AddService(endPt string, servUuid string) {
-	reg.add(endPt, servUuid)
-}
-func (reg *MemoryServiceRegistry) RemoveService(endPt string) {
-	reg.remove(endPt)
-}

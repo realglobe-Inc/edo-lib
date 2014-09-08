@@ -41,15 +41,11 @@ func (reg *fileBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp
 		}
 	}
 
-	stmp := &Stamp{}
-	stmp.Date = fi.ModTime()
-	stmp.Digest = strconv.FormatInt(fi.Size(), 10)
-
 	// 対象のスタンプを取得。
 
-	newCaStmp := &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
+	newCaStmp := &Stamp{Date: fi.ModTime(), ExpiDate: time.Now().Add(reg.expiDur), Digest: strconv.FormatInt(fi.Size(), 10)}
 
-	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
+	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
 		return nil, newCaStmp, nil
 	}
 
