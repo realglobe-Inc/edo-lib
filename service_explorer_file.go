@@ -12,10 +12,10 @@ import (
 
 // 非キャッシュ用。
 func NewFileServiceExplorer(path string) ServiceExplorer {
-	return newFileRegistry(path)
+	return newSynchronizedServiceExplorer(newFileDriver(path))
 }
 
-func (reg *fileRegistry) ServiceUuid(servUri string) (servUuid string, err error) {
+func (reg *fileDriver) ServiceUuid(servUri string) (servUuid string, err error) {
 	path := filepath.Join(reg.path, "uuid.json")
 
 	var cont map[string]string
@@ -31,10 +31,10 @@ func (reg *fileRegistry) ServiceUuid(servUri string) (servUuid string, err error
 
 // キャッシュ用。
 func NewFileDatedServiceExplorer(path string, expiDur time.Duration) DatedServiceExplorer {
-	return newFileBackend(path, expiDur)
+	return newSynchronizedDatedServiceExplorer(newDatedFileDriver(path, expiDur))
 }
 
-func (reg *fileBackend) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
+func (reg *datedFileDriver) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
 	path := filepath.Join(reg.path, "uuid.json")
 
 	fi, err := os.Stat(path)

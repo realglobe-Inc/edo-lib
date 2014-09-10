@@ -9,8 +9,8 @@ import (
 )
 
 // 非キャッシュ用。
-func NewWebServiceExplorer(addr string, ssl bool) (ServiceExplorer, error) {
-	return newWebDriver(addr, ssl)
+func NewWebServiceExplorer(prefix string) ServiceExplorer {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) ServiceUuid(servUri string) (servUuid string, err error) {
@@ -34,8 +34,9 @@ func (reg *webDriver) ServiceUuid(servUri string) (servUuid string, err error) {
 }
 
 // キャッシュ用。
-func NewWebDatedServiceExplorer(addr string, ssl bool) (DatedServiceExplorer, error) {
-	return newWebDriver(addr, ssl)
+func NewWebDatedServiceExplorer(prefix string) DatedServiceExplorer {
+	// TODO キャッシュの並列化。
+	return newSynchronizedDatedServiceExplorer(newCachingDatedServiceExplorer(newWebDriver(prefix)))
 }
 
 func (reg *webDriver) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {

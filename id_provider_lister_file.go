@@ -12,10 +12,10 @@ import (
 
 // 非キャッシュ用。
 func NewFileIdProviderLister(path string) IdProviderLister {
-	return newFileRegistry(path)
+	return newSynchronizedIdProviderLister(newFileDriver(path))
 }
 
-func (reg *fileRegistry) IdProviders() ([]*IdProvider, error) {
+func (reg *fileDriver) IdProviders() ([]*IdProvider, error) {
 	path := filepath.Join(reg.path, "idp.json")
 
 	var cont []*IdProvider
@@ -28,10 +28,10 @@ func (reg *fileRegistry) IdProviders() ([]*IdProvider, error) {
 
 // キャッシュ用。
 func NewFileDatedIdProviderLister(path string, expiDur time.Duration) DatedIdProviderLister {
-	return newFileBackend(path, expiDur)
+	return newSynchronizedDatedIdProviderLister(newDatedFileDriver(path, expiDur))
 }
 
-func (reg *fileBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
+func (reg *datedFileDriver) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	path := filepath.Join(reg.path, "idp.json")
 
 	fi, err := os.Stat(path)

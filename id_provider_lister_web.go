@@ -9,8 +9,8 @@ import (
 )
 
 // 非キャッシュ用。
-func NewWebIdProviderLister(addr string, ssl bool) (IdProviderLister, error) {
-	return newWebDriver(addr, ssl)
+func NewWebIdProviderLister(prefix string) IdProviderLister {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) IdProviders() ([]*IdProvider, error) {
@@ -30,8 +30,9 @@ func (reg *webDriver) IdProviders() ([]*IdProvider, error) {
 }
 
 // キャッシュ用。
-func NewWebDatedIdProviderLister(addr string, ssl bool) (DatedIdProviderLister, error) {
-	return newWebDriver(addr, ssl)
+func NewWebDatedIdProviderLister(prefix string) DatedIdProviderLister {
+	// TODO キャッシュの並列化。
+	return newSynchronizedDatedIdProviderLister(newCachingDatedIdProviderLister(newWebDriver(prefix)))
 }
 
 func (reg *webDriver) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {

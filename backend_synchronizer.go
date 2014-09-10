@@ -6,7 +6,7 @@ import (
 
 // JavaScript.
 func NewSynchronizedJsBackendRegistry(reg JsBackendRegistry) JsBackendRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedStampedObjectRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedStampedObjectRequest)
 			obj, stmp, err := reg.StampedObject(req.dir, req.objName, req.caStmp)
@@ -46,7 +46,7 @@ type synchronizedStampedObjectRequest struct {
 	stmpCh chan *Stamp
 }
 
-func (reg *synchronizedRegistry) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
+func (reg *synchronizedDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
 	objCh := make(chan *Object, 1)
 	stmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)

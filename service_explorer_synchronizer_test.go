@@ -8,12 +8,12 @@ import (
 func TestSynchronizedServiceExplorer(t *testing.T) {
 	reg := NewMemoryServiceExplorer()
 	reg.AddServiceUuid("https://localhost:1234/api", "a_b-c")
-	testServiceExplorer(t, NewSynchronizedServiceExplorer(reg))
+	testServiceExplorer(t, newSynchronizedServiceExplorer(reg))
 }
 
 // キャッシュ用。
 func TestSynchronizedDatedServiceExplorer(t *testing.T) {
 	reg := NewMemoryDatedServiceExplorer(0)
 	reg.AddServiceUuid("https://localhost:1234/api", "a_b-c")
-	testDatedServiceExplorer(t, NewSynchronizedDatedServiceExplorer(reg))
+	testDatedServiceExplorer(t, newSynchronizedDatedServiceExplorer(reg))
 }

@@ -14,7 +14,7 @@ type cachingDatedIdProviderLister struct {
 	caStmp *Stamp
 }
 
-func NewCachingDatedIdProviderLister(backend DatedIdProviderLister) DatedIdProviderLister {
+func newCachingDatedIdProviderLister(backend DatedIdProviderLister) DatedIdProviderLister {
 	return &cachingDatedIdProviderLister{DatedIdProviderLister: backend}
 }
 

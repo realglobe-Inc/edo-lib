@@ -10,38 +10,9 @@ import (
 	"time"
 )
 
-// Web API を提供するレジストリから取ってくる。
-
-type webDriver struct {
-	prefix string
-	*http.Client
-}
-
-func newWebDriver(addr string, ssl bool) (*webDriver, error) {
-	var prefix string
-	if ssl {
-		prefix = "http://"
-	} else {
-		prefix = "https://"
-	}
-	prefix += addr
-
-	client := &http.Client{}
-
-	// 途中で死んだときの対処をしっかりやる方向で。
-	// // 接続テスト。
-	// resp, err := client.Head(prefix)
-	// if err != nil {
-	// 	return nil, erro.Wrap(err)
-	// }
-	// resp.Body.Close()
-
-	return &webDriver{prefix, client}, nil
-}
-
 // ログイン。
-func NewWebLoginRegistry(addr string, ssl bool) (LoginRegistry, error) {
-	return newWebDriver(addr, ssl)
+func NewWebLoginRegistry(prefix string) LoginRegistry {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) User(accToken string) (usrUuid string, err error) {
@@ -62,8 +33,8 @@ func (reg *webDriver) User(accToken string) (usrUuid string, err error) {
 }
 
 // JavaScript.
-func NewWebJsRegistry(addr string, ssl bool) (JsRegistry, error) {
-	return newWebDriver(addr, ssl)
+func NewWebJsRegistry(prefix string) JsRegistry {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) Object(dir, objName string) (*Object, error) {
@@ -128,8 +99,8 @@ func (reg *webDriver) RemoveObject(dir, objName string) error {
 }
 
 // ユーザー情報。
-func NewWebUserRegistry(addr string, ssl bool) (UserRegistry, error) {
-	return newWebDriver(addr, ssl)
+func NewWebUserRegistry(prefix string) UserRegistry {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) Attributes(usrUuid string) (map[string]interface{}, error) {
@@ -211,8 +182,8 @@ func (reg *webDriver) RemoveAttribute(usrUuid, attrName string) error {
 }
 
 // ジョブ。
-func NewWebJobRegistry(addr string, ssl bool) (JobRegistry, error) {
-	return newWebDriver(addr, ssl)
+func NewWebJobRegistry(prefix string) JobRegistry {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) Result(jobId string) (*JobResult, error) {
@@ -262,8 +233,8 @@ func (reg *webDriver) AddResult(jobId string, res *JobResult, deadline time.Time
 }
 
 // 住所。
-func NewWebNameRegistry(addr string, ssl bool) (NameRegistry, error) {
-	return newWebDriver(addr, ssl)
+func NewWebNameRegistry(prefix string) NameRegistry {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) Address(name string) (addr string, err error) {
@@ -300,8 +271,8 @@ func (reg *webDriver) Addresses(name string) (addrs []string, err error) {
 }
 
 // イベント。
-func NewWebEventRegistry(addr string, ssl bool) (EventRegistry, error) {
-	return newWebDriver(addr, ssl)
+func NewWebEventRegistry(prefix string) EventRegistry {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) Handler(usrUuid, event string) (Handler, error) {

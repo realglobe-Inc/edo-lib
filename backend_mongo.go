@@ -8,25 +8,16 @@ import (
 	"time"
 )
 
-type mongoBackend struct {
-	*mongoRegistry
-	expiDur time.Duration
-}
-
-func newMongoBackend(base *mongoRegistry, expiDur time.Duration) *mongoBackend {
-	return &mongoBackend{base, expiDur}
-}
-
 // JavaScript.
 func NewMongoJsBackendRegistry(url, dbName, collName string, expiDur time.Duration) (JsBackendRegistry, error) {
 	reg, err := NewMongoJsRegistry(url, dbName, collName)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return newMongoBackend(reg.(*mongoRegistry), expiDur), nil
+	return newDatedMongoDriver(reg.(*mongoDriver), expiDur), nil
 }
 
-func (reg *mongoBackend) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
+func (reg *datedMongoDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"path": path.Join(dir, objName)})
 	if n, err := query.Count(); err != nil {
 		return nil, nil, erro.Wrap(err)

@@ -1,9 +1,7 @@
 package driver
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"testing"
-	"time"
 )
 
 // 非キャッシュ用。
@@ -16,14 +14,9 @@ func TestMongoServiceKeyRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*serviceKeyRegistry).keyValueStore.(*mongoKeyValueStore).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("key").Insert(bson.M{
-		"service": bson.M{
-			"uuid":       "a_b-c",
-			"public_key": "kore ga kagi dayo.",
-		},
-	}); err != nil {
+	if err := reg.(*serviceKeyRegistry).put("a_b-c", "kore ga kagi dayo."); err != nil {
 		t.Fatal(err)
 	}
 
@@ -40,18 +33,9 @@ func TestMongoDatedServiceKeyRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoBackend).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedServiceKeyRegistry).datedKeyValueStore.(*mongoDatedKeyValueStore).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoBackend).DB("test_driver_mongo").C("key").Insert(bson.M{
-		"service": bson.M{
-			"uuid":       "a_b-c",
-			"public_key": "kore ga kagi dayo.",
-		},
-		"stamp": &Stamp{
-			Date:   time.Now(),
-			Digest: "0",
-		},
-	}); err != nil {
+	if _, err := reg.(*datedServiceKeyRegistry).stampedPut("a_b-c", "kore ga kagi dayo."); err != nil {
 		t.Fatal(err)
 	}
 

@@ -7,8 +7,8 @@ import (
 // スレッドセーフにする。
 
 // 非キャッシュ用。
-func NewSynchronizedIdProviderLister(reg IdProviderLister) IdProviderLister {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+func newSynchronizedIdProviderLister(reg IdProviderLister) IdProviderLister {
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedIdProvidersRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedIdProvidersRequest)
 			idps, err := reg.IdProviders()
@@ -25,7 +25,7 @@ type synchronizedIdProvidersRequest struct {
 	idpsCh chan []*IdProvider
 }
 
-func (reg *synchronizedRegistry) IdProviders() ([]*IdProvider, error) {
+func (reg *synchronizedDriver) IdProviders() ([]*IdProvider, error) {
 	idpsCh := make(chan []*IdProvider, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedIdProvidersRequest{idpsCh}, errCh}
@@ -38,8 +38,8 @@ func (reg *synchronizedRegistry) IdProviders() ([]*IdProvider, error) {
 }
 
 // キャッシュ用。
-func NewSynchronizedDatedIdProviderLister(reg DatedIdProviderLister) DatedIdProviderLister {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+func newSynchronizedDatedIdProviderLister(reg DatedIdProviderLister) DatedIdProviderLister {
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedStampedIdProvidersRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedStampedIdProvidersRequest)
 			idps, stmp, err := reg.StampedIdProviders(req.caStmp)
@@ -60,7 +60,7 @@ type synchronizedStampedIdProvidersRequest struct {
 	stmpCh chan *Stamp
 }
 
-func (reg *synchronizedRegistry) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
+func (reg *synchronizedDriver) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	idpsCh := make(chan []*IdProvider, 1)
 	stmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)

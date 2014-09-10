@@ -18,10 +18,10 @@ import (
 //   }
 // }
 func NewMongoIdProviderLister(url, dbName, collName string) (IdProviderLister, error) {
-	return newMongoRegistry(url, dbName, collName, nil)
+	return newMongoDriver(url, dbName, collName, nil)
 }
 
-func (reg *mongoRegistry) IdProviders() ([]*IdProvider, error) {
+func (reg *mongoDriver) IdProviders() ([]*IdProvider, error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"id_provider": bson.M{"$exists": true}})
 	var buff []struct {
 		*IdProvider `bson:"id_provider"`
@@ -45,7 +45,7 @@ func (reg *mongoRegistry) IdProviders() ([]*IdProvider, error) {
 //   }
 // }
 func NewMongoDatedIdProviderLister(url, dbName, collName string, expiDur time.Duration) (DatedIdProviderLister, error) {
-	reg, err := newMongoRegistry(url, dbName, collName, []mgo.Index{
+	reg, err := newMongoDriver(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:    []string{"stamp"},
 			Sparse: true,
@@ -54,10 +54,10 @@ func NewMongoDatedIdProviderLister(url, dbName, collName string, expiDur time.Du
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return newMongoBackend(reg, expiDur), nil
+	return newDatedMongoDriver(reg, expiDur), nil
 }
 
-func (reg *mongoBackend) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
+func (reg *datedMongoDriver) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
 	var stmp *Stamp
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"stamp": bson.M{"$exists": true}})
 	if n, err := query.Count(); err != nil {

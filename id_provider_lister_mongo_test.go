@@ -16,9 +16,9 @@ func TestMongoIdProviderLister(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("idp").Insert(bson.M{
+	if err := reg.(*mongoDriver).DB("test_driver_mongo").C("idp").Insert(bson.M{
 		"id_provider": &IdProvider{
 			Uuid:     "a_b-c",
 			Name:     "ABC",
@@ -41,9 +41,9 @@ func TestMongoDatedIdProviderLister(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoBackend).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedMongoDriver).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoBackend).DB("test_driver_mongo").C("idp").Insert(
+	if err := reg.(*datedMongoDriver).DB("test_driver_mongo").C("idp").Insert(
 		bson.M{
 			"id_provider": &IdProvider{
 				Uuid:     "a_b-c",

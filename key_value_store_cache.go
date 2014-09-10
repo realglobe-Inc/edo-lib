@@ -9,29 +9,29 @@ import (
 // キャッシュする。
 
 // キャッシュ用。
-type cachingDatedServiceKeyRegistry struct {
-	DatedServiceKeyRegistry
+type cachingDatedKeyValueStore struct {
+	datedKeyValueStore
 	cache util.Cache
 }
 
-func NewCachingDatedServiceKeyRegistry(backend DatedServiceKeyRegistry) DatedServiceKeyRegistry {
-	return &cachingDatedServiceKeyRegistry{DatedServiceKeyRegistry: backend,
+func newCachingDatedKeyValueStore(backend datedKeyValueStore) *cachingDatedKeyValueStore {
+	return &cachingDatedKeyValueStore{datedKeyValueStore: backend,
 		cache: util.NewCache(func(a1 interface{}, a2 interface{}) bool {
 			return a1.(*Stamp).ExpiDate.Before(a2.(*Stamp).ExpiDate)
 		}),
 	}
 }
 
-func (reg *cachingDatedServiceKeyRegistry) StampedServiceKey(servUuid string, caStmp *Stamp) (key string, newCaStmp *Stamp, err error) {
+func (reg *cachingDatedKeyValueStore) stampedGet(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
 	reg.cache.CleanLesser(&Stamp{ExpiDate: now})
 
 	// 残ってるキャッシュは有効。
 
-	val, prio := reg.cache.Get(servUuid)
+	val, prio := reg.cache.Get(key)
 	if prio == nil {
 		// キャッシュしてない。
-		key, newCaStmp, err = reg.DatedServiceKeyRegistry.StampedServiceKey(servUuid, nil)
+		value, newCaStmp, err = reg.datedKeyValueStore.stampedGet(key, nil)
 		if err != nil {
 			return "", nil, erro.Wrap(err)
 		} else if newCaStmp == nil {
@@ -39,12 +39,12 @@ func (reg *cachingDatedServiceKeyRegistry) StampedServiceKey(servUuid string, ca
 			return "", nil, nil
 		} else {
 			// あった。
-			reg.cache.Put(servUuid, key, newCaStmp)
+			reg.cache.Put(key, value, newCaStmp)
 			if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
 				// 要求元のキャッシュと同じだった。
 				return "", newCaStmp, nil
 			} else {
-				return key, newCaStmp, nil
+				return value, newCaStmp, nil
 			}
 		}
 	}
@@ -56,4 +56,17 @@ func (reg *cachingDatedServiceKeyRegistry) StampedServiceKey(servUuid string, ca
 		return "", stmp, nil
 	}
 	return val.(string), stmp, nil
+}
+
+func (reg *cachingDatedKeyValueStore) stampedPut(key string, value interface{}) (*Stamp, error) {
+	if newCaStmp, err := reg.datedKeyValueStore.stampedPut(key, value); err != nil {
+		return nil, erro.Wrap(err)
+	} else {
+		reg.cache.Put(key, value, newCaStmp)
+		return newCaStmp, nil
+	}
+}
+
+func (reg *cachingDatedKeyValueStore) remove(key string) error {
+	return reg.datedKeyValueStore.remove(key)
 }

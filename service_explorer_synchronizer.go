@@ -7,8 +7,8 @@ import (
 // スレッドセーフにする。
 
 // 非キャッシュ用。
-func NewSynchronizedServiceExplorer(reg ServiceExplorer) ServiceExplorer {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+func newSynchronizedServiceExplorer(reg ServiceExplorer) ServiceExplorer {
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedServiceUuidRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedServiceUuidRequest)
 			servUuid, err := reg.ServiceUuid(req.servUri)
@@ -26,7 +26,7 @@ type synchronizedServiceUuidRequest struct {
 	servUuidCh chan string
 }
 
-func (reg *synchronizedRegistry) ServiceUuid(servUri string) (servUuid string, err error) {
+func (reg *synchronizedDriver) ServiceUuid(servUri string) (servUuid string, err error) {
 	servUuidCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedServiceUuidRequest{servUri, servUuidCh}, errCh}
@@ -39,8 +39,8 @@ func (reg *synchronizedRegistry) ServiceUuid(servUri string) (servUuid string, e
 }
 
 // キャッシュ用。
-func NewSynchronizedDatedServiceExplorer(reg DatedServiceExplorer) DatedServiceExplorer {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+func newSynchronizedDatedServiceExplorer(reg DatedServiceExplorer) DatedServiceExplorer {
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedStampedServiceUuidRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedStampedServiceUuidRequest)
 			servUuid, stmp, err := reg.StampedServiceUuid(req.servUri, req.caStmp)
@@ -62,7 +62,7 @@ type synchronizedStampedServiceUuidRequest struct {
 	stmpCh     chan *Stamp
 }
 
-func (reg *synchronizedRegistry) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
+func (reg *synchronizedDriver) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
 	servUuidCh := make(chan string, 1)
 	stmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)

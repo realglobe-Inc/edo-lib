@@ -14,7 +14,7 @@ type cachingDatedServiceExplorer struct {
 	cache util.Cache
 }
 
-func NewCachingDatedServiceExplorer(backend DatedServiceExplorer) DatedServiceExplorer {
+func newCachingDatedServiceExplorer(backend DatedServiceExplorer) *cachingDatedServiceExplorer {
 	return &cachingDatedServiceExplorer{DatedServiceExplorer: backend,
 		cache: util.NewCache(func(a1 interface{}, a2 interface{}) bool {
 			return a1.(*Stamp).ExpiDate.Before(a2.(*Stamp).ExpiDate)

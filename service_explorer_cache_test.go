@@ -14,5 +14,5 @@ func TestCachingDatedServiceExplorer(t *testing.T) {
 
 	reg := NewMemoryDatedServiceExplorer(0)
 	reg.AddServiceUuid("https://localhost:1234/api", "a_b-c")
-	testDatedServiceExplorer(t, NewCachingDatedServiceExplorer(reg))
+	testDatedServiceExplorer(t, newCachingDatedServiceExplorer(reg))
 }

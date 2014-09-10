@@ -17,7 +17,7 @@ import (
 //   }
 // }
 func NewMongoServiceExplorer(url, dbName, collName string) (ServiceExplorer, error) {
-	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+	return newMongoDriver(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:      []string{"service.uri"},
 			Unique:   true,
@@ -26,7 +26,7 @@ func NewMongoServiceExplorer(url, dbName, collName string) (ServiceExplorer, err
 	})
 }
 
-func (reg *mongoRegistry) ServiceUuid(servUri string) (servUuid string, err error) {
+func (reg *mongoDriver) ServiceUuid(servUri string) (servUuid string, err error) {
 	// TODO 二分探索。
 	for curServUri := servUri; ; {
 		query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"service.uri": curServUri})
@@ -65,7 +65,7 @@ func (reg *mongoRegistry) ServiceUuid(servUri string) (servUuid string, err erro
 //   }
 // }
 func NewMongoDatedServiceExplorer(url, dbName, collName string, expiDur time.Duration) (DatedServiceExplorer, error) {
-	reg, err := newMongoRegistry(url, dbName, collName, []mgo.Index{
+	reg, err := newMongoDriver(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:      []string{"service.uuid"},
 			Unique:   true,
@@ -75,10 +75,10 @@ func NewMongoDatedServiceExplorer(url, dbName, collName string, expiDur time.Dur
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return newMongoBackend(reg, expiDur), nil
+	return newDatedMongoDriver(reg, expiDur), nil
 }
 
-func (reg *mongoBackend) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
+func (reg *datedMongoDriver) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
 	// TODO 二分探索。
 	var res struct {
 		Service struct {

@@ -1,69 +1,13 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/edo/util"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"reflect"
-	"runtime"
 	"time"
 )
 
-// スレッドセーフでないレジストリをスレッドセーフにする。
-
-const defChCap = 1000
-
-type synchronizedRegistry struct {
-	reqCh chan *synchronizedRequest
-}
-
-type synchronizedRequest struct {
-	req   interface{}
-	errCh chan<- error
-}
-
-func newSynchronizedRegistry(hndls map[reflect.Type]func(interface{}, chan<- error)) *synchronizedRegistry {
-	reg := &synchronizedRegistry{
-		make(chan *synchronizedRequest, defChCap),
-	}
-
-	go func() {
-		for {
-			reg.serve(hndls)
-		}
-	}()
-
-	return reg
-}
-
-func (reg *synchronizedRegistry) serve(hndls map[reflect.Type]func(interface{}, chan<- error)) {
-	var errCh chan<- error
-	defer func() {
-		if rcv := recover(); rcv != nil {
-			buff := make([]byte, 8192)
-			stackLen := runtime.Stack(buff, false)
-			stack := string(buff[:stackLen])
-			err := erro.Wrap(util.NewPanicWrapper(rcv, stack))
-
-			if errCh != nil {
-				errCh <- err
-			} else {
-				log.Err(erro.Unwrap(err))
-				log.Debug(err)
-			}
-		}
-	}()
-
-	req := <-reg.reqCh
-	errCh = req.errCh
-	hndl := hndls[reflect.TypeOf(req.req)]
-	if hndl != nil {
-		hndl(req.req, errCh)
-	}
-}
-
 // ログイン。
 func NewSynchronizedLoginRegistry(reg LoginRegistry) LoginRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedUserRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedUserRequest)
 			usrUuid, err := reg.User(req.accToken)
@@ -82,7 +26,7 @@ type synchronizedUserRequest struct {
 	usrCh chan string
 }
 
-func (reg *synchronizedRegistry) User(accToken string) (usrUuid string, err error) {
+func (reg *synchronizedDriver) User(accToken string) (usrUuid string, err error) {
 	usrCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedUserRequest{accToken, usrCh}, errCh}
@@ -96,7 +40,7 @@ func (reg *synchronizedRegistry) User(accToken string) (usrUuid string, err erro
 
 // JavaScript.
 func NewSynchronizedJsRegistry(reg JsRegistry) JsRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedObjectRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedObjectRequest)
 			obj, err := reg.Object(req.dir, req.objName)
@@ -133,7 +77,7 @@ type synchronizedRemoveObjectRequest struct {
 	objName string
 }
 
-func (reg *synchronizedRegistry) Object(dir, objName string) (*Object, error) {
+func (reg *synchronizedDriver) Object(dir, objName string) (*Object, error) {
 	objCh := make(chan *Object, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedObjectRequest{dir, objName, objCh}, errCh}
@@ -144,12 +88,12 @@ func (reg *synchronizedRegistry) Object(dir, objName string) (*Object, error) {
 		return nil, err
 	}
 }
-func (reg *synchronizedRegistry) AddObject(dir, objName string, obj *Object) error {
+func (reg *synchronizedDriver) AddObject(dir, objName string, obj *Object) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedAddObjectRequest{dir, objName, obj}, errCh}
 	return <-errCh
 }
-func (reg *synchronizedRegistry) RemoveObject(dir, objName string) error {
+func (reg *synchronizedDriver) RemoveObject(dir, objName string) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedRemoveObjectRequest{dir, objName}, errCh}
 	return <-errCh
@@ -157,7 +101,7 @@ func (reg *synchronizedRegistry) RemoveObject(dir, objName string) error {
 
 // ユーザー情報。
 func NewSynchronizedUserRegistry(reg UserRegistry) UserRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedAttributesRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedAttributesRequest)
 			attrs, err := reg.Attributes(req.usrUuid)
@@ -208,7 +152,7 @@ type synchronizedRemoveAttributeRequest struct {
 	attrName string
 }
 
-func (reg *synchronizedRegistry) Attributes(usrUuid string) (map[string]interface{}, error) {
+func (reg *synchronizedDriver) Attributes(usrUuid string) (map[string]interface{}, error) {
 	attrsCh := make(chan map[string]interface{}, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedAttributesRequest{usrUuid, attrsCh}, errCh}
@@ -219,7 +163,7 @@ func (reg *synchronizedRegistry) Attributes(usrUuid string) (map[string]interfac
 		return nil, err
 	}
 }
-func (reg *synchronizedRegistry) Attribute(usrUuid, attrName string) (interface{}, error) {
+func (reg *synchronizedDriver) Attribute(usrUuid, attrName string) (interface{}, error) {
 	attrCh := make(chan interface{}, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedAttributeRequest{usrUuid, attrName, attrCh}, errCh}
@@ -230,12 +174,12 @@ func (reg *synchronizedRegistry) Attribute(usrUuid, attrName string) (interface{
 		return nil, err
 	}
 }
-func (reg *synchronizedRegistry) AddAttribute(usrUuid, attrName string, attr interface{}) error {
+func (reg *synchronizedDriver) AddAttribute(usrUuid, attrName string, attr interface{}) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedAddAttributeRequest{usrUuid, attrName, attr}, errCh}
 	return <-errCh
 }
-func (reg *synchronizedRegistry) RemoveAttribute(usrUuid, attrName string) error {
+func (reg *synchronizedDriver) RemoveAttribute(usrUuid, attrName string) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedRemoveAttributeRequest{usrUuid, attrName}, errCh}
 	return <-errCh
@@ -243,7 +187,7 @@ func (reg *synchronizedRegistry) RemoveAttribute(usrUuid, attrName string) error
 
 // ジョブ。
 func NewSynchronizedJobRegistry(reg JobRegistry) JobRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedResultRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedResultRequest)
 			res, err := reg.Result(req.jobId)
@@ -271,7 +215,7 @@ type synchronizedAddResultRequest struct {
 	deadline time.Time
 }
 
-func (reg *synchronizedRegistry) Result(jobId string) (*JobResult, error) {
+func (reg *synchronizedDriver) Result(jobId string) (*JobResult, error) {
 	resCh := make(chan *JobResult, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedResultRequest{jobId, resCh}, errCh}
@@ -282,7 +226,7 @@ func (reg *synchronizedRegistry) Result(jobId string) (*JobResult, error) {
 		return nil, err
 	}
 }
-func (reg *synchronizedRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
+func (reg *synchronizedDriver) AddResult(jobId string, res *JobResult, deadline time.Time) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedAddResultRequest{jobId, res, deadline}, errCh}
 	return <-errCh
@@ -290,7 +234,7 @@ func (reg *synchronizedRegistry) AddResult(jobId string, res *JobResult, deadlin
 
 // 別名。
 func NewSynchronizedNameRegistry(reg NameRegistry) NameRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedAddressRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedAddressRequest)
 			addr, err := reg.Address(req.name)
@@ -323,7 +267,7 @@ type synchronizedAddressesRequest struct {
 	addrsCh chan []string
 }
 
-func (reg *synchronizedRegistry) Address(name string) (addr string, err error) {
+func (reg *synchronizedDriver) Address(name string) (addr string, err error) {
 	addrCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedAddressRequest{name, addrCh}, errCh}
@@ -335,7 +279,7 @@ func (reg *synchronizedRegistry) Address(name string) (addr string, err error) {
 	}
 }
 
-func (reg *synchronizedRegistry) Addresses(name string) (addrs []string, err error) {
+func (reg *synchronizedDriver) Addresses(name string) (addrs []string, err error) {
 	addrsCh := make(chan []string, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedAddressesRequest{name, addrsCh}, errCh}
@@ -349,7 +293,7 @@ func (reg *synchronizedRegistry) Addresses(name string) (addrs []string, err err
 
 // イベント。
 func NewSynchronizedEventRegistry(reg EventRegistry) EventRegistry {
-	return newSynchronizedRegistry(map[reflect.Type]func(interface{}, chan<- error){
+	return newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&synchronizedHandlerRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*synchronizedHandlerRequest)
 			hndl, err := reg.Handler(req.usrUuid, req.event)
@@ -386,7 +330,7 @@ type synchronizedRemoveHandlerRequest struct {
 	event   string
 }
 
-func (reg *synchronizedRegistry) Handler(usrUuid, event string) (Handler, error) {
+func (reg *synchronizedDriver) Handler(usrUuid, event string) (Handler, error) {
 	hndlCh := make(chan Handler, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedHandlerRequest{usrUuid, event, hndlCh}, errCh}
@@ -397,12 +341,12 @@ func (reg *synchronizedRegistry) Handler(usrUuid, event string) (Handler, error)
 		return nil, err
 	}
 }
-func (reg *synchronizedRegistry) AddHandler(usrUuid, event string, hndl Handler) error {
+func (reg *synchronizedDriver) AddHandler(usrUuid, event string, hndl Handler) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedAddHandlerRequest{usrUuid, event, hndl}, errCh}
 	return <-errCh
 }
-func (reg *synchronizedRegistry) RemoveHandler(usrUuid, event string) error {
+func (reg *synchronizedDriver) RemoveHandler(usrUuid, event string) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&synchronizedRemoveHandlerRequest{usrUuid, event}, errCh}
 	return <-errCh

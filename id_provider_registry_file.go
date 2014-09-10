@@ -1,10 +1,6 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"os"
-	"path/filepath"
-	"strconv"
 	"time"
 )
 
@@ -12,49 +8,10 @@ import (
 
 // 非キャッシュ用。
 func NewFileIdProviderRegistry(path string) IdProviderRegistry {
-	return newFileRegistry(path)
-}
-
-func (reg *fileRegistry) IdProviderQueryUri(idpUuid string) (queryUri string, err error) {
-	path := filepath.Join(reg.path, idpUuid+".json")
-
-	if err := readFromJson(path, &queryUri); err != nil {
-		return "", erro.Wrap(err)
-	}
-
-	return queryUri, nil
+	return newIdProviderRegistry(newSynchronizedKeyValueStore(newFileKeyValueStore(path)))
 }
 
 // キャッシュ用。
 func NewFileDatedIdProviderRegistry(path string, expiDur time.Duration) DatedIdProviderRegistry {
-	return newFileBackend(path, expiDur)
-}
-
-func (reg *fileBackend) StampedIdProviderQueryUri(idpUuid string, caStmp *Stamp) (queryUri string, newCaStmp *Stamp, err error) {
-	path := filepath.Join(reg.path, idpUuid+".json")
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", nil, nil
-		} else {
-			return "", nil, erro.Wrap(err)
-		}
-	}
-
-	// 対象のスタンプを取得。
-
-	newCaStmp = &Stamp{Date: fi.ModTime(), ExpiDate: time.Now().Add(reg.expiDur), Digest: strconv.FormatInt(fi.Size(), 10)}
-
-	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
-		return "", newCaStmp, nil
-	}
-
-	// 無効なキャッシュだった。
-
-	if err := readFromJson(path, &queryUri); err != nil {
-		return "", nil, erro.Wrap(err)
-	}
-
-	return queryUri, newCaStmp, nil
+	return newDatedIdProviderRegistry(newSynchronizedDatedKeyValueStore(newFileDatedKeyValueStore(path, expiDur)))
 }

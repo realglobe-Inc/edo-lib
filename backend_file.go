@@ -8,21 +8,12 @@ import (
 	"time"
 )
 
-type fileBackend struct {
-	*fileRegistry
-	expiDur time.Duration
-}
-
-func newFileBackend(path string, expiDur time.Duration) *fileBackend {
-	return &fileBackend{newFileRegistry(path), expiDur}
-}
-
 // JavaScript.
 func NewFileJsBackendRegistry(path string, expiDur time.Duration) JsBackendRegistry {
-	return newFileBackend(path, expiDur)
+	return newDatedFileDriver(path, expiDur)
 }
 
-func (reg *fileBackend) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
+func (reg *datedFileDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
 	headPath := filepath.Join(reg.path, dir, objName+".json")
 	codePath := filepath.Join(reg.path, dir, objName+".js")
 

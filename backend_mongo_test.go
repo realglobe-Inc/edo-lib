@@ -13,7 +13,7 @@ func TestMongoJsBackendRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoBackend).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedMongoDriver).DB("test_driver_mongo").DropDatabase()
 
 	testJsBackendRegistry(t, reg)
 }

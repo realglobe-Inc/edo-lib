@@ -1,9 +1,7 @@
 package driver
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"testing"
-	"time"
 )
 
 // 非キャッシュ用。
@@ -16,14 +14,9 @@ func TestMongoIdProviderRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*idProviderRegistry).keyValueStore.(*mongoKeyValueStore).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("idp").Insert(bson.M{
-		"id_provider": bson.M{
-			"uuid":      "a_b-c",
-			"query_uri": "https://localhost:1234/query",
-		},
-	}); err != nil {
+	if err := reg.(*idProviderRegistry).put("a_b-c", "https://localhost:1234/query"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -40,18 +33,9 @@ func TestMongoDatedIdProviderRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoBackend).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedIdProviderRegistry).datedKeyValueStore.(*mongoDatedKeyValueStore).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoBackend).DB("test_driver_mongo").C("idp").Insert(bson.M{
-		"id_provider": bson.M{
-			"uuid":      "a_b-c",
-			"query_uri": "https://localhost:1234/query",
-		},
-		"stamp": &Stamp{
-			Date:   time.Now(),
-			Digest: "0",
-		},
-	}); err != nil {
+	if _, err := reg.(*datedIdProviderRegistry).stampedPut("a_b-c", "https://localhost:1234/query"); err != nil {
 		t.Fatal(err)
 	}
 

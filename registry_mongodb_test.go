@@ -30,9 +30,9 @@ func TestMongoLoginRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("login").Insert(
+	if err := reg.(*mongoDriver).DB("test_driver_mongo").C("login").Insert(
 		&mongoUser{"abc-012", "a_b-c"},
 	); err != nil {
 		t.Fatal(err)
@@ -50,7 +50,7 @@ func TestMongoJsRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
 	testJsRegistry(t, reg)
 }
@@ -64,7 +64,7 @@ func TestMongoUserRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
 	testUserRegistry(t, reg)
 }
@@ -78,7 +78,7 @@ func TestMongoJobRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
 	testJobRegistry(t, reg)
 }
@@ -92,7 +92,7 @@ func TestMongoJobRegistryRemoveOld(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
 	testJobRegistryRemoveOld(t, reg)
 }
@@ -106,9 +106,9 @@ func TestMongoNameRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("name").Insert(
+	if err := reg.(*mongoDriver).DB("test_driver_mongo").C("name").Insert(
 		&mongoAddress{"c.b.a", "c.localhost"},
 		&mongoAddress{"d.b.a", "d.localhost"},
 		&mongoAddress{"b.a", "localhost"},
@@ -128,7 +128,7 @@ func TestMongoEventRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
 	testEventRegistry(t, reg)
 }

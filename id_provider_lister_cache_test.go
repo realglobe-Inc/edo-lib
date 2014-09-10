@@ -18,5 +18,5 @@ func TestCachingDatedIdProviderLister(t *testing.T) {
 		Name:     "ABC",
 		LoginUri: "https://localhost:1234",
 	})
-	testDatedIdProviderLister(t, NewCachingDatedIdProviderLister(reg))
+	testDatedIdProviderLister(t, newCachingDatedIdProviderLister(reg))
 }

@@ -10,8 +10,8 @@ import (
 )
 
 // JavaScript.
-func NewWebJsBackendRegistry(addr string, ssl bool) (JsBackendRegistry, error) {
-	return newWebDriver(addr, ssl)
+func NewWebJsBackendRegistry(prefix string) JsBackendRegistry {
+	return newWebDriver(prefix)
 }
 
 func (reg *webDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {

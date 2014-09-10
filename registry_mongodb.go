@@ -6,81 +6,12 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"path"
-	"reflect"
 	"time"
 )
 
-// mondodb を使うドライバー。
-
-type mongoRegistry struct {
-	dbName   string
-	collName string
-	*mgo.Session
-}
-
-func newMongoRegistry(url, dbName, collName string, indices []mgo.Index) (*mongoRegistry, error) {
-	sess, err := mgo.Dial(url)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	curIndices, err := sess.DB(dbName).C(collName).Indexes()
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	// 既存の要らない索引を消す。
-	for _, curIdx := range curIndices {
-		if len(curIdx.Key) == 1 && curIdx.Key[0] == "_id" {
-			continue
-		}
-
-		ok := false
-		for _, idx := range indices {
-			if reflect.DeepEqual(curIdx, idx) {
-				ok = true
-				break
-			}
-		}
-		if ok {
-			continue
-		}
-
-		// 要らない。
-		if err := sess.DB(dbName).C(collName).DropIndex(curIdx.Key...); err != nil {
-			return nil, erro.Wrap(err)
-		}
-	}
-
-	curIndices, err = sess.DB(dbName).C(collName).Indexes()
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	for _, idx := range indices {
-		ok := true
-		for _, curIdx := range curIndices {
-			if reflect.DeepEqual(idx, curIdx) {
-				ok = false
-				break
-			}
-		}
-		if !ok {
-			// もうある。
-			continue
-		}
-
-		if err := sess.DB(dbName).C(collName).EnsureIndex(idx); err != nil {
-			return nil, erro.Wrap(err)
-		}
-	}
-
-	return &mongoRegistry{dbName, collName, sess}, nil
-}
-
 // ログイン。
 func NewMongoLoginRegistry(url, dbName, collName string) (LoginRegistry, error) {
-	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+	return newMongoDriver(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:      []string{"access_token"},
 			Unique:   true,
@@ -95,7 +26,7 @@ type mongoUser struct {
 	UsrUuid string `bson:"user_uuid"`
 }
 
-func (reg *mongoRegistry) User(accToken string) (usrUuid string, err error) {
+func (reg *mongoDriver) User(accToken string) (usrUuid string, err error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"access_token": accToken})
 	if n, err := query.Count(); err != nil {
 		return "", erro.Wrap(err)
@@ -111,7 +42,7 @@ func (reg *mongoRegistry) User(accToken string) (usrUuid string, err error) {
 
 // JavaScript.
 func NewMongoJsRegistry(url, dbName, collName string) (JsRegistry, error) {
-	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+	return newMongoDriver(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:      []string{"path"},
 			Unique:   true,
@@ -132,7 +63,7 @@ type mongoObject struct {
 	Digest int       `bson:"digest"`
 }
 
-func (reg *mongoRegistry) Object(dir, objName string) (*Object, error) {
+func (reg *mongoDriver) Object(dir, objName string) (*Object, error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"path": path.Join(dir, objName)})
 	if n, err := query.Count(); err != nil {
 		return nil, erro.Wrap(err)
@@ -159,7 +90,7 @@ func (obj *Object) digest() int {
 
 }
 
-func (reg *mongoRegistry) AddObject(dir, objName string, obj *Object) error {
+func (reg *mongoDriver) AddObject(dir, objName string, obj *Object) error {
 	mongoObj := &mongoObject{path.Join(dir, objName), obj.Service, obj.Library, obj.Include, obj.Code, time.Now(), obj.digest()}
 	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{"path": mongoObj.Path}, mongoObj); err != nil {
 		return erro.Wrap(err)
@@ -167,7 +98,7 @@ func (reg *mongoRegistry) AddObject(dir, objName string, obj *Object) error {
 	return nil
 }
 
-func (reg *mongoRegistry) RemoveObject(dir, objName string) error {
+func (reg *mongoDriver) RemoveObject(dir, objName string) error {
 	if err := reg.DB(reg.dbName).C(reg.collName).Remove(bson.M{"path": path.Join(dir, objName)}); err != nil {
 		return erro.Wrap(err)
 	}
@@ -176,7 +107,7 @@ func (reg *mongoRegistry) RemoveObject(dir, objName string) error {
 
 // ユーザー情報。
 func NewMongoUserRegistry(url, dbName, collName string) (UserRegistry, error) {
-	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+	return newMongoDriver(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key: []string{"user_uuid"},
 		},
@@ -194,7 +125,7 @@ type mongoAttribute struct {
 	Attr     interface{} `bson:"value"`
 }
 
-func (reg *mongoRegistry) Attributes(usrUuid string) (attrs map[string]interface{}, err error) {
+func (reg *mongoDriver) Attributes(usrUuid string) (attrs map[string]interface{}, err error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"user_uuid": usrUuid})
 	if n, err := query.Count(); err != nil {
 		return nil, erro.Wrap(err)
@@ -212,7 +143,7 @@ func (reg *mongoRegistry) Attributes(usrUuid string) (attrs map[string]interface
 	return attrs, nil
 }
 
-func (reg *mongoRegistry) Attribute(usrUuid, attrName string) (attr interface{}, err error) {
+func (reg *mongoDriver) Attribute(usrUuid, attrName string) (attr interface{}, err error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"user_uuid": usrUuid, "key": attrName})
 	if n, err := query.Count(); err != nil {
 		return nil, erro.Wrap(err)
@@ -226,7 +157,7 @@ func (reg *mongoRegistry) Attribute(usrUuid, attrName string) (attr interface{},
 	return mongoAttr.Attr, nil
 }
 
-func (reg *mongoRegistry) AddAttribute(usrUuid, attrName string, attr interface{}) error {
+func (reg *mongoDriver) AddAttribute(usrUuid, attrName string, attr interface{}) error {
 	mongoAttr := &mongoAttribute{usrUuid, attrName, attr}
 	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{"user_uuid": usrUuid, "key": attrName}, mongoAttr); err != nil {
 		return erro.Wrap(err)
@@ -234,7 +165,7 @@ func (reg *mongoRegistry) AddAttribute(usrUuid, attrName string, attr interface{
 	return nil
 }
 
-func (reg *mongoRegistry) RemoveAttribute(usrUuid, attrName string) error {
+func (reg *mongoDriver) RemoveAttribute(usrUuid, attrName string) error {
 	if err := reg.DB(reg.dbName).C(reg.collName).Remove(bson.M{"user_uuid": usrUuid, "key": attrName}); err != nil {
 		return erro.Wrap(err)
 	}
@@ -243,7 +174,7 @@ func (reg *mongoRegistry) RemoveAttribute(usrUuid, attrName string) error {
 
 // ジョブ。
 func NewMongoJobRegistry(url, dbName, collName string) (JobRegistry, error) {
-	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+	return newMongoDriver(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:      []string{"job_id"},
 			Unique:   true,
@@ -263,7 +194,7 @@ type mongoJobResult struct {
 	Body     string            `bson:"body,omitempty"`
 }
 
-func (reg *mongoRegistry) Result(jobId string) (*JobResult, error) {
+func (reg *mongoDriver) Result(jobId string) (*JobResult, error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"job_id": jobId})
 	if n, err := query.Count(); err != nil {
 		return nil, erro.Wrap(err)
@@ -277,7 +208,7 @@ func (reg *mongoRegistry) Result(jobId string) (*JobResult, error) {
 	return &JobResult{res.Status, res.Headers, res.Body}, nil
 }
 
-func (reg *mongoRegistry) AddResult(jobId string, res *JobResult, deadline time.Time) error {
+func (reg *mongoDriver) AddResult(jobId string, res *JobResult, deadline time.Time) error {
 	mongoRes := &mongoJobResult{jobId, deadline, res.Status, res.Headers, res.Body}
 	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{"job_id": jobId}, mongoRes); err != nil {
 		return erro.Wrap(err)
@@ -305,7 +236,7 @@ func NewMongoNameRegistry(url, dbName, collName string) (NameRegistry, error) {
 		return nil, erro.Wrap(err)
 	}
 
-	return &mongoRegistry{dbName, collName, sess}, nil
+	return &mongoDriver{dbName, collName, sess}, nil
 }
 
 type mongoAddress struct {
@@ -313,7 +244,7 @@ type mongoAddress struct {
 	Addr string `bson:"address"`
 }
 
-func (reg *mongoRegistry) Address(name string) (addr string, err error) {
+func (reg *mongoDriver) Address(name string) (addr string, err error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"name": name})
 	if n, err := query.Count(); err != nil {
 		return "", erro.Wrap(err)
@@ -327,7 +258,7 @@ func (reg *mongoRegistry) Address(name string) (addr string, err error) {
 	return mongoAddr.Addr, nil
 }
 
-func (reg *mongoRegistry) Addresses(name string) (addrs []string, err error) {
+func (reg *mongoDriver) Addresses(name string) (addrs []string, err error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"name": bson.M{"$regex": name + "$"}})
 	var mongoAddrs []mongoAddress
 	if err := query.All(&mongoAddrs); err != nil {
@@ -341,7 +272,7 @@ func (reg *mongoRegistry) Addresses(name string) (addrs []string, err error) {
 
 // イベント。
 func NewMongoEventRegistry(url, dbName, collName string) (EventRegistry, error) {
-	return newMongoRegistry(url, dbName, collName, []mgo.Index{
+	return newMongoDriver(url, dbName, collName, []mgo.Index{
 		mgo.Index{
 			Key:      []string{"user_uuid", "event"},
 			Unique:   true,
@@ -356,7 +287,7 @@ type mongoHandler struct {
 	Hndl    Handler `bson:"handler"`
 }
 
-func (reg *mongoRegistry) Handler(usrUuid, event string) (Handler, error) {
+func (reg *mongoDriver) Handler(usrUuid, event string) (Handler, error) {
 	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{"user_uuid": usrUuid, "event": event})
 	if n, err := query.Count(); err != nil {
 		return nil, erro.Wrap(err)
@@ -370,7 +301,7 @@ func (reg *mongoRegistry) Handler(usrUuid, event string) (Handler, error) {
 	return res.Hndl, nil
 }
 
-func (reg *mongoRegistry) AddHandler(usrUuid, event string, hndl Handler) error {
+func (reg *mongoDriver) AddHandler(usrUuid, event string, hndl Handler) error {
 	mongoHndl := &mongoHandler{usrUuid, event, hndl}
 	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{"user_uuid": usrUuid, "event": event}, mongoHndl); err != nil {
 		return erro.Wrap(err)
@@ -378,7 +309,7 @@ func (reg *mongoRegistry) AddHandler(usrUuid, event string, hndl Handler) error 
 	return nil
 }
 
-func (reg *mongoRegistry) RemoveHandler(usrUuid, event string) error {
+func (reg *mongoDriver) RemoveHandler(usrUuid, event string) error {
 	if err := reg.DB(reg.dbName).C(reg.collName).Remove(bson.M{"user_uuid": usrUuid, "event": event}); err != nil {
 		return erro.Wrap(err)
 	}

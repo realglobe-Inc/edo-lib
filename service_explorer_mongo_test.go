@@ -16,9 +16,9 @@ func TestMongoServiceExplorer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoRegistry).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoRegistry).DB("test_driver_mongo").C("idp").Insert(bson.M{
+	if err := reg.(*mongoDriver).DB("test_driver_mongo").C("idp").Insert(bson.M{
 		"service": bson.M{
 			"uuid": "a_b-c",
 			"uri":  "https://localhost:1234/api",
@@ -40,9 +40,9 @@ func TestMongoDatedServiceExplorer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoBackend).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedMongoDriver).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*mongoBackend).DB("test_driver_mongo").C("idp").Insert(bson.M{
+	if err := reg.(*datedMongoDriver).DB("test_driver_mongo").C("idp").Insert(bson.M{
 		"service": bson.M{
 			"uuid": "a_b-c",
 			"uri":  "https://localhost:1234/api",

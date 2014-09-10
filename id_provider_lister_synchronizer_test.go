@@ -12,7 +12,7 @@ func TestSynchronizedIdProviderLister(t *testing.T) {
 		Name:     "ABC",
 		LoginUri: "https://localhost:1234",
 	})
-	testIdProviderLister(t, NewSynchronizedIdProviderLister(reg))
+	testIdProviderLister(t, newSynchronizedIdProviderLister(reg))
 }
 
 // キャッシュ用。
@@ -23,5 +23,5 @@ func TestSynchronizedDatedIdProviderLister(t *testing.T) {
 		Name:     "ABC",
 		LoginUri: "https://localhost:1234",
 	})
-	testDatedIdProviderLister(t, NewSynchronizedDatedIdProviderLister(reg))
+	testDatedIdProviderLister(t, newSynchronizedDatedIdProviderLister(reg))
 }

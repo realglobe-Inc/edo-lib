@@ -15,8 +15,8 @@ type EventRouter interface {
 	Fire(usrUuid, event string, body interface{}) error
 }
 
-func NewWebEventRouter(addr string, ssl bool) (EventRouter, error) {
-	return newWebDriver(addr, ssl)
+func NewWebEventRouter(prefix string) EventRouter {
+	return newWebDriver(prefix)
 }
 
 func (rout *webDriver) Fire(usrUuid, event string, body interface{}) error {
