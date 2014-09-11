@@ -15,7 +15,7 @@ func TestFileServiceExplorer(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "uuid.json"), map[string]string{"https://localhost:1234/api": "a_b-c"}); err != nil {
+	if err := writeToJson(filepath.Join(path, "list.json"), map[string]string{"https://localhost:1234/api": "a_b-c"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -30,7 +30,7 @@ func TestFileDatedServiceExplorer(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "uuid.json"), map[string]string{"https://localhost:1234/api": "a_b-c"}); err != nil {
+	if err := writeToJson(filepath.Join(path, "list.json"), map[string]string{"https://localhost:1234/api": "a_b-c"}); err != nil {
 		t.Fatal(err)
 	}
 

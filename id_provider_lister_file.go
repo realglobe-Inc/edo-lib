@@ -16,7 +16,7 @@ func NewFileIdProviderLister(path string) IdProviderLister {
 }
 
 func (reg *fileDriver) IdProviders() ([]*IdProvider, error) {
-	path := filepath.Join(reg.path, "idp.json")
+	path := filepath.Join(reg.path, "list.json")
 
 	var cont []*IdProvider
 	if err := readFromJson(path, &cont); err != nil {
@@ -32,7 +32,7 @@ func NewFileDatedIdProviderLister(path string, expiDur time.Duration) DatedIdPro
 }
 
 func (reg *datedFileDriver) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error) {
-	path := filepath.Join(reg.path, "idp.json")
+	path := filepath.Join(reg.path, "list.json")
 
 	fi, err := os.Stat(path)
 	if err != nil {
