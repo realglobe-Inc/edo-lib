@@ -2,6 +2,7 @@ package driver
 
 import ()
 
+// 非キャッシュ用。
 type keyValueStore interface {
 	get(key string) (value interface{}, err error)
 	put(key string, value interface{}) error
