@@ -16,7 +16,7 @@ func NewFileServiceExplorer(path string) ServiceExplorer {
 }
 
 func (reg *fileDriver) ServiceUuid(servUri string) (servUuid string, err error) {
-	path := filepath.Join(reg.path, "uuid.json")
+	path := filepath.Join(reg.path, "list.json")
 
 	var cont map[string]string
 	if err := readFromJson(path, &cont); err != nil {
@@ -35,7 +35,7 @@ func NewFileDatedServiceExplorer(path string, expiDur time.Duration) DatedServic
 }
 
 func (reg *datedFileDriver) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
-	path := filepath.Join(reg.path, "uuid.json")
+	path := filepath.Join(reg.path, "list.json")
 
 	fi, err := os.Stat(path)
 	if err != nil {
