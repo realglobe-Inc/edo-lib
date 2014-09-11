@@ -5,13 +5,14 @@ import (
 )
 
 // キャッシュ。
+// スレッドセーフではない。
 
 type Cache interface {
 	// 入れる。
 	Put(key, val, prio interface{})
 	// 取り出す。
 	Get(key interface{}) (val, prio interface{})
-	// 優先度を変えつつ取り出す。
+	// 優先度を変えつつ取り出す。LRU のとき使う。
 	Update(key, prio interface{}) (val interface{})
 	// 基準以下を削除。
 	CleanLesser(prioThres interface{})
