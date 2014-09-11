@@ -9,6 +9,10 @@ type IdProvider struct {
 	LoginUri string `json:"login_uri"  bson:"login_uri"`
 }
 
+func (idp *IdProvider) String() string {
+	return idp.Uuid + "," + idp.Name + "," + idp.LoginUri
+}
+
 // ID プロバイダの列挙。
 type IdProviderLister interface {
 	IdProviders() ([]*IdProvider, error)
