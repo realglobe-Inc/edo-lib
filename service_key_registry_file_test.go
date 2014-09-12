@@ -15,7 +15,7 @@ func TestFileServiceKeyRegistry(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "a_b-c.json"), "kore ga kagi dayo."); err != nil {
+	if err := writeToJson(filepath.Join(path, "a_b-c.json"), testPublicKeyPem); err != nil {
 		t.Fatal(err)
 	}
 
@@ -30,7 +30,7 @@ func TestFileDatedServiceKeyRegistry(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "a_b-c.json"), "kore ga kagi dayo."); err != nil {
+	if err := writeToJson(filepath.Join(path, "a_b-c.json"), testPublicKeyPem); err != nil {
 		t.Fatal(err)
 	}
 

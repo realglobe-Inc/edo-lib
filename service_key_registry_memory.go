@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"crypto/rsa"
 	"time"
 )
 
@@ -15,15 +16,15 @@ func NewMemoryServiceKeyRegistry() *MemoryServiceKeyRegistry {
 	return &MemoryServiceKeyRegistry{newSynchronizedKeyValueStore(newMemoryKeyValueStore())}
 }
 
-func (reg *MemoryServiceKeyRegistry) ServiceKey(servUuid string) (servKey string, err error) {
+func (reg *MemoryServiceKeyRegistry) ServiceKey(servUuid string) (servKey *rsa.PublicKey, err error) {
 	val, err := reg.get(servUuid)
-	if val != nil && val != "" {
-		servKey = val.(string)
+	if val != nil {
+		servKey = val.(*rsa.PublicKey)
 	}
 	return servKey, err
 }
 
-func (reg *MemoryServiceKeyRegistry) AddServiceKey(servUuid, servKey string) {
+func (reg *MemoryServiceKeyRegistry) AddServiceKey(servUuid string, servKey *rsa.PublicKey) {
 	reg.put(servUuid, servKey)
 }
 
@@ -40,15 +41,15 @@ func NewMemoryDatedServiceKeyRegistry(expiDur time.Duration) *MemoryDatedService
 	return &MemoryDatedServiceKeyRegistry{newSynchronizedDatedKeyValueStore(newMemoryDatedKeyValueStore(expiDur))}
 }
 
-func (reg *MemoryDatedServiceKeyRegistry) StampedServiceKey(servUuid string, caStmp *Stamp) (servKey string, newCaStmp *Stamp, err error) {
+func (reg *MemoryDatedServiceKeyRegistry) StampedServiceKey(servUuid string, caStmp *Stamp) (servKey *rsa.PublicKey, newCaStmp *Stamp, err error) {
 	val, newCaStmp, err := reg.stampedGet(servUuid, caStmp)
-	if val != nil && val != "" {
-		servKey = val.(string)
+	if val != nil {
+		servKey = val.(*rsa.PublicKey)
 	}
 	return servKey, newCaStmp, err
 }
 
-func (reg *MemoryDatedServiceKeyRegistry) AddServiceKey(servUuid, servKey string) {
+func (reg *MemoryDatedServiceKeyRegistry) AddServiceKey(servUuid string, servKey *rsa.PublicKey) {
 	reg.stampedPut(servUuid, servKey)
 }
 

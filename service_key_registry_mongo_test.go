@@ -16,7 +16,7 @@ func TestMongoServiceKeyRegistry(t *testing.T) {
 	}
 	defer reg.(*serviceKeyRegistry).keyValueStore.(*mongoKeyValueStore).DB("test_driver_mongo").DropDatabase()
 
-	if err := reg.(*serviceKeyRegistry).put("a_b-c", "kore ga kagi dayo."); err != nil {
+	if err := reg.(*serviceKeyRegistry).put("a_b-c", testPublicKeyPem); err != nil {
 		t.Fatal(err)
 	}
 
@@ -35,7 +35,7 @@ func TestMongoDatedServiceKeyRegistry(t *testing.T) {
 	}
 	defer reg.(*datedServiceKeyRegistry).datedKeyValueStore.(*mongoDatedKeyValueStore).DB("test_driver_mongo").DropDatabase()
 
-	if _, err := reg.(*datedServiceKeyRegistry).stampedPut("a_b-c", "kore ga kagi dayo."); err != nil {
+	if _, err := reg.(*datedServiceKeyRegistry).stampedPut("a_b-c", testPublicKeyPem); err != nil {
 		t.Fatal(err)
 	}
 
