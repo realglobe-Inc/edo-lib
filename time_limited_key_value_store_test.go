@@ -58,7 +58,7 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// 消えるまで待つ。
-	time.Sleep(expiDur)
+	time.Sleep(2 * expiDur)
 
 	// もう無い。
 	value5, err := reg.Get(key)
