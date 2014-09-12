@@ -64,9 +64,9 @@ func (reg *datedFileDriver) stampedGet(key string, caStmp *Stamp) (value interfa
 	fi, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return "", nil, nil
+			return nil, nil, nil
 		} else {
-			return "", nil, erro.Wrap(err)
+			return nil, nil, erro.Wrap(err)
 		}
 	}
 
@@ -75,13 +75,13 @@ func (reg *datedFileDriver) stampedGet(key string, caStmp *Stamp) (value interfa
 	newCaStmp = &Stamp{Date: fi.ModTime(), ExpiDate: time.Now().Add(reg.expiDur), Digest: strconv.FormatInt(fi.Size(), 10)}
 
 	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
-		return "", newCaStmp, nil
+		return nil, newCaStmp, nil
 	}
 
 	// 無効なキャッシュだった。
 
 	if err := readFromJson(path, &value); err != nil {
-		return "", nil, erro.Wrap(err)
+		return nil, nil, erro.Wrap(err)
 	}
 
 	return value, newCaStmp, nil

@@ -44,7 +44,7 @@ func newMemoryDatedKeyValueStore(expiDur time.Duration) *memoryDatedKeyValueStor
 func (reg *memoryDatedKeyValueStore) stampedGet(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
 	stmp := reg.stmps[key]
 	if stmp == nil {
-		return "", nil, nil
+		return nil, nil, nil
 	}
 	newCaStmp = &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
 
@@ -53,7 +53,7 @@ func (reg *memoryDatedKeyValueStore) stampedGet(key string, caStmp *Stamp) (valu
 		return value, newCaStmp, nil
 	}
 
-	return "", newCaStmp, nil
+	return nil, newCaStmp, nil
 }
 
 func (reg *memoryDatedKeyValueStore) stampedPut(key string, value interface{}) (*Stamp, error) {

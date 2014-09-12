@@ -33,16 +33,16 @@ func (reg *cachingDatedKeyValueStore) stampedGet(key string, caStmp *Stamp) (val
 		// キャッシュしてない。
 		value, newCaStmp, err = reg.datedKeyValueStore.stampedGet(key, nil)
 		if err != nil {
-			return "", nil, erro.Wrap(err)
+			return nil, nil, erro.Wrap(err)
 		} else if newCaStmp == nil {
 			// 無い。
-			return "", nil, nil
+			return nil, nil, nil
 		} else {
 			// あった。
 			reg.cache.Put(key, value, newCaStmp)
 			if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
 				// 要求元のキャッシュと同じだった。
-				return "", newCaStmp, nil
+				return nil, newCaStmp, nil
 			} else {
 				return value, newCaStmp, nil
 			}
@@ -53,7 +53,7 @@ func (reg *cachingDatedKeyValueStore) stampedGet(key string, caStmp *Stamp) (val
 
 	stmp := prio.(*Stamp)
 	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
-		return "", stmp, nil
+		return nil, stmp, nil
 	}
 	return val.(string), stmp, nil
 }

@@ -119,7 +119,7 @@ func (reg *synchronizedDriver) stampedGet(key string, caStmp *Stamp) (value inte
 	case value := <-valueCh:
 		return value, <-stmpCh, nil
 	case err := <-errCh:
-		return "", nil, err
+		return nil, nil, err
 	}
 }
 
