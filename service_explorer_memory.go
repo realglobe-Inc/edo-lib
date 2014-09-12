@@ -82,14 +82,25 @@ func serviceExplorerTreeParent(label string) string {
 		// localhost とか。
 		return ""
 	} else if sepIdx := strings.Index(label, "://"); sepIdx < 0 {
-		// localhost/api/hoge とか。
-		return label[:idx]
+		if idx == len(label)-1 {
+			// localhost/api/hoge/ とか。
+			return label[:idx]
+		} else {
+			// localhost/api/hoge/ とか。
+			return label[:idx+1]
+		}
 	} else if idx <= sepIdx+3 {
 		// https:// とか
 		return ""
 	} else {
 		// https://localhost/api/hoge とか。
-		return label[:idx]
+		if idx == len(label)-1 {
+			// localhost/api/hoge/ とか。
+			return label[:idx]
+		} else {
+			// localhost/api/hoge/ とか。
+			return label[:idx+1]
+		}
 	}
 }
 
