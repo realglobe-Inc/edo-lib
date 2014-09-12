@@ -79,49 +79,65 @@ func ErrorToResponseJson(err error) []byte {
 }
 
 func errorToResponse(err error) interface{} {
-
 	raw := erro.Unwrap(err)
 
-	var res struct {
-		Name     string      `json:"name"`
-		Message  string      `json:"message"`
-		SysType  string      `json:"sys_type"`
-		SysData  interface{} `json:"sys_data"`
-		SysStack string      `json:"sys_stack,omitempty"`
-	}
-
-	res.Name = "Error"
-	res.Message = raw.Error()
-
-	// sysType.
-	t := reflect.TypeOf(raw)
-	for t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-
-	sysType := t.Name()
-	if sysType == "" {
-		sysType = "Unknown"
-	}
-	res.SysType = sysType
-
-	res.SysData = raw
-
-	// sysStack.
-	var sysStack string
-	switch r := raw.(type) {
-	case *PanicWrapper:
-		sysStack += r.stack
-	}
-
-	trc, ok := err.(*erro.Tracer)
-	if ok {
-		if len(sysStack) < 0 {
-			sysStack += "\n"
+	switch e := raw.(type) {
+	case *HttpStatusError:
+		return httpStatusErrorToResponse(e)
+	default:
+		var res struct {
+			Name     string      `json:"name"`
+			Message  string      `json:"message"`
+			SysType  string      `json:"sys_type"`
+			SysData  interface{} `json:"sys_data"`
+			SysStack string      `json:"sys_stack,omitempty"`
 		}
-		sysStack += trc.Stack()
-	}
-	res.SysStack = sysStack
 
-	return res
+		res.Name = "Error"
+		res.Message = raw.Error()
+
+		// sysType.
+		t := reflect.TypeOf(raw)
+		for t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
+
+		sysType := t.Name()
+		if sysType == "" {
+			sysType = "Unknown"
+		}
+		res.SysType = sysType
+
+		res.SysData = raw
+
+		// sysStack.
+		var sysStack string
+		switch r := raw.(type) {
+		case *PanicWrapper:
+			sysStack += r.stack
+		}
+
+		trc, ok := err.(*erro.Tracer)
+		if ok {
+			if len(sysStack) < 0 {
+				sysStack += "\n"
+			}
+			sysStack += trc.Stack()
+		}
+		res.SysStack = sysStack
+
+		return &res
+	}
+}
+
+func httpStatusErrorToResponse(err *HttpStatusError) interface{} {
+	var res struct {
+		Status  int    `json:"status"`
+		Message string `json:"message"`
+	}
+
+	res.Status = err.Status()
+	res.Message = err.Message()
+
+	return &res
 }
