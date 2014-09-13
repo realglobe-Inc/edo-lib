@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// 非キャッシュ用。
 type memoryTimeLimitedKeyValueStore struct {
 	util.Cache
 }

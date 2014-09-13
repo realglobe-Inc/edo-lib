@@ -35,6 +35,7 @@ func writeDate(date time.Time, path string) error {
 	return nil
 }
 
+// 非キャッシュ用。
 type fileTimeLimitedKeyValueStore struct {
 	*fileDriver
 }

@@ -7,6 +7,7 @@ type UserNameIndex interface {
 	UserUuid(usrName string) (usrUuid string, err error)
 }
 
+// 非キャッシュ用。
 type userNameIndex struct {
 	keyValueStore
 }

@@ -1,7 +1,34 @@
 package driver
 
-import ()
+import (
+	"github.com/realglobe-Inc/go-lib-rg/erro"
+)
 
+// {
+//   "user": {
+//     attr: XXX,
+//   }
+// }
+
+// 非キャッシュ用。
 func NewWebUserAttributeRegistry(prefix string) UserAttributeRegistry {
-	return newUserAttributeRegistry(newWebKeyValueStore(prefix))
+	return newWebUserAttributeRegistry(newWebKeyValueStore(prefix))
+}
+
+type webUserAttributeRegistry struct {
+	keyValueStore
+}
+
+func newWebUserAttributeRegistry(base keyValueStore) *webUserAttributeRegistry {
+	return &webUserAttributeRegistry{base}
+}
+
+func (reg *webUserAttributeRegistry) UserAttribute(usrUuid, attrName string) (usrAttr interface{}, err error) {
+	val, err := reg.get(userAttributeKey(usrUuid, attrName))
+	if err != nil {
+		return nil, erro.Wrap(err)
+	} else if val == nil {
+		return nil, nil
+	}
+	return val.(map[string]interface{})["user"].(map[string]interface{})[attrName], nil
 }

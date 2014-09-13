@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+// 非キャッシュ用。
 func TestFileUserAttributeRegistry(t *testing.T) {
 	path, err := ioutil.TempDir("", "test_edo_driver")
 	if err != nil {

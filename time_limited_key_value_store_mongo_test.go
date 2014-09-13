@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+// 非キャッシュ用。
 func TestMongoTimeLimitedKeyValueStore(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()

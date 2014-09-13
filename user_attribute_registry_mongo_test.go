@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+// 非キャッシュ用。
 func TestMongoUserAttributeRegistry(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()

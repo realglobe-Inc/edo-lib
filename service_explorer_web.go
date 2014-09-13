@@ -24,13 +24,13 @@ func (reg *webDriver) ServiceUuid(servUri string) (servUuid string, err error) {
 	}
 	var buff struct {
 		Service struct {
-			Uri string
+			Uuid string
 		}
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&buff); err != nil {
 		return "", erro.Wrap(err)
 	}
-	return buff.Service.Uri, nil
+	return buff.Service.Uuid, nil
 }
 
 // キャッシュ用。
@@ -68,13 +68,13 @@ func (reg *webDriver) StampedServiceUuid(servUri string, caStmp *Stamp) (servUui
 		case http.StatusOK:
 			var buff struct {
 				Service struct {
-					Uri string
+					Uuid string
 				}
 			}
 			if err := json.NewDecoder(resp.Body).Decode(&buff); err != nil {
 				return "", nil, erro.Wrap(err)
 			}
-			return buff.Service.Uri, stmp, nil
+			return buff.Service.Uuid, stmp, nil
 		default:
 			panic("implementation error.")
 		}

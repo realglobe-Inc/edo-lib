@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// 非キャッシュ用。
 func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	key := "abcdAbcd1234-+/:"
 	value := "aaa"

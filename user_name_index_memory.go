@@ -2,6 +2,7 @@ package driver
 
 import ()
 
+// 非キャッシュ用。
 type MemoryUserNameIndex struct {
 	keyValueStore
 }

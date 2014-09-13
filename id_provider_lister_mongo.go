@@ -8,8 +8,6 @@ import (
 )
 
 // mongodb をバックエンドに使う。
-
-// 非キャッシュ用。
 // {
 //   "id_provider": {
 //     "uuid": "aaaa-bbbb-cccc",
@@ -17,6 +15,8 @@ import (
 //     "login_uri":  "https://realglobe.jp/login"
 //   }
 // }
+
+// 非キャッシュ用。
 func NewMongoIdProviderLister(url, dbName, collName string) (IdProviderLister, error) {
 	return newMongoDriver(url, dbName, collName, nil)
 }
@@ -37,7 +37,7 @@ func (reg *mongoDriver) IdProviders() ([]*IdProvider, error) {
 }
 
 // キャッシュ用。
-// 非キャッシュ用のドキュメントに加えて、
+// 以下を 1 つだけ追加。
 // {
 //   "stamp": {
 //     "date": "XXXXX",

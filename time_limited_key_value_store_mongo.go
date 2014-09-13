@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// 非キャッシュ用。
 type mongoTimeLimitedKeyValueStore struct {
 	*mongoDriver
 	keyTag string

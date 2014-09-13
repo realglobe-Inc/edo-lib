@@ -2,7 +2,7 @@ package driver
 
 import ()
 
-// サービスの URI から UUID を引く。
+// サービスの URI から UUID を引く。非キャッシュ用。
 type ServiceExplorer interface {
 	ServiceUuid(servUri string) (servUuid string, err error)
 }

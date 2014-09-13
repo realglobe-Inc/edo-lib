@@ -6,6 +6,7 @@ import (
 
 // 事前に、ユーザー UUID a_b-c、属性名 attribute、属性値 abcd で登録しとく。
 
+// 非キャッシュ用。
 func testUserAttributeRegistry(t *testing.T, reg UserAttributeRegistry) {
 	usrUuid := "a_b-c"
 	attrName := "attribute"

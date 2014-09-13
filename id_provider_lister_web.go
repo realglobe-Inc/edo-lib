@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+// {
+//   "id_providers": [
+//     { "uuid": "aaaa-bbbb-cccc", "name": "リアルグローブ", "uri": "https://realglobe.jp/login" },
+//     ...
+//   ]
+// }
+
 // 非キャッシュ用。
 func NewWebIdProviderLister(prefix string) IdProviderLister {
 	return newWebDriver(prefix)
@@ -19,14 +26,18 @@ func (reg *webDriver) IdProviders() ([]*IdProvider, error) {
 		return nil, erro.Wrap(err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
 	}
-	var idps []*IdProvider
-	if err := json.NewDecoder(resp.Body).Decode(&idps); err != nil {
+
+	var res struct {
+		Idps []*IdProvider `json:"id_providers"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return idps, nil
+	return res.Idps, nil
 }
 
 // キャッシュ用。
@@ -54,33 +65,22 @@ func (reg *webDriver) StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, 
 	case http.StatusNotFound:
 		return nil, nil, nil
 	case http.StatusNotModified, http.StatusOK:
-		date := resp.Header.Get("Last-Modified")
-		expiDate := resp.Header.Get("Expires")
-		etag := resp.Header.Get("ETag")
-
-		stmp := &Stamp{Digest: etag}
-		if date != "" {
-			stmp.Date, err = time.Parse(time.RFC1123, date)
-			if err != nil {
-				return nil, nil, erro.Wrap(err)
-			}
-		}
-		if expiDate != "" {
-			stmp.ExpiDate, err = time.Parse(time.RFC1123, expiDate)
-			if err != nil {
-				return nil, nil, erro.Wrap(err)
-			}
+		stmp, err := ParseStampFromResponseHeader(resp.Header)
+		if err != nil {
+			return nil, nil, erro.Wrap(err)
 		}
 
 		switch resp.StatusCode {
 		case http.StatusNotModified:
 			return nil, stmp, nil
 		case http.StatusOK:
-			var idps []*IdProvider
-			if err := json.NewDecoder(resp.Body).Decode(&idps); err != nil {
+			var res struct {
+				Idps []*IdProvider `json:"id_providers"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 				return nil, nil, erro.Wrap(err)
 			}
-			return idps, stmp, nil
+			return res.Idps, stmp, nil
 		default:
 			panic("implementation error.")
 		}
