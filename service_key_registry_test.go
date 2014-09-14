@@ -37,7 +37,7 @@ func TestParseKey(t *testing.T) {
 
 // 非キャッシュ用。
 func testServiceKeyRegistry(t *testing.T, reg ServiceKeyRegistry) {
-	key, err := reg.ServiceKey("a_b-c")
+	key, err := reg.ServiceKey(testServUuid)
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(key, testPublicKey) {
@@ -48,7 +48,7 @@ func testServiceKeyRegistry(t *testing.T, reg ServiceKeyRegistry) {
 // キャッシュ用。
 func testDatedServiceKeyRegistry(t *testing.T, reg DatedServiceKeyRegistry) {
 
-	key1, stmp1, err := reg.StampedServiceKey("a_b-c", nil)
+	key1, stmp1, err := reg.StampedServiceKey(testServUuid, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(key1, testPublicKey) || stmp1 == nil {
@@ -56,7 +56,7 @@ func testDatedServiceKeyRegistry(t *testing.T, reg DatedServiceKeyRegistry) {
 	}
 
 	// キャッシュと同じだから返らない。
-	key2, stmp2, err := reg.StampedServiceKey("a_b-c", stmp1)
+	key2, stmp2, err := reg.StampedServiceKey(testServUuid, stmp1)
 	if err != nil {
 		t.Fatal(err)
 	} else if key2 != nil || stmp2 == nil {
@@ -64,7 +64,7 @@ func testDatedServiceKeyRegistry(t *testing.T, reg DatedServiceKeyRegistry) {
 	}
 
 	// キャッシュが古いから返る。
-	key3, stmp3, err := reg.StampedServiceKey("a_b-c", &Stamp{Date: stmp1.Date.Add(-time.Second), Digest: stmp1.Digest})
+	key3, stmp3, err := reg.StampedServiceKey(testServUuid, &Stamp{Date: stmp1.Date.Add(-time.Second), Digest: stmp1.Digest})
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(key3, testPublicKey) || stmp3 == nil {
@@ -72,7 +72,7 @@ func testDatedServiceKeyRegistry(t *testing.T, reg DatedServiceKeyRegistry) {
 	}
 
 	// ダイジェストが違うから返る。
-	key4, stmp4, err := reg.StampedServiceKey("a_b-c", &Stamp{Date: stmp1.Date, Digest: stmp1.Digest + "a"})
+	key4, stmp4, err := reg.StampedServiceKey(testServUuid, &Stamp{Date: stmp1.Date, Digest: stmp1.Digest + "a"})
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(key3, testPublicKey) || stmp4 == nil {

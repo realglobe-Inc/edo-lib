@@ -9,13 +9,13 @@ import (
 
 // 非キャッシュ用。
 func TestFileServiceKeyRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "a_b-c.json"), testPublicKeyPem); err != nil {
+	if err := writeToJson(filepath.Join(path, testServUuid+".json"), testPublicKeyPem); err != nil {
 		t.Fatal(err)
 	}
 
@@ -24,13 +24,13 @@ func TestFileServiceKeyRegistry(t *testing.T) {
 
 // キャッシュ用。
 func TestFileDatedServiceKeyRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "a_b-c.json"), testPublicKeyPem); err != nil {
+	if err := writeToJson(filepath.Join(path, testServUuid+".json"), testPublicKeyPem); err != nil {
 		t.Fatal(err)
 	}
 

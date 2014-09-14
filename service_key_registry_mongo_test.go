@@ -10,13 +10,13 @@ func TestMongoServiceKeyRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoServiceKeyRegistry(mongoAddr, "test_driver_mongo", "key")
+	reg, err := NewMongoServiceKeyRegistry(mongoAddr, testLabel, "service-key-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*serviceKeyRegistry).keyValueStore.(*mongoKeyValueStore).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*serviceKeyRegistry).keyValueStore.(*mongoKeyValueStore).DB(testLabel).DropDatabase()
 
-	if err := reg.(*serviceKeyRegistry).put("a_b-c", testPublicKeyPem); err != nil {
+	if err := reg.(*serviceKeyRegistry).put(testServUuid, testPublicKeyPem); err != nil {
 		t.Fatal(err)
 	}
 
@@ -29,13 +29,13 @@ func TestMongoDatedServiceKeyRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoDatedServiceKeyRegistry(mongoAddr, "test_driver_mongo", "key", 0)
+	reg, err := NewMongoDatedServiceKeyRegistry(mongoAddr, testLabel, "service-key-registry", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*datedServiceKeyRegistry).datedKeyValueStore.(*mongoDatedKeyValueStore).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedServiceKeyRegistry).datedKeyValueStore.(*mongoDatedKeyValueStore).DB(testLabel).DropDatabase()
 
-	if _, err := reg.(*datedServiceKeyRegistry).stampedPut("a_b-c", testPublicKeyPem); err != nil {
+	if _, err := reg.(*datedServiceKeyRegistry).stampedPut(testServUuid, testPublicKeyPem); err != nil {
 		t.Fatal(err)
 	}
 

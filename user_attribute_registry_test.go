@@ -1,28 +1,36 @@
 package driver
 
 import (
+	"reflect"
 	"testing"
 )
 
-// 事前に、ユーザー UUID a_b-c、属性名 attribute、属性値 abcd で登録しとく。
+// 要事前登録。
 
 // 非キャッシュ用。
 func testUserAttributeRegistry(t *testing.T, reg UserAttributeRegistry) {
-	usrUuid := "a_b-c"
-	attrName := "attribute"
-	attr := "abcd"
+	usrUuid := testUsrUuid
+	attrName := testAttrName
+	usrAttr := testAttr
 
-	usrUuid1, err := reg.UserAttribute(usrUuid, attrName)
+	usrAttr1, err := reg.UserAttribute(usrUuid, attrName)
 	if err != nil {
 		t.Fatal(err)
-	} else if usrUuid1 != attr {
-		t.Error(usrUuid1)
+	} else if !reflect.DeepEqual(usrAttr1, usrAttr) {
+		t.Error(usrAttr1)
 	}
 
-	usrUuid2, err := reg.UserAttribute(usrUuid, attrName+"1")
+	usrAttr2, err := reg.UserAttribute(usrUuid, attrName+"1")
 	if err != nil {
 		t.Fatal(err)
-	} else if usrUuid2 != nil && usrUuid2 != "" {
-		t.Error(usrUuid2)
+	} else if usrAttr2 != nil {
+		t.Error(usrAttr2)
+	}
+
+	usrAttr3, err := reg.UserAttribute(usrUuid+"1", attrName)
+	if err != nil {
+		t.Fatal(err)
+	} else if usrAttr3 != nil {
+		t.Error(usrAttr3)
 	}
 }

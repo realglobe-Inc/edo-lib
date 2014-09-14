@@ -12,16 +12,16 @@ func TestMongoServiceExplorer(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoServiceExplorer(mongoAddr, "test_driver_mongo", "idp")
+	reg, err := NewMongoServiceExplorer(mongoAddr, testLabel, "service-explorer")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
-	if err := reg.(*mongoDriver).DB("test_driver_mongo").C("idp").Insert(bson.M{
+	if err := reg.(*mongoDriver).DB(testLabel).C("service-explorer").Insert(bson.M{
 		"service": bson.M{
-			"uuid": "a_b-c",
-			"uri":  "https://localhost:1234/api",
+			"uuid": testServUuid,
+			"uri":  testUri,
 		},
 	}); err != nil {
 		t.Fatal(err)
@@ -36,16 +36,16 @@ func TestMongoDatedServiceExplorer(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoDatedServiceExplorer(mongoAddr, "test_driver_mongo", "idp", 0)
+	reg, err := NewMongoDatedServiceExplorer(mongoAddr, testLabel, "service-explorer", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*datedMongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedMongoDriver).DB(testLabel).DropDatabase()
 
-	if err := reg.(*datedMongoDriver).DB("test_driver_mongo").C("idp").Insert(bson.M{
+	if err := reg.(*datedMongoDriver).DB(testLabel).C("service-explorer").Insert(bson.M{
 		"service": bson.M{
-			"uuid": "a_b-c",
-			"uri":  "https://localhost:1234/api",
+			"uuid": testServUuid,
+			"uri":  testUri,
 		},
 		"stamp": &Stamp{
 			Date:   time.Now(),

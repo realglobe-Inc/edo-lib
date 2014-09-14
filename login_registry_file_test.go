@@ -9,13 +9,13 @@ import (
 
 // 非キャッシュ用。
 func TestFileLoginRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "abc-012.json"), "a_b-c"); err != nil {
+	if err := writeToJson(filepath.Join(path, testAccToken+".json"), testUsrName); err != nil {
 		t.Fatal(err)
 	}
 

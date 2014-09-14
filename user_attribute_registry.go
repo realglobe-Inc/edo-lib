@@ -2,7 +2,7 @@ package driver
 
 import ()
 
-// ユーザー名からユーザー UUID を引く。
+// ユーザーの属性を返す。
 type UserAttributeRegistry interface {
 	UserAttribute(usrUuid, attrName string) (usrAttr interface{}, err error)
 }

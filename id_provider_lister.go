@@ -4,13 +4,12 @@ import ()
 
 // ID プロバイダ選択時に列挙する情報。
 type IdProvider struct {
-	Uuid     string `json:"uuid"       bson:"uuid"`
-	Name     string `json:"name"       bson:"name"`
-	LoginUri string `json:"login_uri"  bson:"login_uri"`
+	Name string `json:"name" bson:"name"`
+	Uuid string `json:"uuid" bson:"uuid"`
 }
 
 func (idp *IdProvider) String() string {
-	return idp.Uuid + "," + idp.Name + "," + idp.LoginUri
+	return idp.Uuid + "," + idp.Name
 }
 
 // ID プロバイダの列挙。

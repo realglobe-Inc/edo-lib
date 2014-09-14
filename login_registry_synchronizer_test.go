@@ -7,6 +7,6 @@ import (
 // 非キャッシュ用。
 func TestSynchronizedLoginRegistry(t *testing.T) {
 	reg := NewMemoryLoginRegistry()
-	reg.AddUser("abc-012", "a_b-c")
+	reg.AddUser(testAccToken, testUsrName)
 	testLoginRegistry(t, NewSynchronizedLoginRegistry(reg))
 }

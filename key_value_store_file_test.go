@@ -8,7 +8,7 @@ import (
 
 // 非キャッシュ用。
 func TestFileKeyValueStore(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -19,7 +19,7 @@ func TestFileKeyValueStore(t *testing.T) {
 
 // キャッシュ用。
 func TestFileDatedKeyValueStore(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}

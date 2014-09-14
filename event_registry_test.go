@@ -60,8 +60,8 @@ func TestEventTreeConversion(t *testing.T) {
 
 // 非キャッシュ用。
 func testEventRegistry(t *testing.T, reg EventRegistry) {
-	usrUuid := "a_b-c"
-	event := "/d/e"
+	usrUuid := testUsrUuid
+	event := "/sample/event"
 	var hndl Handler = []*HandlerElement{&HandlerElement{Url: "https://localhost"}}
 
 	hndl1, err := reg.Handler(usrUuid, event)

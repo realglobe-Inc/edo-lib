@@ -10,11 +10,11 @@ func TestMongoJsRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoJsRegistry(mongoAddr, "test_driver_mongo", "js")
+	reg, err := NewMongoJsRegistry(mongoAddr, testLabel, "js-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
 	testJsRegistry(t, reg)
 }
@@ -25,11 +25,11 @@ func TestMongoJsBackendRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoJsBackendRegistry(mongoAddr, "test_driver_mongo", "js", 0)
+	reg, err := NewMongoJsBackendRegistry(mongoAddr, testLabel, "js-registry", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*datedMongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedMongoDriver).DB(testLabel).DropDatabase()
 
 	testJsBackendRegistry(t, reg)
 }

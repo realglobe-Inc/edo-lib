@@ -9,13 +9,13 @@ import (
 
 // 非キャッシュ用。
 func TestFileUserAttributeRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, escapeToFileName(userAttributeKey("a_b-c", "attribute"))+".json"), "abcd"); err != nil {
+	if err := writeToJson(filepath.Join(path, escapeToFileName(userAttributeKey(testUsrUuid, testAttrName))+".json"), testAttr); err != nil {
 		t.Fatal(err)
 	}
 

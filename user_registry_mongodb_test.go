@@ -10,11 +10,11 @@ func TestMongoUserRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoUserRegistry(mongoAddr, "test_driver_mongo", "user")
+	reg, err := NewMongoUserRegistry(mongoAddr, testLabel, "user-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
 	testUserRegistry(t, reg)
 }

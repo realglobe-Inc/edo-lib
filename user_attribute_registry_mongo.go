@@ -5,7 +5,7 @@ import (
 )
 
 // {
-//   "user_attribute_key": "aaa",
+//   "user_attribute_key": "user-attribute-no-key",
 //   "user_attribute": XXX
 // }
 

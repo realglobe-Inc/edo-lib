@@ -13,10 +13,6 @@ func TestCachingDatedIdProviderLister(t *testing.T) {
 	// ////////////////////////////////
 
 	reg := NewMemoryDatedIdProviderLister(0)
-	reg.AddIdProvider(&IdProvider{
-		Uuid:     "a_b-c",
-		Name:     "ABC",
-		LoginUri: "https://localhost:1234",
-	})
+	reg.SetIdProviders(testIdps)
 	testDatedIdProviderLister(t, newCachingDatedIdProviderLister(reg))
 }

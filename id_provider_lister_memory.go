@@ -9,25 +9,18 @@ import (
 
 // 非キャッシュ用。
 type MemoryIdProviderLister struct {
-	idps map[string]*IdProvider
+	idps []*IdProvider
 }
 
 func NewMemoryIdProviderLister() *MemoryIdProviderLister {
-	return &MemoryIdProviderLister{map[string]*IdProvider{}}
+	return &MemoryIdProviderLister{[]*IdProvider{}}
 }
 
 func (reg *MemoryIdProviderLister) IdProviders() ([]*IdProvider, error) {
-	idps := []*IdProvider{}
-	for _, idp := range reg.idps {
-		idps = append(idps, idp)
-	}
-	return idps, nil
+	return reg.idps, nil
 }
-func (reg *MemoryIdProviderLister) AddIdProvider(idp *IdProvider) {
-	reg.idps[idp.Uuid] = idp
-}
-func (reg *MemoryIdProviderLister) RemoveIdProvider(idpUuid string) {
-	delete(reg.idps, idpUuid)
+func (reg *MemoryIdProviderLister) SetIdProviders(idps []*IdProvider) {
+	reg.idps = idps
 }
 
 // キャッシュ用。
@@ -51,13 +44,8 @@ func (reg *MemoryDatedIdProviderLister) StampedIdProviders(caStmp *Stamp) ([]*Id
 
 	return nil, newCaStmp, nil
 }
-func (reg *MemoryDatedIdProviderLister) AddIdProvider(idp *IdProvider) {
-	reg.MemoryIdProviderLister.AddIdProvider(idp)
-	dig, _ := strconv.Atoi(reg.stmp.Digest)
-	reg.stmp = &Stamp{Date: time.Now(), Digest: strconv.Itoa(dig + 1)}
-}
-func (reg *MemoryDatedIdProviderLister) RemoveIdProvider(idpUuid string) {
-	reg.MemoryIdProviderLister.RemoveIdProvider(idpUuid)
+func (reg *MemoryDatedIdProviderLister) SetIdProviders(idps []*IdProvider) {
+	reg.MemoryIdProviderLister.SetIdProviders(idps)
 	dig, _ := strconv.Atoi(reg.stmp.Digest)
 	reg.stmp = &Stamp{Date: time.Now(), Digest: strconv.Itoa(dig + 1)}
 }

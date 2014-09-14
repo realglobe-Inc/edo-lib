@@ -10,18 +10,16 @@ func TestMongoNameRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoNameRegistry(mongoAddr, "test_driver_mongo", "name")
+	reg, err := NewMongoNameRegistry(mongoAddr, testLabel, "name-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
-	if err := reg.(*mongoDriver).DB("test_driver_mongo").C("name").Insert(
-		&mongoAddress{"c.b.a", "c.localhost"},
-		&mongoAddress{"d.b.a", "d.localhost"},
-		&mongoAddress{"b.a", "localhost"},
-	); err != nil {
-		t.Fatal(err)
+	for name, addr := range testNameAddrMap {
+		if err := reg.(*mongoDriver).DB(testLabel).C("name-registry").Insert(&mongoAddress{name, addr}); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	testNameRegistry(t, reg)

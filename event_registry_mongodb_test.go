@@ -10,11 +10,11 @@ func TestMongoEventRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoEventRegistry(mongoAddr, "test_driver_mongo", "event")
+	reg, err := NewMongoEventRegistry(mongoAddr, testLabel, "event-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
 	testEventRegistry(t, reg)
 }

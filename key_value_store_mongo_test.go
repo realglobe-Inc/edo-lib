@@ -10,11 +10,11 @@ func TestMongoKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := newMongoKeyValueStore(mongoAddr, "test_driver_mongo", "kvs", "key", "value")
+	reg, err := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", "value")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.DB("test_driver_mongo").DropDatabase()
+	defer reg.DB(testLabel).DropDatabase()
 
 	testKeyValueStore(t, reg)
 }
@@ -25,11 +25,11 @@ func TestMongoDatedKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := newMongoDatedKeyValueStore(mongoAddr, "test_driver_mongo", "kvs", 0, "key", "value")
+	reg, err := newMongoDatedKeyValueStore(mongoAddr, testLabel, "key-value-store", 0, "key", "value")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.DB("test_driver_mongo").DropDatabase()
+	defer reg.DB(testLabel).DropDatabase()
 
 	testDatedKeyValueStore(t, reg)
 }

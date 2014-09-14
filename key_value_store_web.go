@@ -126,15 +126,10 @@ func (reg *webDriver) stampedGet(key string, caStmp *Stamp) (value interface{}, 
 		case http.StatusNotModified:
 			return nil, stmp, nil
 		case http.StatusOK:
-			var buff struct {
-				Id_provider struct {
-					Query_uri string
-				}
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&buff); err != nil {
+			if err := json.NewDecoder(resp.Body).Decode(&value); err != nil {
 				return nil, nil, erro.Wrap(err)
 			}
-			return buff.Id_provider.Query_uri, stmp, nil
+			return value, stmp, nil
 		default:
 			panic("implementation error.")
 		}

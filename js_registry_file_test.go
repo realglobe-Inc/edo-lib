@@ -8,7 +8,7 @@ import (
 
 // キャッシュ用。
 func TestFileJsRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -19,7 +19,7 @@ func TestFileJsRegistry(t *testing.T) {
 
 // 非キャッシュ用。
 func TestFileJsBackendRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}

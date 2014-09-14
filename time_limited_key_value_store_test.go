@@ -1,18 +1,17 @@
 package driver
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
 
 // 非キャッシュ用。
 func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
-	key := "abcdAbcd1234-+/:"
-	value := "aaa"
-	expiDur := 100 * time.Millisecond
+	expiDur := 50 * time.Millisecond
 
 	// まだ無い。
-	value1, err := reg.Get(key)
+	value1, err := reg.Get(testKey)
 	if err != nil {
 		t.Fatal(err)
 	} else if value1 != nil {
@@ -20,25 +19,25 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// 入れる。
-	if err := reg.Put(key, value, time.Now().Add(expiDur)); err != nil {
+	if err := reg.Put(testKey, testValue, time.Now().Add(expiDur)); err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	value2, err := reg.Get(key)
+	value2, err := reg.Get(testKey)
 	if err != nil {
 		t.Fatal(err)
-	} else if value2 == nil || value2.(string) != value {
+	} else if value2 == nil || !reflect.DeepEqual(value2, testValue) {
 		t.Error(value2)
 	}
 
 	// 消す。
-	if err := reg.Remove(key); err != nil {
+	if err := reg.Remove(testKey); err != nil {
 		t.Fatal(err)
 	}
 
 	// もう無い。
-	value3, err := reg.Get(key)
+	value3, err := reg.Get(testKey)
 	if err != nil {
 		t.Fatal(err)
 	} else if value3 != nil {
@@ -46,15 +45,15 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// また入れる。
-	if err := reg.Put(key, value, time.Now().Add(expiDur)); err != nil {
+	if err := reg.Put(testKey, testValue, time.Now().Add(expiDur)); err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	value4, err := reg.Get(key)
+	value4, err := reg.Get(testKey)
 	if err != nil {
 		t.Fatal(err)
-	} else if value4 == nil || value4.(string) != value {
+	} else if value4 == nil || !reflect.DeepEqual(value4, testValue) {
 		t.Error(value4)
 	}
 
@@ -62,7 +61,7 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	time.Sleep(2 * expiDur)
 
 	// もう無い。
-	value5, err := reg.Get(key)
+	value5, err := reg.Get(testKey)
 	if err != nil {
 		t.Fatal(err)
 	} else if value5 != nil {

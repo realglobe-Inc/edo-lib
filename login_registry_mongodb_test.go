@@ -10,14 +10,14 @@ func TestMongoLoginRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoLoginRegistry(mongoAddr, "test_driver_mongo", "login")
+	reg, err := NewMongoLoginRegistry(mongoAddr, testLabel, "login-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
-	if err := reg.(*mongoDriver).DB("test_driver_mongo").C("login").Insert(
-		&mongoUser{"abc-012", "a_b-c"},
+	if err := reg.(*mongoDriver).DB(testLabel).C("login-registry").Insert(
+		&mongoUser{testAccToken, testUsrName},
 	); err != nil {
 		t.Fatal(err)
 	}

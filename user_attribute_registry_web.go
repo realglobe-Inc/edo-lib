@@ -6,7 +6,7 @@ import (
 
 // {
 //   "user": {
-//     attr: XXX,
+//     attrNameX: XXX,
 //   }
 // }
 

@@ -10,11 +10,11 @@ func TestMongoJobRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoJobRegistry(mongoAddr, "test_driver_mongo", "job")
+	reg, err := NewMongoJobRegistry(mongoAddr, testLabel, "job-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
 	testJobRegistry(t, reg)
 }
@@ -24,11 +24,11 @@ func TestMongoJobRegistryRemoveOld(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoJobRegistry(mongoAddr, "test_driver_mongo", "job")
+	reg, err := NewMongoJobRegistry(mongoAddr, testLabel, "job-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
 	testJobRegistryRemoveOld(t, reg)
 }

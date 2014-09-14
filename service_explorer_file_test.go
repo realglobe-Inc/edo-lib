@@ -9,13 +9,13 @@ import (
 
 // 非キャッシュ用。
 func TestFileServiceExplorer(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "list.json"), map[string]string{"https://localhost:1234/api": "a_b-c"}); err != nil {
+	if err := writeToJson(filepath.Join(path, "list.json"), map[string]string{testUri: testServUuid}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -24,13 +24,13 @@ func TestFileServiceExplorer(t *testing.T) {
 
 // キャッシュ用。
 func TestFileDatedServiceExplorer(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "list.json"), map[string]string{"https://localhost:1234/api": "a_b-c"}); err != nil {
+	if err := writeToJson(filepath.Join(path, "list.json"), map[string]string{testUri: testServUuid}); err != nil {
 		t.Fatal(err)
 	}
 

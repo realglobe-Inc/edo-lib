@@ -8,7 +8,7 @@ import (
 
 // 非キャッシュ用。
 func TestFileUserRegistry(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}

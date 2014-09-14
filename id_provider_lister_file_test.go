@@ -9,13 +9,13 @@ import (
 
 // 非キャッシュ用。
 func TestFileIdProviderLister(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "list.json"), []*IdProvider{&IdProvider{"a_b-c", "ABC", "https://localhost:1234"}}); err != nil {
+	if err := writeToJson(filepath.Join(path, "list.json"), testIdps); err != nil {
 		t.Fatal(err)
 	}
 
@@ -24,13 +24,13 @@ func TestFileIdProviderLister(t *testing.T) {
 
 // キャッシュ用。
 func TestFileDatedIdProviderLister(t *testing.T) {
-	path, err := ioutil.TempDir("", "test_edo_driver")
+	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "list.json"), []*IdProvider{&IdProvider{"a_b-c", "ABC", "https://localhost:1234"}}); err != nil {
+	if err := writeToJson(filepath.Join(path, "list.json"), testIdps); err != nil {
 		t.Fatal(err)
 	}
 

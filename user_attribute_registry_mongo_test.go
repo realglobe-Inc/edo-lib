@@ -10,13 +10,13 @@ func TestMongoUserAttributeRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoUserAttributeRegistry(mongoAddr, "test_driver_mongo", "test")
+	reg, err := NewMongoUserAttributeRegistry(mongoAddr, testLabel, "user-attribute-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*userAttributeRegistry).keyValueStore.(*mongoKeyValueStore).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*userAttributeRegistry).keyValueStore.(*mongoKeyValueStore).DB(testLabel).DropDatabase()
 
-	if err := reg.(*userAttributeRegistry).put(userAttributeKey("a_b-c", "attribute"), "abcd"); err != nil {
+	if err := reg.(*userAttributeRegistry).put(userAttributeKey(testUsrUuid, testAttrName), testAttr); err != nil {
 		t.Fatal(err)
 	}
 

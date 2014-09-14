@@ -10,13 +10,13 @@ func TestMongoUserNameIndex(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoUserNameIndex(mongoAddr, "test_driver_mongo", "test")
+	reg, err := NewMongoUserNameIndex(mongoAddr, testLabel, "user-name-index")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*userNameIndex).keyValueStore.(*mongoKeyValueStore).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*userNameIndex).keyValueStore.(*mongoKeyValueStore).DB(testLabel).DropDatabase()
 
-	if err := reg.(*userNameIndex).put("a_b-c", "aaaa-bbbb-cccc"); err != nil {
+	if err := reg.(*userNameIndex).put(testUsrName, testUsrUuid); err != nil {
 		t.Fatal(err)
 	}
 

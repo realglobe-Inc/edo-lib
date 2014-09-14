@@ -12,20 +12,16 @@ func TestMongoIdProviderLister(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoIdProviderLister(mongoAddr, "test_driver_mongo", "idp")
+	reg, err := NewMongoIdProviderLister(mongoAddr, testLabel, "id-provider-lister")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*mongoDriver).DB(testLabel).DropDatabase()
 
-	if err := reg.(*mongoDriver).DB("test_driver_mongo").C("idp").Insert(bson.M{
-		"id_provider": &IdProvider{
-			Uuid:     "a_b-c",
-			Name:     "ABC",
-			LoginUri: "https://localhost:1234",
-		},
-	}); err != nil {
-		t.Fatal(err)
+	for _, idp := range testIdps {
+		if err := reg.(*mongoDriver).DB(testLabel).C("id-provider-lister").Insert(bson.M{"id_provider": idp}); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	testIdProviderLister(t, reg)
@@ -37,20 +33,13 @@ func TestMongoDatedIdProviderLister(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoDatedIdProviderLister(mongoAddr, "test_driver_mongo", "idp", 0)
+	reg, err := NewMongoDatedIdProviderLister(mongoAddr, testLabel, "id-provider-lister", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*datedMongoDriver).DB("test_driver_mongo").DropDatabase()
+	defer reg.(*datedMongoDriver).DB(testLabel).DropDatabase()
 
-	if err := reg.(*datedMongoDriver).DB("test_driver_mongo").C("idp").Insert(
-		bson.M{
-			"id_provider": &IdProvider{
-				Uuid:     "a_b-c",
-				Name:     "ABC",
-				LoginUri: "https://localhost:1234",
-			},
-		},
+	if err := reg.(*datedMongoDriver).DB(testLabel).C("id-provider-lister").Insert(
 		bson.M{
 			"stamp": &Stamp{
 				Date:   time.Now(),
@@ -59,6 +48,11 @@ func TestMongoDatedIdProviderLister(t *testing.T) {
 		},
 	); err != nil {
 		t.Fatal(err)
+	}
+	for _, idp := range testIdps {
+		if err := reg.(*datedMongoDriver).DB(testLabel).C("id-provider-lister").Insert(bson.M{"id_provider": idp}); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	testDatedIdProviderLister(t, reg)

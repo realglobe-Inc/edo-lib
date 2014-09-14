@@ -59,11 +59,11 @@ func TestNameTreeConversion(t *testing.T) {
 	}
 }
 
-// 事前に、
-// c.b.a に c.localhost、
-// d.b.a に d.localhost、
-// b.a   に   localhost、
-// を登録しとく。
+var testNameAddrMap = map[string]string{
+	"c.b.a": "c.localhost",
+	"d.b.a": "d.localhost",
+	"b.a":   "localhost",
+}
 
 // 非キャッシュ用。
 func testNameRegistry(t *testing.T, reg NameRegistry) {
