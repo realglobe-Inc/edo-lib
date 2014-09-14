@@ -52,3 +52,20 @@ func InitFluentdLog(root string, lv level.Level, addr, tag string) error {
 	log.Debug("Logging into fluentd " + addr + ".")
 	return nil
 }
+
+func SetupLog(root, logType string, logLv level.Level, logPath, fluAddr, fluTag string) error {
+	switch logType {
+	case "":
+	case "file":
+		if err := InitFileLog(root, logLv, logPath); err != nil {
+			return erro.Wrap(err)
+		}
+	case "fluentd":
+		if err := InitFluentdLog(root, logLv, fluAddr, fluTag); err != nil {
+			return erro.Wrap(err)
+		}
+	default:
+		return erro.New("invalid log type " + logType + ".")
+	}
+	return nil
+}
