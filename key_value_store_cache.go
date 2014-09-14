@@ -55,7 +55,7 @@ func (reg *cachingDatedKeyValueStore) stampedGet(key string, caStmp *Stamp) (val
 	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
 		return nil, stmp, nil
 	}
-	return val.(string), stmp, nil
+	return val, stmp, nil
 }
 
 func (reg *cachingDatedKeyValueStore) stampedPut(key string, value interface{}) (*Stamp, error) {

@@ -24,7 +24,7 @@ func newWebIdProviderAttributeRegistry(base keyValueStore) *webIdProviderAttribu
 }
 
 func (reg *webIdProviderAttributeRegistry) IdProviderAttribute(idpUuid, attrName string) (idpAttr interface{}, err error) {
-	val, err := reg.get(idpUuid)
+	val, err := reg.get(idProviderAttributeKey(idpUuid, attrName))
 	if err != nil {
 		return nil, erro.Wrap(err)
 	} else if val == nil {
@@ -48,7 +48,7 @@ func newWebDatedIdProviderAttributeRegistry(base datedKeyValueStore) *webDatedId
 }
 
 func (reg *webDatedIdProviderAttributeRegistry) StampedIdProviderAttribute(idpUuid, attrName string, caStmp *Stamp) (idpAttr interface{}, newCaStmp *Stamp, err error) {
-	val, newCaStmp, err := reg.stampedGet(idpUuid, caStmp)
+	val, newCaStmp, err := reg.stampedGet(idProviderAttributeKey(idpUuid, attrName), caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
