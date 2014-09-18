@@ -86,7 +86,7 @@ func serviceExplorerTreeParent(label string) string {
 			// localhost/api/hoge/ とか。
 			return label[:idx]
 		} else {
-			// localhost/api/hoge/ とか。
+			// localhost/api/hoge とか。
 			return label[:idx+1]
 		}
 	} else if idx <= sepIdx+3 {
@@ -98,7 +98,7 @@ func serviceExplorerTreeParent(label string) string {
 			// localhost/api/hoge/ とか。
 			return label[:idx]
 		} else {
-			// localhost/api/hoge/ とか。
+			// localhost/api/hoge とか。
 			return label[:idx+1]
 		}
 	}
