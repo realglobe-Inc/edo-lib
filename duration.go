@@ -18,10 +18,10 @@ func (dur *Duration) MarshalJSON() ([]byte, error) {
 
 func (dur *Duration) UnmarshalJSON(b []byte) error {
 	var buff string
-	err := json.Unmarshal(b, &buff)
-	if err != nil {
+	if err := json.Unmarshal(b, &buff); err != nil {
 		return erro.Wrap(err)
 	}
+	var err error
 	dur.Duration, err = time.ParseDuration(buff)
 	if err != nil {
 		return erro.Wrap(err)
