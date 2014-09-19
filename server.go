@@ -36,6 +36,7 @@ func Serve(socType, socPath string, socPort int, protType string, routes map[str
 	resetInterval := time.Minute
 	for {
 		if brk, err := func() (brk bool, err error) {
+
 			var lis net.Listener
 			defer func() {
 				if lis != nil {
@@ -68,6 +69,7 @@ func Serve(socType, socPath string, socPort int, protType string, routes map[str
 			go func() {
 				select {
 				case <-shutCh:
+					shutCh <- struct{}{}
 					subShutCh <- true
 					lis.Close()
 				case <-stopCh:
@@ -115,7 +117,13 @@ func Serve(socType, socPath string, socPort int, protType string, routes map[str
 
 			sleepTime = serverNextSleepTime(sleepTime, resetInterval)
 			log.Info("Retry after ", sleepTime)
-			time.Sleep(sleepTime)
+
+			timeCh := time.After(sleepTime)
+			select {
+			case <-shutCh:
+				return nil
+			case <-timeCh:
+			}
 		}
 	}
 
