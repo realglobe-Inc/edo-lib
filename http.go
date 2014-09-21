@@ -6,7 +6,10 @@ import (
 	"net/http/httputil"
 )
 
-const ContentTypeJson string = "application/json"
+const (
+	ContentTypeJson string = "application/json"
+	ContentTypeHtml        = "text/html"
+)
 
 func LogRequest(r *http.Request, useBody bool) {
 	buff, _ := httputil.DumpRequest(r, useBody)
