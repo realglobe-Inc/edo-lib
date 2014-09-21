@@ -2,6 +2,7 @@ package util
 
 import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"net/http"
 	"regexp"
 	"strings"
 )
@@ -34,4 +35,25 @@ func init() {
 
 func MergeSlash(str string) string {
 	return slashes.ReplaceAllString(str, "/")
+}
+
+func UrlPrefix(r *http.Request) string {
+	var prefix string
+	if s := r.Header.Get("X-Forwarded-Proto"); s != "" {
+		prefix = s
+	} else if s := r.Header.Get("X-Forwarded-Ssl"); s == "on" {
+		prefix = "https"
+	} else {
+		prefix = "http"
+	}
+
+	prefix += "://"
+
+	if h := r.Header.Get("X-Forwarded-Host"); h != "" {
+		prefix += h
+	} else {
+		prefix += r.Host
+	}
+
+	return prefix
 }
