@@ -59,7 +59,7 @@ func HashFunctionString(hash crypto.Hash) string {
 	}
 }
 
-func ParsePublicKey(pemStr string) (*rsa.PublicKey, error) {
+func ParseRsaPublicKey(pemStr string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
 		return nil, erro.New("no public key.")

@@ -12,20 +12,20 @@ func TestCache(t *testing.T) {
 		return prio1.(time.Time).Before(prio2.(time.Time))
 	})
 
-	ca.Put("key", "val", time.Unix(1, 0))
-	ca.Put("key2", "val2", time.Unix(2, 0))
+	ca.Put("key", "value", time.Unix(1, 0))
+	ca.Put("key2", "value2", time.Unix(2, 0))
 
-	if val, _ := ca.Get("key"); val != "val" {
-		t.Error(val)
+	if value, _ := ca.Get("key"); value != "value" {
+		t.Error(value)
 	}
 
 	ca.Update("key2", time.Unix(3, 0))
-	ca.CleanLesser(time.Unix(2, 0))
+	ca.CleanLower(time.Unix(2, 0))
 
-	if val, _ := ca.Get("key"); val != nil {
-		t.Error(val)
-	} else if val, _ := ca.Get("key2"); val != "val2" {
-		t.Error(val)
+	if value, _ := ca.Get("key"); value != nil {
+		t.Error(value)
+	} else if value, _ := ca.Get("key2"); value != "value2" {
+		t.Error(value)
 	}
 }
 
@@ -37,15 +37,15 @@ func TestCacheManyElements(t *testing.T) {
 	prios := []time.Time{}
 	for i := 0; i < 100; i++ {
 		prios = append(prios, time.Unix(rand.Int63n(3000*365*24*60*60), 0))
-		ca.Put("key"+strconv.Itoa(i), "val"+strconv.Itoa(i), prios[i])
+		ca.Put("key"+strconv.Itoa(i), "value"+strconv.Itoa(i), prios[i])
 	}
 
 	thres := time.Unix(rand.Int63(), 0)
-	ca.CleanLesser(thres)
+	ca.CleanLower(thres)
 
 	for i := 0; i < 100; i++ {
-		val, _ := ca.Get("key" + strconv.Itoa(i))
-		if val == nil {
+		value, _ := ca.Get("key" + strconv.Itoa(i))
+		if value == nil {
 			continue
 		}
 		if prios[i].Before(thres) {

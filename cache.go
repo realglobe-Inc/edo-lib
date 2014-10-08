@@ -9,15 +9,19 @@ import (
 
 type Cache interface {
 	// 入れる。
-	Put(key, val, prio interface{})
+	Put(key, value, prio interface{})
 	// 取り出す。
-	Get(key interface{}) (val, prio interface{})
+	Get(key interface{}) (value, prio interface{})
 	// 優先度を変えつつ取り出す。LRU のとき使う。
-	Update(key, prio interface{}) (val interface{})
+	Update(key, prio interface{}) (value interface{})
 	// 基準以下を削除。
-	CleanLesser(prioThres interface{})
+	// 優先度 nil はいかなる非 nil な優先度より低いとする。
+	// よって、Update で優先度を nil にしてから、CleanLower すれば削除できる。
+	// nil で CleanLower したときは優先度を nil のものだけを削除する。
+	CleanLower(prioThres interface{})
 }
 
+// less は非 nil の優先度 2 つを比べる関数。優先度 nil に対する挙動は指定できない。
 func NewCache(less func(interface{}, interface{}) bool) Cache {
 	ca := &cache{less, []*cacheElement{}, map[interface{}]int{}}
 	heap.Init(ca)
@@ -33,20 +37,20 @@ type cache struct {
 	keyToIdx  map[interface{}]int
 }
 
-func (ca *cache) Put(key, val, prio interface{}) {
-	ca.Push(&cacheElement{key, val, prio})
+func (ca *cache) Put(key, value, prio interface{}) {
+	ca.Push(&cacheElement{key, value, prio})
 }
 
-func (ca *cache) Get(key interface{}) (val, prio interface{}) {
+func (ca *cache) Get(key interface{}) (value, prio interface{}) {
 	idx, ok := ca.keyToIdx[key]
 	if !ok {
 		return nil, nil
 	}
 	elem := ca.prioQueue[idx]
-	return elem.val, elem.prio
+	return elem.value, elem.prio
 }
 
-func (ca *cache) Update(key, prio interface{}) (val interface{}) {
+func (ca *cache) Update(key, prio interface{}) (value interface{}) {
 	idx, ok := ca.keyToIdx[key]
 	if !ok {
 		return nil
@@ -54,12 +58,16 @@ func (ca *cache) Update(key, prio interface{}) (val interface{}) {
 	elem := ca.prioQueue[idx]
 	elem.prio = prio
 	heap.Fix(ca, idx)
-	return elem.val
+	return elem.value
 }
 
-func (ca *cache) CleanLesser(prioThres interface{}) {
+func (ca *cache) CleanLower(prioThres interface{}) {
 	for ca.Len() > 0 {
-		if ca.less(ca.prioQueue[0].prio, prioThres) {
+		if ca.prioQueue[0].prio == nil {
+			heap.Pop(ca)
+		} else if prioThres == nil {
+			break
+		} else if ca.less(ca.prioQueue[0].prio, prioThres) {
 			heap.Pop(ca)
 		} else {
 			break
@@ -68,9 +76,9 @@ func (ca *cache) CleanLesser(prioThres interface{}) {
 }
 
 type cacheElement struct {
-	key  interface{}
-	val  interface{}
-	prio interface{}
+	key   interface{}
+	value interface{}
+	prio  interface{}
 }
 
 func (ca *cache) Len() int {
@@ -78,7 +86,17 @@ func (ca *cache) Len() int {
 }
 
 func (ca *cache) Less(i, j int) bool {
-	return ca.less(ca.prioQueue[i].prio, ca.prioQueue[j].prio)
+	if ca.prioQueue[i].prio == nil {
+		// nil < 非 nil。
+		// nil == nil。
+		return ca.prioQueue[j].prio != nil
+	} else if ca.prioQueue[j].prio == nil {
+		// 非 nil > nil。
+		return false
+	} else {
+		// 非 nil ? 非 nil。
+		return ca.less(ca.prioQueue[i].prio, ca.prioQueue[j].prio)
+	}
 }
 func (ca *cache) Swap(i, j int) {
 	ca.prioQueue[i], ca.prioQueue[j] = ca.prioQueue[j], ca.prioQueue[i]
