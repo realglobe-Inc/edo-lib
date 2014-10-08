@@ -3,43 +3,46 @@ package driver
 import (
 	"encoding/json"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"net/http"
 )
 
-// 非キャッシュ用。
-func NewWebNameRegistry(prefix string) NameRegistry {
-	return newWebDriver(prefix)
+// data を JSON として、[]string にデコードする。
+func stringArrayUnmarshal(data []byte) (interface{}, error) {
+	var res []string
+	if err := json.Unmarshal(data, &res); err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return res, nil
 }
 
-func (reg *webDriver) Address(name string) (addr string, err error) {
-	resp, err := reg.Get(reg.prefix + "/node/" + name)
-	if err != nil {
-		return "", erro.Wrap(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return "", nil
-	} else if resp.StatusCode != http.StatusOK {
-		return "", erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&addr); err != nil {
-		return "", erro.Wrap(err)
-	}
-	return addr, nil
+type webNameRegistry struct {
+	addr  KeyValueStore
+	addrs KeyValueStore
 }
-func (reg *webDriver) Addresses(name string) (addrs []string, err error) {
-	resp, err := reg.Get(reg.prefix + "/tree/" + name)
+
+// スレッドセーフ。
+func NewWebNameRegistry(prefix string) NameRegistry {
+	return &webNameRegistry{
+		NewWebKeyValueStore(prefix, nil, jsonUnmarshal),
+		NewWebKeyValueStore(prefix, nil, stringArrayUnmarshal),
+	}
+}
+
+func (reg *webNameRegistry) Address(name string, caStmp *Stamp) (addr string, newCaStmp *Stamp, err error) {
+	value, newCaStmp, err := reg.addr.Get("node/"+name, caStmp)
 	if err != nil {
-		return nil, erro.Wrap(err)
+		return "", nil, erro.Wrap(err)
+	} else if value == nil || value == "" {
+		return "", newCaStmp, nil
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
-	} else if resp.StatusCode != http.StatusOK {
-		return nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
+	return value.(string), newCaStmp, nil
+}
+
+func (reg *webNameRegistry) Addresses(name string, caStmp *Stamp) (addrs []string, newCaStmp *Stamp, err error) {
+	value, _, err := reg.addr.Get("tree/"+name, caStmp)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if value == nil {
+		return nil, newCaStmp, nil
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&addrs); err != nil {
-		return nil, erro.Wrap(err)
-	}
-	return addrs, nil
+	return value.([]string), newCaStmp, nil
 }

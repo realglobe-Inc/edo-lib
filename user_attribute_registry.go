@@ -2,24 +2,20 @@ package driver
 
 import ()
 
-// ユーザーの属性を返す。
 type UserAttributeRegistry interface {
-	UserAttribute(usrUuid, attrName string) (usrAttr interface{}, err error)
+	// ユーザーの属性を返す。
+	UserAttribute(usrUuid, attrName string, caStmp *Stamp) (usrAttr interface{}, newCaStmp *Stamp, err error)
 }
 
-// 非キャッシュ用。
+// 骨組み。
 type userAttributeRegistry struct {
-	keyValueStore
+	base KeyValueStore
 }
 
-func newUserAttributeRegistry(base keyValueStore) *userAttributeRegistry {
+func newUserAttributeRegistry(base KeyValueStore) *userAttributeRegistry {
 	return &userAttributeRegistry{base}
 }
 
-func userAttributeKey(usrUuid, attrName string) string {
-	return usrUuid + "/" + attrName
-}
-
-func (reg *userAttributeRegistry) UserAttribute(usrUuid, attrName string) (usrAttr interface{}, err error) {
-	return reg.get(userAttributeKey(usrUuid, attrName))
+func (reg *userAttributeRegistry) UserAttribute(usrUuid, attrName string, caStmp *Stamp) (usrAttr interface{}, newCaStmp *Stamp, err error) {
+	return reg.base.Get(usrUuid+"/"+attrName, caStmp)
 }

@@ -1,25 +1,28 @@
 package driver
 
-import ()
+import (
+	"time"
+)
 
-// 非キャッシュ用。
+// nameTree を保存する。
 type MemoryNameRegistry struct {
-	tree *nameTree
+	base KeyValueStore
 }
 
-func NewMemoryNameRegistry() *MemoryNameRegistry {
-	return &MemoryNameRegistry{newNameTree()}
+// スレッドセーフ。
+func NewMemoryNameRegistry(expiDur time.Duration) *MemoryNameRegistry {
+	return &MemoryNameRegistry{NewMemoryKeyValueStore(expiDur)}
 }
 
-func (reg *MemoryNameRegistry) Address(name string) (addr string, err error) {
-	return reg.tree.address(name), nil
+func (reg *MemoryNameRegistry) Address(name string, caStmp *Stamp) (addr string, newCaStmp *Stamp, err error) {
+	return (&nameRegistry{reg.base}).Address(name, caStmp)
 }
-func (reg *MemoryNameRegistry) Addresses(name string) (addrs []string, err error) {
-	return reg.tree.addresses(name), nil
+func (reg *MemoryNameRegistry) Addresses(name string, caStmp *Stamp) (addrs []string, newCaStmp *Stamp, err error) {
+	return (&nameRegistry{reg.base}).Addresses(name, caStmp)
 }
-func (reg *MemoryNameRegistry) AddAddress(name, addr string) {
-	reg.tree.add(name, addr)
-}
-func (reg *MemoryNameRegistry) RemoveAddress(name string) {
-	reg.tree.remove(name)
+
+func (reg *MemoryNameRegistry) SetAddresses(cont map[string]string) {
+	tree := newNameTree()
+	tree.fromContainer(cont)
+	reg.base.Put("names", tree)
 }

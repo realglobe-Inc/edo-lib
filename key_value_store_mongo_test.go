@@ -4,32 +4,30 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMongoKeyValueStore(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()
 	}
 
-	reg, err := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", "value")
+	reg, err := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.DB(testLabel).DropDatabase()
+	defer reg.base.DB(testLabel).DropDatabase()
 
 	testKeyValueStore(t, reg)
 }
 
-// キャッシュ用。
-func TestMongoDatedKeyValueStore(t *testing.T) {
+func TestMongoKeyValueStoreStamp(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()
 	}
 
-	reg, err := newMongoDatedKeyValueStore(mongoAddr, testLabel, "key-value-store", 0, "key", "value")
+	reg, err := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.DB(testLabel).DropDatabase()
+	defer reg.base.DB(testLabel).DropDatabase()
 
-	testDatedKeyValueStore(t, reg)
+	testKeyValueStoreStamp(t, reg)
 }

@@ -1,68 +1,32 @@
 package driver
 
 import (
+	"encoding/json"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"os"
-	"path/filepath"
-	"strconv"
 	"time"
 )
 
-// バックエンドにファイルシステムを使う。
-
-// 非キャッシュ用。
-func NewFileServiceExplorer(path string) ServiceExplorer {
-	return newSynchronizedServiceExplorer(newFileDriver(path))
-}
-
-func (reg *fileDriver) ServiceUuid(servUri string) (servUuid string, err error) {
-	path := filepath.Join(reg.path, "list.json")
-
-	var cont map[string]string
-	if err := readFromJson(path, &cont); err != nil {
-		return "", erro.Wrap(err)
-	}
-
-	tree := newServiceExplorerTree()
-	tree.fromContainer(cont)
-
-	return tree.get(servUri), nil
-}
-
-// キャッシュ用。
-func NewFileDatedServiceExplorer(path string, expiDur time.Duration) DatedServiceExplorer {
-	return newSynchronizedDatedServiceExplorer(newDatedFileDriver(path, expiDur))
-}
-
-func (reg *datedFileDriver) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
-	path := filepath.Join(reg.path, "list.json")
-
-	fi, err := os.Stat(path)
+func serviceExplorerTreeMarshal(value interface{}) (data []byte, err error) {
+	data, err = json.Marshal(value.(*serviceExplorerTree).toContainer())
 	if err != nil {
-		if os.IsNotExist(err) {
-			return "", nil, nil
-		} else {
-			return "", nil, erro.Wrap(err)
-		}
+		return nil, erro.Wrap(err)
 	}
+	return data, nil
+}
 
-	// 対象のスタンプを取得。
-
-	newCaStmp = &Stamp{Date: fi.ModTime(), ExpiDate: time.Now().Add(reg.expiDur), Digest: strconv.FormatInt(fi.Size(), 10)}
-
-	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
-		return "", newCaStmp, nil
-	}
-
-	// 無効なキャッシュだった。
-
-	var cont map[string]string
-	if err := readFromJson(path, &cont); err != nil {
-		return "", nil, erro.Wrap(err)
+// data を JSON として、map[string]string にデコードしてから serviceExplorerTree をつくる。
+func serviceExplorerTreeUnmarshal(data []byte) (interface{}, error) {
+	var uriToUuid map[string]string
+	if err := json.Unmarshal(data, &uriToUuid); err != nil {
+		return nil, erro.Wrap(err)
 	}
 
 	tree := newServiceExplorerTree()
-	tree.fromContainer(cont)
+	tree.fromContainer(uriToUuid)
+	return tree, nil
+}
 
-	return tree.get(servUri), newCaStmp, nil
+// スレッドセーフ。
+func NewFileServiceExplorer(path string, expiDur time.Duration) ServiceExplorer {
+	return newServiceExplorer(NewFileKeyValueStore(path, jsonKeyGen, serviceExplorerTreeMarshal, serviceExplorerTreeUnmarshal, expiDur))
 }

@@ -3,11 +3,9 @@ package driver
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestFileUserNameIndex(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -15,9 +13,9 @@ func TestFileUserNameIndex(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, testUsrName+".json"), testUsrUuid); err != nil {
+	reg := NewFileUserNameIndex(path, 0)
+	if _, err := reg.(*userNameIndex).base.Put(testUsrName, testUsrUuid); err != nil {
 		t.Fatal(err)
 	}
-
-	testUserNameIndex(t, NewFileUserNameIndex(path))
+	testUserNameIndex(t, reg)
 }

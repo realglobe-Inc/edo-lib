@@ -1,17 +1,21 @@
 package driver
 
 import (
+	"encoding/json"
+	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"time"
 )
 
-// バックエンドにファイルシステムを使う。
-
-// 非キャッシュ用。
-func NewFileIdProviderAttributeRegistry(path string) IdProviderAttributeRegistry {
-	return newIdProviderAttributeRegistry(newSynchronizedKeyValueStore(newFileKeyValueStore(path)))
+// data を JSON として、encoding/json の標準データ型にデコードする。
+func jsonUnmarshal(data []byte) (interface{}, error) {
+	var res interface{}
+	if err := json.Unmarshal(data, &res); err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return res, nil
 }
 
-// キャッシュ用。
-func NewFileDatedIdProviderAttributeRegistry(path string, expiDur time.Duration) DatedIdProviderAttributeRegistry {
-	return newDatedIdProviderAttributeRegistry(newSynchronizedDatedKeyValueStore(newFileDatedKeyValueStore(path, expiDur)))
+// スレッドセーフ。
+func NewFileIdProviderAttributeRegistry(path string, expiDur time.Duration) IdProviderAttributeRegistry {
+	return newIdProviderAttributeRegistry(NewFileKeyValueStore(path, jsonKeyGen, json.Marshal, jsonUnmarshal, expiDur))
 }

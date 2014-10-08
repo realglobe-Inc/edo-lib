@@ -2,16 +2,12 @@ package driver
 
 import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"time"
 )
 
-// {
-//   "user_name": "abcd",
-//   "user_uuid": "abcd-no-uuid"
-// }
-
-// 非キャッシュ用。
-func NewMongoUserNameIndex(url, dbName, collName string) (UserNameIndex, error) {
-	base, err := newMongoKeyValueStore(url, dbName, collName, "user_name", "user_uuid")
+// スレッドセーフ。
+func NewMongoUserNameIndex(url, dbName, collName string, expiDur time.Duration) (UserNameIndex, error) {
+	base, err := newMongoKeyValueStore(url, dbName, collName, expiDur)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}

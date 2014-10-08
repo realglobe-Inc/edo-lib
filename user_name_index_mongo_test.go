@@ -4,19 +4,18 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMongoUserNameIndex(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoUserNameIndex(mongoAddr, testLabel, "user-name-index")
+	reg, err := NewMongoUserNameIndex(mongoAddr, testLabel, "user-name-index", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*userNameIndex).keyValueStore.(*mongoKeyValueStore).DB(testLabel).DropDatabase()
+	defer reg.(*userNameIndex).base.(*mongoKeyValueStore).base.DB(testLabel).DropDatabase()
 
-	if err := reg.(*userNameIndex).put(testUsrName, testUsrUuid); err != nil {
+	if _, err := reg.(*userNameIndex).base.Put(testUsrName, testUsrUuid); err != nil {
 		t.Fatal(err)
 	}
 

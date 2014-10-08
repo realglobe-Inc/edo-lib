@@ -2,93 +2,70 @@ package driver
 
 import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"time"
 )
 
-// バックエンドにファイルシステムを使う。
-
 // TODO 今は手抜きで古いファイルを無視するだけ。どんどん溜まっていく。
 
-func readDate(path string) (time.Time, error) {
-	buff, err := ioutil.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return time.Time{}, nil
-		}
-		return time.Time{}, erro.Wrap(err)
-	}
-	date, err := time.Parse(time.RFC3339Nano, string(buff))
-	if err != nil {
-		return time.Time{}, erro.Wrap(err)
-	}
-	return date, nil
-}
-
-func writeDate(date time.Time, path string) error {
-	buff := date.Format(time.RFC3339Nano)
-	if err := ioutil.WriteFile(path, []byte(buff), filePerm); err != nil {
-		return erro.Wrap(err)
-	}
-	return nil
-}
-
-// 非キャッシュ用。
 type fileTimeLimitedKeyValueStore struct {
-	*fileDriver
+	base    KeyValueStore
+	expires KeyValueStore
 }
 
-func NewFileTimeLimitedKeyValueStore(path string) TimeLimitedKeyValueStore {
-	return &fileTimeLimitedKeyValueStore{newFileDriver(path)}
+// スレッドセーフ。
+func NewFileTimeLimitedKeyValueStore(path string, keyGen func(string) string, marshal Marshal, unmarshal Unmarshal, expiDur time.Duration) TimeLimitedKeyValueStore {
+	return newSynchronizedTimeLimitedKeyValueStore(newCachingTimeLimitedKeyValueStore(newFileTimeLimitedKeyValueStore(path, keyGen, marshal, unmarshal, expiDur)))
 }
 
-func (reg *fileTimeLimitedKeyValueStore) Get(key string) (value interface{}, err error) {
-	limPath := filepath.Join(reg.path, escapeToFileName(key)+".deadline")
-	date, err := readDate(limPath)
-	if err != nil {
+// スレッドセーフではない。
+func newFileTimeLimitedKeyValueStore(path string, keyGen func(string) string, marshal Marshal, unmarshal Unmarshal, expiDur time.Duration) *fileTimeLimitedKeyValueStore {
+	return &fileTimeLimitedKeyValueStore{
+		NewFileKeyValueStore(path,
+			func(before string) string {
+				if keyGen != nil {
+					before = keyGen(before)
+				}
+				return before + ".expires"
+			}, marshal, unmarshal, expiDur),
+		NewFileKeyValueStore(path, keyGen,
+			func(value interface{}) ([]byte, error) {
+				return []byte(value.(time.Time).Format(time.RFC3339Nano)), nil
+			},
+			func(data []byte) (interface{}, error) {
+				date, err := time.Parse(time.RFC3339Nano, string(data))
+				if err != nil {
+					return time.Time{}, erro.Wrap(err)
+				}
+				return date, nil
+			},
+			expiDur),
+	}
+}
+
+func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+	if value, _, err := reg.expires.Get(key, caStmp); err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if value == nil {
+		return nil, nil, nil
+	} else if expires := value.(time.Time); time.Now().After(expires) {
+		return nil, nil, nil
+	}
+
+	return reg.base.Get(key, caStmp)
+}
+
+func (reg *fileTimeLimitedKeyValueStore) Put(key string, value interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+	if _, err := reg.expires.Put(key, expiDate); err != nil {
 		return nil, erro.Wrap(err)
-	} else if date.IsZero() || date.Before(time.Now()) {
-		return nil, nil
 	}
 
-	path := filepath.Join(reg.path, escapeToFileName(key)+".json")
-	if err := readFromJson(path, &value); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	return value, nil
-}
-
-func (reg *fileTimeLimitedKeyValueStore) Put(key string, value interface{}, timLim time.Time) error {
-	limPath := filepath.Join(reg.path, escapeToFileName(key)+".deadline")
-	if err := writeDate(timLim, limPath); err != nil {
-		return erro.Wrap(err)
-	}
-
-	path := filepath.Join(reg.path, escapeToFileName(key)+".json")
-	if err := writeToJson(path, &value); err != nil {
-		return erro.Wrap(err)
-	}
-
-	return nil
+	return reg.base.Put(key, value)
 }
 
 func (reg *fileTimeLimitedKeyValueStore) Remove(key string) error {
-	limPath := filepath.Join(reg.path, escapeToFileName(key)+".deadline")
-	if err := os.Remove(limPath); err != nil {
-		if !os.IsNotExist(err) {
-			return erro.Wrap(err)
-		}
+	if err := reg.expires.Remove(key); err != nil {
+		return erro.Wrap(err)
 	}
 
-	path := filepath.Join(reg.path, escapeToFileName(key)+".json")
-	if err := os.Remove(path); err != nil {
-		if !os.IsNotExist(err) {
-			return erro.Wrap(err)
-		}
-	}
-
-	return nil
+	return reg.base.Remove(key)
 }

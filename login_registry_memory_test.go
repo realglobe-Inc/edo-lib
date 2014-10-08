@@ -4,9 +4,8 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMemoryLoginRegistry(t *testing.T) {
-	reg := NewMemoryLoginRegistry()
+	reg := NewMemoryLoginRegistry(0)
 	reg.AddUser(testAccToken, testUsrName)
 	testLoginRegistry(t, reg)
 }

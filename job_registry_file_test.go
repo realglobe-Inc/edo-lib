@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestFileJobRegistry(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -14,5 +13,5 @@ func TestFileJobRegistry(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testJobRegistry(t, NewFileJobRegistry(path))
+	testJobRegistry(t, NewFileJobRegistry(path, 0))
 }

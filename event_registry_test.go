@@ -58,24 +58,23 @@ func TestEventTreeConversion(t *testing.T) {
 	}
 }
 
-// 非キャッシュ用。
 func testEventRegistry(t *testing.T, reg EventRegistry) {
 	usrUuid := testUsrUuid
 	event := "/sample/event"
 	var hndl Handler = []*HandlerElement{&HandlerElement{Url: "https://localhost"}}
 
-	hndl1, err := reg.Handler(usrUuid, event)
+	hndl1, _, err := reg.Handler(usrUuid, event, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if hndl1 != nil {
 		t.Error(hndl1)
 	}
 
-	if err := reg.AddHandler(usrUuid, event, hndl); err != nil {
+	if _, err := reg.AddHandler(usrUuid, event, hndl); err != nil {
 		t.Fatal(err)
 	}
 
-	hndl2, err := reg.Handler(usrUuid, event)
+	hndl2, _, err := reg.Handler(usrUuid, event, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(hndl, hndl2) {
@@ -86,7 +85,7 @@ func testEventRegistry(t *testing.T, reg EventRegistry) {
 		t.Fatal(err)
 	}
 
-	hndl3, err := reg.Handler(usrUuid, event)
+	hndl3, _, err := reg.Handler(usrUuid, event, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if hndl3 != nil {

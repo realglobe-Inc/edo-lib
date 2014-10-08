@@ -4,9 +4,8 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMemoryUserAttributeRegistry(t *testing.T) {
-	reg := NewMemoryUserAttributeRegistry()
+	reg := NewMemoryUserAttributeRegistry(0)
 	reg.AddUserAttribute(testUsrUuid, testAttrName, testAttr)
 	testUserAttributeRegistry(t, reg)
 }

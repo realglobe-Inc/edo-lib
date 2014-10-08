@@ -6,12 +6,11 @@ import (
 	"time"
 )
 
-// 非キャッシュ用。
 func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
-	expiDur := 50 * time.Millisecond
+	expiDur := 10 * time.Millisecond
 
 	// まだ無い。
-	value1, err := reg.Get(testKey)
+	value1, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if value1 != nil {
@@ -19,16 +18,18 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// 入れる。
-	if err := reg.Put(testKey, testValue, time.Now().Add(expiDur)); err != nil {
+	if _, err := reg.Put(testKey, testValue, time.Now().Add(expiDur)); err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	value2, err := reg.Get(testKey)
+	value2, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
-	} else if value2 == nil || !reflect.DeepEqual(value2, testValue) {
-		t.Error(value2)
+	} else if !reflect.DeepEqual(value2, testValue) {
+		if !jsonEqual(value2, testValue) {
+			t.Error(value2)
+		}
 	}
 
 	// 消す。
@@ -37,7 +38,7 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// もう無い。
-	value3, err := reg.Get(testKey)
+	value3, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if value3 != nil {
@@ -45,23 +46,25 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// また入れる。
-	if err := reg.Put(testKey, testValue, time.Now().Add(expiDur)); err != nil {
+	if _, err := reg.Put(testKey, testValue, time.Now().Add(expiDur)); err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	value4, err := reg.Get(testKey)
+	value4, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
-	} else if value4 == nil || !reflect.DeepEqual(value4, testValue) {
-		t.Error(value4)
+	} else if !reflect.DeepEqual(value4, testValue) {
+		if !jsonEqual(value4, testValue) {
+			t.Error(value4)
+		}
 	}
 
 	// 消えるまで待つ。
 	time.Sleep(2 * expiDur)
 
 	// もう無い。
-	value5, err := reg.Get(testKey)
+	value5, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if value5 != nil {

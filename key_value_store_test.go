@@ -6,10 +6,9 @@ import (
 	"time"
 )
 
-// 非キャッシュ用。
-func testKeyValueStore(t *testing.T, reg keyValueStore) {
+func testKeyValueStore(t *testing.T, reg KeyValueStore) {
 	// まだ無い。
-	value1, err := reg.get(testKey)
+	value1, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if value1 != nil {
@@ -17,25 +16,27 @@ func testKeyValueStore(t *testing.T, reg keyValueStore) {
 	}
 
 	// 入れる。
-	if err := reg.put(testKey, testValue); err != nil {
+	if _, err := reg.Put(testKey, testValue); err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	value2, err := reg.get(testKey)
+	value2, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
-	} else if value2 == nil || !reflect.DeepEqual(value2, testValue) {
-		t.Error(value2)
+	} else if !reflect.DeepEqual(value2, testValue) {
+		if !jsonEqual(value2, testValue) {
+			t.Error(value2)
+		}
 	}
 
 	// 消す。
-	if err := reg.remove(testKey); err != nil {
+	if err := reg.Remove(testKey); err != nil {
 		t.Fatal(err)
 	}
 
 	// もう無い。
-	value3, err := reg.get(testKey)
+	value3, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if value3 != nil {
@@ -43,10 +44,9 @@ func testKeyValueStore(t *testing.T, reg keyValueStore) {
 	}
 }
 
-// キャッシュ用。
-func testDatedKeyValueStore(t *testing.T, reg datedKeyValueStore) {
+func testKeyValueStoreStamp(t *testing.T, reg KeyValueStore) {
 	// まだ無い。
-	value1, stmp1, err := reg.stampedGet(testKey, nil)
+	value1, stmp1, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if value1 != nil || stmp1 != nil {
@@ -54,21 +54,25 @@ func testDatedKeyValueStore(t *testing.T, reg datedKeyValueStore) {
 	}
 
 	// 入れる。
-	stmp2, err := reg.stampedPut(testKey, testValue)
+	stmp2, err := reg.Put(testKey, testValue)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	value3, stmp3, err := reg.stampedGet(testKey, nil)
+	value3, stmp3, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
-	} else if value3 == nil || !reflect.DeepEqual(value3, testValue) || stmp3 == nil {
-		t.Error(value3, stmp3)
+	} else if stmp3 == nil {
+		t.Error(stmp3)
+	} else if !reflect.DeepEqual(value3, testValue) {
+		if !jsonEqual(value3, testValue) {
+			t.Error(value3)
+		}
 	}
 
 	// キャッシュと同じだから返らない。
-	value4, stmp4, err := reg.stampedGet(testKey, stmp2)
+	value4, stmp4, err := reg.Get(testKey, stmp2)
 	if err != nil {
 		t.Fatal(err)
 	} else if value4 != nil || stmp4 == nil {
@@ -76,28 +80,36 @@ func testDatedKeyValueStore(t *testing.T, reg datedKeyValueStore) {
 	}
 
 	// キャッシュが古いから返る。
-	value5, stmp5, err := reg.stampedGet(testKey, &Stamp{Date: stmp2.Date.Add(-time.Second), Digest: stmp2.Digest})
+	value5, stmp5, err := reg.Get(testKey, &Stamp{Date: stmp2.Date.Add(-time.Second), Digest: stmp2.Digest})
 	if err != nil {
 		t.Fatal(err)
-	} else if value5 == nil || !reflect.DeepEqual(value5, testValue) || stmp5 == nil {
-		t.Error(value5, stmp5)
+	} else if stmp5 == nil {
+		t.Error(stmp5)
+	} else if !reflect.DeepEqual(value5, testValue) {
+		if !jsonEqual(value5, testValue) {
+			t.Error(value5)
+		}
 	}
 
 	// ダイジェストが違うから返る。
-	value6, stmp6, err := reg.stampedGet(testKey, &Stamp{Date: stmp2.Date, Digest: stmp2.Digest + "a"})
+	value6, stmp6, err := reg.Get(testKey, &Stamp{Date: stmp2.Date, Digest: stmp2.Digest + "a"})
 	if err != nil {
 		t.Fatal(err)
-	} else if value6 == nil || !reflect.DeepEqual(value6, testValue) || stmp6 == nil {
-		t.Error(value6, stmp6)
+	} else if stmp6 == nil {
+		t.Error(stmp6)
+	} else if !reflect.DeepEqual(value6, testValue) {
+		if !jsonEqual(value6, testValue) {
+			t.Error(value6)
+		}
 	}
 
 	// 消す。
-	if err := reg.remove(testKey); err != nil {
+	if err := reg.Remove(testKey); err != nil {
 		t.Fatal(err)
 	}
 
 	// もう無い。
-	value7, stmp7, err := reg.stampedGet(testKey, stmp2)
+	value7, stmp7, err := reg.Get(testKey, stmp2)
 	if err != nil {
 		t.Fatal(err)
 	} else if value7 != nil || stmp7 != nil {

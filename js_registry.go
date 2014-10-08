@@ -1,6 +1,8 @@
 package driver
 
-import ()
+import (
+	"github.com/realglobe-Inc/go-lib-rg/erro"
+)
 
 type Object struct {
 	Service bool `json:"service,omitempty"` // Web API からの利用を許可するか。
@@ -14,24 +16,38 @@ type Object struct {
 	Code string `json:"code"`
 }
 
-// 非キャッシュ用。
 type JsRegistry interface {
 	// オブジェクトのソースを取得する。
-	Object(dir, objName string) (*Object, error)
+	Object(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error)
 
 	// オブジェクトのソースを登録する。一時的な利用を想定。
-	AddObject(dir, objName string, obj *Object) error
+	AddObject(dir, objName string, obj *Object) (*Stamp, error)
 	// オブジェクトのソースを削除する。
 	RemoveObject(dir, objName string) error
 }
 
-// キャッシュ用。
-type JsBackend interface {
-	// オブジェクトのソースを取得する。
-	StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error)
+type jsRegistry struct {
+	base KeyValueStore
 }
 
-type JsBackendRegistry interface {
-	JsRegistry
-	JsBackend
+func newJsRegistry(base KeyValueStore) *jsRegistry {
+	return &jsRegistry{base}
+}
+
+func (reg *jsRegistry) Object(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
+	value, newCaStmp, err := reg.base.Get(dir+"/"+objName, caStmp)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if value == nil {
+		return nil, newCaStmp, nil
+	}
+	return value.(*Object), newCaStmp, nil
+}
+
+func (reg *jsRegistry) AddObject(dir, objName string, obj *Object) (*Stamp, error) {
+	return reg.base.Put(dir+"/"+objName, obj)
+}
+
+func (reg *jsRegistry) RemoveObject(dir, objName string) error {
+	return reg.base.Remove(dir + "/" + objName)
 }

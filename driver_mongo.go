@@ -7,16 +7,17 @@ import (
 	"time"
 )
 
-// mondodb を使うドライバー。
+// TODO 一時的に落ちていても大丈夫なように。
 
-// 非キャッシュ用。
+// スレッドセーフ。
 type mongoDriver struct {
+	*mgo.Session
 	dbName   string
 	collName string
-	*mgo.Session
+	expiDur  time.Duration
 }
 
-func newMongoDriver(url, dbName, collName string, indices []mgo.Index) (*mongoDriver, error) {
+func newMongoDriver(url, dbName, collName string, expiDur time.Duration, indices []mgo.Index) (*mongoDriver, error) {
 	sess, err := mgo.Dial(url)
 	if err != nil {
 		return nil, erro.Wrap(err)
@@ -73,15 +74,9 @@ func newMongoDriver(url, dbName, collName string, indices []mgo.Index) (*mongoDr
 		}
 	}
 
-	return &mongoDriver{dbName, collName, sess}, nil
+	return &mongoDriver{sess, dbName, collName, expiDur}, nil
 }
 
-// キャッシュ用。
-type datedMongoDriver struct {
-	*mongoDriver
-	expiDur time.Duration
-}
-
-func newDatedMongoDriver(base *mongoDriver, expiDur time.Duration) *datedMongoDriver {
-	return &datedMongoDriver{base, expiDur}
+func (reg *mongoDriver) C() *mgo.Collection {
+	return reg.DB(reg.dbName).C(reg.collName)
 }

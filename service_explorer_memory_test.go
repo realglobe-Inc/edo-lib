@@ -4,16 +4,14 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMemoryServiceExplorer(t *testing.T) {
-	reg := NewMemoryServiceExplorer()
-	reg.AddServiceUuid(testUri, testServUuid)
+	reg := NewMemoryServiceExplorer(0)
+	reg.SetServiceUuids(map[string]string{testUri: testServUuid})
 	testServiceExplorer(t, reg)
 }
 
-// キャッシュ用。
-func TestMemoryDatedServiceExplorer(t *testing.T) {
-	reg := NewMemoryDatedServiceExplorer(0)
-	reg.AddServiceUuid(testUri, testServUuid)
-	testDatedServiceExplorer(t, reg)
+func TestMemoryServiceExplorerStamp(t *testing.T) {
+	reg := NewMemoryServiceExplorer(0)
+	reg.SetServiceUuids(map[string]string{testUri: testServUuid})
+	testServiceExplorerStamp(t, reg)
 }

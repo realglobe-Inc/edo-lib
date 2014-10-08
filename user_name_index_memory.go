@@ -1,28 +1,33 @@
 package driver
 
-import ()
+import (
+	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"time"
+)
 
-// 非キャッシュ用。
 type MemoryUserNameIndex struct {
-	keyValueStore
+	base KeyValueStore
 }
 
-func NewMemoryUserNameIndex() *MemoryUserNameIndex {
-	return &MemoryUserNameIndex{newSynchronizedKeyValueStore(newMemoryKeyValueStore())}
+// スレッドセーフ。
+func NewMemoryUserNameIndex(expiDur time.Duration) *MemoryUserNameIndex {
+	return &MemoryUserNameIndex{NewMemoryKeyValueStore(expiDur)}
 }
 
-func (reg *MemoryUserNameIndex) UserUuid(usrName string) (usrUuid string, err error) {
-	val, err := reg.get(usrName)
-	if val != nil && val != "" {
-		usrUuid = val.(string)
+func (reg *MemoryUserNameIndex) UserUuid(usrName string, caStmp *Stamp) (usrUuid string, newCaStmp *Stamp, err error) {
+	value, newCaStmp, err := reg.base.Get(usrName, caStmp)
+	if err != nil {
+		return "", nil, erro.Wrap(err)
+	} else if value == nil || value == "" {
+		return "", newCaStmp, nil
 	}
-	return usrUuid, err
+	return value.(string), newCaStmp, err
 }
 
 func (reg *MemoryUserNameIndex) AddUserUuid(usrName, usrUuid string) {
-	reg.put(usrName, usrUuid)
+	reg.base.Put(usrName, usrUuid)
 }
 
 func (reg *MemoryUserNameIndex) RemoveIdProvider(usrName string) {
-	reg.remove(usrName)
+	reg.base.Remove(usrName)
 }

@@ -2,83 +2,42 @@ package driver
 
 import (
 	"encoding/json"
-	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"net/http"
 	"net/url"
 )
 
-// 非キャッシュ用。
-func NewWebServiceExplorer(prefix string) ServiceExplorer {
-	return newWebDriver(prefix)
-}
-
-func (reg *webDriver) ServiceUuid(servUri string) (servUuid string, err error) {
-	resp, err := reg.Get(reg.prefix + "?service_uri=" + url.QueryEscape(servUri))
-	if err != nil {
-		return "", erro.Wrap(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
-	}
-	var buff struct {
+// {
+//     "service": {
+//         "uuid": "service-no-uuid"
+//     }
+// }
+func webServiceUuidUnmarshal(data []byte) (interface{}, error) {
+	var res struct {
 		Service struct {
 			Uuid string
 		}
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&buff); err != nil {
-		return "", erro.Wrap(err)
+	if err := json.Unmarshal(data, &res); err != nil {
+		return nil, erro.Wrap(err)
 	}
-	return buff.Service.Uuid, nil
+	return res.Service.Uuid, nil
 }
 
-// キャッシュ用。
-func NewWebDatedServiceExplorer(prefix string) DatedServiceExplorer {
-	// TODO キャッシュの並列化。
-	return newSynchronizedDatedServiceExplorer(newCachingDatedServiceExplorer(newWebDriver(prefix)))
+type webServiceExplorer struct {
+	base KeyValueStore
 }
 
-func (reg *webDriver) StampedServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
-	req, err := http.NewRequest("GET", reg.prefix, nil)
-	if caStmp != nil {
-		WriteStampToRequestHeader(caStmp, req.Header)
-	}
+// スレッドセーフ。
+func NewWebServiceExplorer(prefix string) ServiceExplorer {
+	return &webServiceExplorer{NewWebKeyValueStore(prefix, nil, webServiceUuidUnmarshal)}
+}
 
-	util.LogRequest(req, true)
-	resp, err := reg.Do(req)
+func (reg *webServiceExplorer) ServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
+	value, newCaStmp, err := reg.base.Get("?service_uri="+url.QueryEscape(servUri), caStmp)
 	if err != nil {
 		return "", nil, erro.Wrap(err)
+	} else if value == nil || value == "" {
+		return "", newCaStmp, nil
 	}
-	defer resp.Body.Close()
-	util.LogResponse(resp, true)
-
-	switch resp.StatusCode {
-	case http.StatusNotFound:
-		return "", nil, nil
-	case http.StatusNotModified, http.StatusOK:
-		stmp, err := ParseStampFromResponseHeader(resp.Header)
-		if err != nil {
-			return "", nil, erro.Wrap(err)
-		}
-
-		switch resp.StatusCode {
-		case http.StatusNotModified:
-			return "", stmp, nil
-		case http.StatusOK:
-			var buff struct {
-				Service struct {
-					Uuid string
-				}
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&buff); err != nil {
-				return "", nil, erro.Wrap(err)
-			}
-			return buff.Service.Uuid, stmp, nil
-		default:
-			panic("implementation error.")
-		}
-	default:
-		return "", nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode)+".")
-	}
+	return value.(string), newCaStmp, nil
 }

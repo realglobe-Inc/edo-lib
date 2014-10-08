@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMemoryEventRegistry(t *testing.T) {
-	testEventRegistry(t, NewMemoryEventRegistry())
+	testEventRegistry(t, NewMemoryEventRegistry(0))
 }

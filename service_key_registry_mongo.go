@@ -1,30 +1,40 @@
 package driver
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"time"
 )
 
-// mongodb をバックエンドに使う。
-// {
-//   "service_uuid": "aaaa-bbbb-cccc",
-//   "service_public_key":  "XXXXX"
-// }
-
-// 非キャッシュ用。
-func NewMongoServiceKeyRegistry(url, dbName, collName string) (ServiceKeyRegistry, error) {
-	base, err := newMongoKeyValueStore(url, dbName, collName, "service_uuid", "service_public_key")
+func publicKeyToPem(pubKey interface{}) (pemStr interface{}, err error) {
+	block := &pem.Block{
+		Type: "PUBLIC KEY",
+	}
+	block.Bytes, err = x509.MarshalPKIXPublicKey(pubKey.(*rsa.PublicKey))
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return newServiceKeyRegistry(base), nil
+
+	return pem.EncodeToMemory(block), nil
 }
 
-// キャッシュ用。
-func NewMongoDatedServiceKeyRegistry(url, dbName, collName string, expiDur time.Duration) (DatedServiceKeyRegistry, error) {
-	base, err := newMongoDatedKeyValueStore(url, dbName, collName, expiDur, "service_uuid", "service_public_key")
+// PEM 形式の文字列から rsa.PublicKey をつくる。
+func pemToPublicKey(pemStr interface{}) (pubKey interface{}, err error) {
+	return util.ParseRsaPublicKey(string(pemStr.([]byte)))
+}
+
+// スレッドセーフ。
+func NewMongoServiceKeyRegistry(url, dbName, collName string, expiDur time.Duration) (ServiceKeyRegistry, error) {
+	base, err := newMongoKeyValueStore(url, dbName, collName, expiDur)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return newDatedServiceKeyRegistry(base), nil
+	base.MongoMarshal = publicKeyToPem
+	base.MongoUnmarshal = pemToPublicKey
+	// デコード後をキャッシュ。
+	// TODO キャッシュの並列化。
+	return newServiceKeyRegistry(newCachingKeyValueStore(base)), nil
 }

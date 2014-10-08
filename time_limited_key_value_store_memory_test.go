@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMemoryTimeLimitedKeyValueStore(t *testing.T) {
-	testTimeLimitedKeyValueStore(t, NewMemoryTimeLimitedKeyValueStore())
+	testTimeLimitedKeyValueStore(t, newMemoryTimeLimitedKeyValueStore(0))
 }

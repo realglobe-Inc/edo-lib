@@ -7,10 +7,8 @@ import (
 	"runtime"
 )
 
-// スレッドセーフでないレジストリをスレッドセーフにする。
-
-const defChCap = 1000
-
+// スレッドセーフでないデータ読み書きドライバーをスレッドセーフにする。
+// 方法は非並列化。
 type synchronizedDriver struct {
 	reqCh chan *synchronizedRequest
 }
@@ -19,6 +17,10 @@ type synchronizedRequest struct {
 	req   interface{}
 	errCh chan<- error
 }
+
+// キューの容量。
+// 別に 0 でも良いが、そうすると毎回切り替えが必要になる。
+const defChCap = 100
 
 func newSynchronizedDriver(hndls map[reflect.Type]func(interface{}, chan<- error)) *synchronizedDriver {
 	reg := &synchronizedDriver{

@@ -2,39 +2,69 @@ package driver
 
 import (
 	"github.com/realglobe-Inc/edo/util"
+	"strconv"
 	"time"
 )
 
-// 非キャッシュ用。
+func stampExpirationDateLess(a1 interface{}, a2 interface{}) bool {
+	return a1.(*Stamp).ExpiDate.Before(a2.(*Stamp).ExpiDate)
+}
+
 type memoryTimeLimitedKeyValueStore struct {
-	util.Cache
+	base    util.Cache
+	expiDur time.Duration
 }
 
-func NewMemoryTimeLimitedKeyValueStore() TimeLimitedKeyValueStore {
-	return &memoryTimeLimitedKeyValueStore{util.NewCache(func(a1 interface{}, a2 interface{}) bool {
-		return a1.(time.Time).Before(a2.(time.Time))
-	})}
+// スレッドセーフ。
+func NewMemoryTimeLimitedKeyValueStore(expiDur time.Duration) TimeLimitedKeyValueStore {
+	return newSynchronizedTimeLimitedKeyValueStore(newMemoryTimeLimitedKeyValueStore(expiDur))
 }
 
-func (this *memoryTimeLimitedKeyValueStore) Get(key string) (value interface{}, err error) {
-	this.Cache.CleanLesser(time.Now())
-
-	val, _ := this.Cache.Get(key)
-	return val, nil
+// スレッドセーフではない。
+func newMemoryTimeLimitedKeyValueStore(expiDur time.Duration) *memoryTimeLimitedKeyValueStore {
+	return &memoryTimeLimitedKeyValueStore{util.NewCache(stampExpirationDateLess), expiDur}
 }
 
-func (this *memoryTimeLimitedKeyValueStore) Put(key string, value interface{}, timLim time.Time) error {
-	this.Cache.Put(key, value, timLim)
-
-	this.Cache.CleanLesser(time.Now())
-	return nil
-}
-
-func (this *memoryTimeLimitedKeyValueStore) Remove(key string) error {
-	// 期限切れにして押し出す。
+func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
-	this.Cache.Update(key, now.Add(-time.Second))
+	reg.base.CleanLower(&Stamp{ExpiDate: now})
 
-	this.Cache.CleanLesser(now)
+	value, prio := reg.base.Get(key)
+	if prio == nil {
+		return nil, nil, nil
+	}
+	stmp := prio.(*Stamp)
+
+	newCaStmp = &Stamp{Date: stmp.Date, ExpiDate: now.Add(reg.expiDur), Digest: stmp.Digest}
+	if newCaStmp.ExpiDate.After(stmp.ExpiDate) {
+		// newCaStmp.ExpiDate は stmp.ExpiDate 以前。
+		newCaStmp.ExpiDate = stmp.ExpiDate
+	}
+
+	if caStmp == nil || caStmp.Date.Before(newCaStmp.Date) || caStmp.Digest != newCaStmp.Digest {
+		return value, newCaStmp, nil
+	}
+	return nil, newCaStmp, nil
+}
+
+func (reg *memoryTimeLimitedKeyValueStore) Put(key string, value interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+	now := time.Now()
+
+	stmp := &Stamp{Date: now, ExpiDate: expiDate, Digest: strconv.FormatInt(now.UnixNano(), 10)}
+	reg.base.Put(key, value, stmp)
+
+	newCaStmp = &Stamp{Date: stmp.Date, ExpiDate: now.Add(reg.expiDur), Digest: stmp.Digest}
+	if newCaStmp.ExpiDate.After(expiDate) {
+		// newCaStmp.ExpiDate は expiDate 以前。
+		newCaStmp.ExpiDate = expiDate
+	}
+
+	reg.base.CleanLower(&Stamp{ExpiDate: now})
+	return newCaStmp, nil
+}
+
+func (reg *memoryTimeLimitedKeyValueStore) Remove(key string) error {
+	reg.base.Update(key, nil)
+	reg.base.CleanLower(nil)
 	return nil
 }

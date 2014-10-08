@@ -3,11 +3,9 @@ package driver
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestFileUserAttributeRegistry(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -15,9 +13,10 @@ func TestFileUserAttributeRegistry(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, escapeToFileName(userAttributeKey(testUsrUuid, testAttrName))+".json"), testAttr); err != nil {
+	reg := NewFileUserAttributeRegistry(path, 0)
+	if _, err := reg.(*userAttributeRegistry).base.Put(testUsrUuid+"/"+testAttrName, testAttr); err != nil {
 		t.Fatal(err)
 	}
 
-	testUserAttributeRegistry(t, NewFileUserAttributeRegistry(path))
+	testUserAttributeRegistry(t, reg)
 }

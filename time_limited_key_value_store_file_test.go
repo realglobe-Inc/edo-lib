@@ -1,12 +1,12 @@
 package driver
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestFileTimeLimitedKeyValueStore(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -14,5 +14,5 @@ func TestFileTimeLimitedKeyValueStore(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testTimeLimitedKeyValueStore(t, NewFileTimeLimitedKeyValueStore(path))
+	testTimeLimitedKeyValueStore(t, newFileTimeLimitedKeyValueStore(path, nil, json.Marshal, jsonUnmarshal, 0))
 }

@@ -3,11 +3,9 @@ package driver
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestFileIdProviderAttributeRegistry(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -15,24 +13,25 @@ func TestFileIdProviderAttributeRegistry(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, escapeToFileName(userAttributeKey(testIdpUuid, testAttrName))+".json"), testAttr); err != nil {
+	reg := NewFileIdProviderAttributeRegistry(path, 0)
+	if _, err := reg.(*idProviderAttributeRegistry).base.Put(testIdpUuid+"/"+testAttrName, testAttr); err != nil {
 		t.Fatal(err)
 	}
 
-	testIdProviderAttributeRegistry(t, NewFileIdProviderAttributeRegistry(path))
+	testIdProviderAttributeRegistry(t, reg)
 }
 
-// キャッシュ用。
-func TestFileDatedIdProviderAttributeRegistry(t *testing.T) {
+func TestFileIdProviderAttributeRegistryStamp(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, escapeToFileName(userAttributeKey(testIdpUuid, testAttrName))+".json"), testAttr); err != nil {
+	reg := NewFileIdProviderAttributeRegistry(path, 0)
+	if _, err := reg.(*idProviderAttributeRegistry).base.Put(testIdpUuid+"/"+testAttrName, testAttr); err != nil {
 		t.Fatal(err)
 	}
 
-	testDatedIdProviderAttributeRegistry(t, NewFileDatedIdProviderAttributeRegistry(path, 0))
+	testIdProviderAttributeRegistryStamp(t, reg)
 }

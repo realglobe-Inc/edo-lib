@@ -4,12 +4,10 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMemoryKeyValueStore(t *testing.T) {
-	testKeyValueStore(t, newMemoryKeyValueStore())
+	testKeyValueStore(t, newMemoryKeyValueStore(0))
 }
 
-// キャッシュ用。
-func TestMemoryDatedKeyValueStore(t *testing.T) {
-	testDatedKeyValueStore(t, newMemoryDatedKeyValueStore(0))
+func TestMemoryKeyValueStoreStamp(t *testing.T) {
+	testKeyValueStoreStamp(t, newMemoryKeyValueStore(0))
 }

@@ -1,6 +1,8 @@
 package driver
 
-import ()
+import (
+	"github.com/realglobe-Inc/go-lib-rg/erro"
+)
 
 // ID プロバイダ選択時に列挙する情報。
 type IdProvider struct {
@@ -12,12 +14,27 @@ func (idp *IdProvider) String() string {
 	return idp.Uuid + "," + idp.Name
 }
 
-// ID プロバイダの列挙。
 type IdProviderLister interface {
-	IdProviders() ([]*IdProvider, error)
+	// ID プロバイダの列挙。
+	IdProviders(caStmp *Stamp) (idps []*IdProvider, newCaStmp *Stamp, err error)
 }
 
-// ID プロバイダの列挙。キャッシュ用。
-type DatedIdProviderLister interface {
-	StampedIdProviders(caStmp *Stamp) ([]*IdProvider, *Stamp, error)
+// 骨組み。
+// バックエンドに ID プロバイダのリストそのものを保存。
+type idProviderLister struct {
+	base KeyValueStore
+}
+
+func newIdProviderLister(base KeyValueStore) *idProviderLister {
+	return &idProviderLister{base: base}
+}
+
+func (reg *idProviderLister) IdProviders(caStmp *Stamp) (idps []*IdProvider, newCaStmp *Stamp, err error) {
+	value, newCaStmp, err := reg.base.Get("list", caStmp)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if value == nil {
+		return nil, newCaStmp, nil
+	}
+	return value.([]*IdProvider), newCaStmp, nil
 }

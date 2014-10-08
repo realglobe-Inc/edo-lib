@@ -1,12 +1,12 @@
 package driver
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestFileKeyValueStore(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -14,16 +14,15 @@ func TestFileKeyValueStore(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testKeyValueStore(t, newFileKeyValueStore(path))
+	testKeyValueStore(t, newFileKeyValueStore(path, nil, json.Marshal, jsonUnmarshal, 0))
 }
 
-// キャッシュ用。
-func TestFileDatedKeyValueStore(t *testing.T) {
+func TestFileKeyValueStoreStamp(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	testDatedKeyValueStore(t, newFileDatedKeyValueStore(path, 0))
+	testKeyValueStoreStamp(t, newFileKeyValueStore(path, nil, json.Marshal, jsonUnmarshal, 0))
 }

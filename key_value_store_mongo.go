@@ -8,148 +8,117 @@ import (
 	"time"
 )
 
-// mongodb をバックエンドに使う。
+// スレッドセーフ。
 
-// 非キャッシュ用。
+const (
+	mongoKeyTag   = "key"
+	mongoValueTag = "value"
+	mongoStampTag = "stamp"
+)
+
+type MongoMarshal func(interface{}) (interface{}, error)
+type MongoUnmarshal func(interface{}) (interface{}, error)
+type MongoTake func(*mgo.Query) (interface{}, *Stamp, error)
+
 // {
-//   keyTag: "aaaa-bbbb-cccc",
-//   valTag:  "https://realglobe.jp/query",
+//     "key": "key-no-atai",
+//     "value":  value-no-atai,
+//     "stamp": {
+//         "date": "date-no-atai",
+//         "expiration_date": "expiration-date-no-atai",
+//         "digest": "digest-no-atai"
+//     }
 // }
+
 type mongoKeyValueStore struct {
-	*mongoDriver
-	keyTag string
-	valTag string
+	base *mongoDriver
+	MongoMarshal
+	MongoUnmarshal
+	MongoTake
 }
 
-// keyTag と valTag は . を含まないこと。
-func newMongoKeyValueStore(url, dbName, collName, keyTag, valTag string) (*mongoKeyValueStore, error) {
-	base, err := newMongoDriver(url, dbName, collName, []mgo.Index{
+// スレッドセーフ。
+func NewMongoKeyValueStore(url, dbName, collName string, expiDur time.Duration) (KeyValueStore, error) {
+	return newMongoKeyValueStore(url, dbName, collName, expiDur)
+}
+
+// スレッドセーフ。
+func newMongoKeyValueStore(url, dbName, collName string, expiDur time.Duration) (*mongoKeyValueStore, error) {
+	base, err := newMongoDriver(url, dbName, collName, expiDur, []mgo.Index{
 		mgo.Index{
-			Key:      []string{keyTag},
+			Key:      []string{mongoKeyTag},
 			Unique:   true,
 			DropDups: true,
+		},
+		mgo.Index{
+			Key: []string{mongoStampTag + ".expiration_date"},
 		},
 	})
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return &mongoKeyValueStore{base, keyTag, valTag}, nil
+	return &mongoKeyValueStore{base: base}, nil
 }
 
-func (reg *mongoKeyValueStore) get(key string) (value interface{}, err error) {
-	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{reg.keyTag: key}).Select(bson.M{reg.valTag: 1, "_id": 0})
-	if n, err := query.Count(); err != nil {
-		return nil, erro.Wrap(err)
-	} else if n == 0 {
-		return nil, nil
-	}
-	var res map[string]interface{}
-	if err := query.One(&res); err != nil {
-		return nil, erro.Wrap(err)
-	}
-	return res[reg.valTag], nil
-}
-
-func (reg *mongoKeyValueStore) put(key string, value interface{}) error {
-	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{reg.keyTag: key}, bson.M{reg.keyTag: key, reg.valTag: value}); err != nil {
-		return erro.Wrap(err)
-	}
-	return nil
-}
-
-func (reg *mongoKeyValueStore) remove(key string) error {
-	if err := reg.DB(reg.dbName).C(reg.collName).Remove(bson.M{reg.keyTag: key}); err != nil {
-		return erro.Wrap(err)
-	}
-	return nil
-}
-
-// キャッシュ用。
-// {
-//   keyTag: "aaaa-bbbb-cccc",
-//   valTag:  "https://realglobe.jp/query",
-//   "stamp": {
-//     "date": "XXXXX",
-//     "digest": "YYYYY"
-//   }
-// }
-type mongoDatedKeyValueStore struct {
-	*datedMongoDriver
-	keyTag string
-	valTag string
-}
-
-// keyTag と valTag は . を含まず "stamp" でないこと。
-func newMongoDatedKeyValueStore(url, dbName, collName string, expiDur time.Duration, keyTag, valTag string) (*mongoDatedKeyValueStore, error) {
-	reg, err := newMongoDriver(url, dbName, collName, []mgo.Index{
-		mgo.Index{
-			Key:      []string{keyTag},
-			Unique:   true,
-			DropDups: true,
-		},
-	})
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-	return &mongoDatedKeyValueStore{newDatedMongoDriver(reg, expiDur), keyTag, valTag}, nil
-}
-
-func (reg *mongoDatedKeyValueStore) stampedGet(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
-	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{reg.keyTag: key}).Select(bson.M{reg.valTag: 1, "stamp": 1, "_id": 0})
+func (reg *mongoKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+	query := reg.base.C().Find(bson.M{mongoKeyTag: key}).Select(bson.M{mongoValueTag: 1, mongoStampTag: 1})
 	if n, err := query.Count(); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if n == 0 {
 		return nil, nil, nil
 	}
-	var res map[string]interface{}
-	if err := query.One(&res); err != nil {
-		return nil, nil, erro.Wrap(err)
-	}
 
-	var date time.Time
-	var dig string
-	if a := res["stamp"]; a == nil {
-		return nil, nil, erro.New("stamp of " + key + " is not exist.")
-	} else if b, ok := a.(map[string]interface{}); !ok {
-		return nil, nil, erro.New("stamp of " + key + " is invalid.")
+	var stmp *Stamp
+	if reg.MongoTake != nil {
+		value, stmp, err = reg.MongoTake(query)
+		if err != nil {
+			return nil, nil, erro.Wrap(err)
+		}
 	} else {
-		if c := b["date"]; c == nil {
-			return nil, nil, erro.New("date of " + key + " is not exist.")
-		} else if date, ok = c.(time.Time); !ok {
-			return nil, nil, erro.New("date of " + key + " is invalid.")
+		var res struct {
+			Value interface{}
+			Stamp *Stamp
 		}
-		if d := b["digest"]; d == nil {
-			return nil, nil, erro.New("digest of " + key + " is not exist.")
-		} else if dig, ok = d.(string); !ok {
-			return nil, nil, erro.New("digest of " + key + " is invalid.")
+		if err := query.One(&res); err != nil {
+			return nil, nil, erro.Wrap(err)
 		}
+		value = res.Value
+		stmp = res.Stamp
 	}
 
 	// 対象のスタンプを取得。
 
-	newCaStmp = &Stamp{Date: date, ExpiDate: time.Now().Add(reg.expiDur), Digest: dig}
+	newCaStmp = &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.base.expiDur), Digest: stmp.Digest}
 	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
 		return nil, newCaStmp, nil
 	}
 
 	// 無効なキャッシュだった。
 
-	return res[reg.valTag], newCaStmp, nil
+	if reg.MongoUnmarshal == nil {
+		return value, newCaStmp, nil
+	}
+
+	value, err = reg.MongoUnmarshal(value)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	}
+	return value, newCaStmp, nil
 }
 
-func (reg *mongoDatedKeyValueStore) stampedPut(key string, value interface{}) (newCaStmp *Stamp, err error) {
+func (reg *mongoKeyValueStore) Put(key string, value interface{}) (newCaStmp *Stamp, err error) {
 	var digest string
-	query := reg.DB(reg.dbName).C(reg.collName).Find(bson.M{reg.keyTag: key}).Select(bson.M{"stamp": 1, "_id": 0})
+	query := reg.base.C().Find(bson.M{mongoKeyTag: key}).Select(bson.M{mongoStampTag: 1})
 	if n, err := query.Count(); err != nil {
 		return nil, erro.Wrap(err)
 	} else if n > 0 {
 		var res struct {
-			Stmp *Stamp `bson:"stamp"`
+			Stamp *Stamp
 		}
 		if err := query.One(&res); err != nil {
 			return nil, erro.Wrap(err)
 		}
-		n, err := strconv.Atoi(res.Stmp.Digest)
+		n, err := strconv.Atoi(res.Stamp.Digest)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
@@ -160,15 +129,27 @@ func (reg *mongoDatedKeyValueStore) stampedPut(key string, value interface{}) (n
 
 	// 対象のスタンプを取得。
 
-	newCaStmp = &Stamp{Date: time.Now(), ExpiDate: time.Now().Add(reg.expiDur), Digest: digest}
-	if _, err := reg.DB(reg.dbName).C(reg.collName).Upsert(bson.M{reg.keyTag: key}, bson.M{reg.keyTag: key, reg.valTag: value, "stamp": &Stamp{Date: newCaStmp.Date, Digest: newCaStmp.Digest}}); err != nil {
+	newCaStmp = &Stamp{Date: time.Now(), ExpiDate: time.Now().Add(reg.base.expiDur), Digest: digest}
+
+	var buff interface{}
+	if reg.MongoMarshal == nil {
+		buff = value
+	} else {
+		var err error
+		buff, err = reg.MongoMarshal(value)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+	}
+
+	if _, err := reg.base.C().Upsert(bson.M{mongoKeyTag: key}, bson.M{mongoKeyTag: key, mongoValueTag: buff, mongoStampTag: &Stamp{Date: newCaStmp.Date, Digest: newCaStmp.Digest}}); err != nil {
 		return nil, erro.Wrap(err)
 	}
 	return newCaStmp, nil
 }
 
-func (reg *mongoDatedKeyValueStore) remove(key string) error {
-	if err := reg.DB(reg.dbName).C(reg.collName).Remove(bson.M{reg.keyTag: key}); err != nil {
+func (reg *mongoKeyValueStore) Remove(key string) error {
+	if err := reg.base.C().Remove(bson.M{mongoKeyTag: key}); err != nil {
 		return erro.Wrap(err)
 	}
 	return nil

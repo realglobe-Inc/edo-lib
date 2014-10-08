@@ -9,17 +9,18 @@ import (
 	"net/http"
 )
 
-// イベントの処理。
 type EventRouter interface {
 	// イベントを発生させる。
 	Fire(usrUuid, event string, body interface{}) error
 }
 
+type eventRouter webDriver
+
 func NewWebEventRouter(prefix string) EventRouter {
-	return newWebDriver(prefix)
+	return (*eventRouter)(newWebDriver(prefix))
 }
 
-func (rout *webDriver) Fire(usrUuid, event string, body interface{}) error {
+func (reg *eventRouter) Fire(usrUuid, event string, body interface{}) error {
 	var bodyType string
 	var buff io.Reader
 	if body != nil {
@@ -30,7 +31,7 @@ func (rout *webDriver) Fire(usrUuid, event string, body interface{}) error {
 		buff = bytes.NewReader(bodyJson)
 		bodyType = util.ContentTypeJson
 	}
-	resp, err := rout.Post(rout.prefix+"/"+usrUuid+event, bodyType, buff)
+	resp, err := ((*webDriver)(reg)).Client.Post((*webDriver)(reg).prefix+"/"+usrUuid+event, bodyType, buff)
 	if err != nil {
 		return erro.Wrap(err)
 	}

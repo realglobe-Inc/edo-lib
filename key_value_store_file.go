@@ -2,111 +2,51 @@ package driver
 
 import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"net/url"
-	"os"
-	"path/filepath"
-	"strconv"
 	"time"
 )
 
-// バックエンドにファイルシステムを使う。
+type Marshal func(interface{}) ([]byte, error)
+type Unmarshal func([]byte) (interface{}, error)
 
-func escapeToFileName(before string) (after string) {
-	// TODO URL パラメータのエスケープで代用してるがもっと良い方法はありそう。
-	return url.QueryEscape(before)
+type fileKeyValueStore struct {
+	base RawDataStore
+	Marshal
+	Unmarshal
 }
 
-// 非キャッシュ用。
-func newFileKeyValueStore(path string) keyValueStore {
-	return newFileDriver(path)
+// スレッドセーフ。
+func NewFileKeyValueStore(path string, keyGen func(string) string, marshal Marshal, unmarshal Unmarshal, expiDur time.Duration) KeyValueStore {
+	return newSynchronizedKeyValueStore(newCachingKeyValueStore(newFileKeyValueStore(path, keyGen, marshal, unmarshal, expiDur)))
 }
 
-func (reg *fileDriver) get(key string) (value interface{}, err error) {
-	path := filepath.Join(reg.path, escapeToFileName(key)+".json")
-
-	if err := readFromJson(path, &value); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	return value, nil
+// スレッドセーフではない。
+func newFileKeyValueStore(path string, keyGen func(string) string, marshal Marshal, unmarshal Unmarshal, expiDur time.Duration) *fileKeyValueStore {
+	return &fileKeyValueStore{newFileRawDataStore(path, keyGen, expiDur), marshal, unmarshal}
 }
-
-func (reg *fileDriver) put(key string, value interface{}) error {
-	path := filepath.Join(reg.path, escapeToFileName(key)+".json")
-
-	if err := writeToJson(path, &value); err != nil {
-		return erro.Wrap(err)
-	}
-
-	return nil
-}
-
-func (reg *fileDriver) remove(key string) error {
-	path := filepath.Join(reg.path, escapeToFileName(key)+".json")
-
-	if err := os.Remove(path); err != nil {
-		if !os.IsNotExist(err) {
-			return erro.Wrap(err)
-		}
-	}
-
-	return nil
-}
-
-// キャッシュ用。
-func newFileDatedKeyValueStore(path string, expiDur time.Duration) datedKeyValueStore {
-	return newDatedFileDriver(path, expiDur)
-}
-
-func (reg *datedFileDriver) stampedGet(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
-	path := filepath.Join(reg.path, escapeToFileName(key)+".json")
-
-	fi, err := os.Stat(path)
+func (reg *fileKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+	buff, newCaStmp, err := reg.base.Get(key, caStmp)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil, nil
-		} else {
-			return nil, nil, erro.Wrap(err)
-		}
-	}
-
-	// 対象のスタンプを取得。
-
-	newCaStmp = &Stamp{Date: fi.ModTime(), ExpiDate: time.Now().Add(reg.expiDur), Digest: strconv.FormatInt(fi.Size(), 10)}
-
-	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
+		return nil, nil, erro.Wrap(err)
+	} else if buff == nil {
 		return nil, newCaStmp, nil
 	}
 
-	// 無効なキャッシュだった。
-
-	if err := readFromJson(path, &value); err != nil {
+	value, err = reg.Unmarshal(buff)
+	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
-
 	return value, newCaStmp, nil
 }
 
-func (reg *datedFileDriver) stampedPut(key string, value interface{}) (*Stamp, error) {
-	path := filepath.Join(reg.path, escapeToFileName(key)+".json")
-
-	if err := writeToJson(path, &value); err != nil {
+func (reg *fileKeyValueStore) Put(key string, value interface{}) (*Stamp, error) {
+	buff, err := reg.Marshal(value)
+	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	// 保存できた。
+	return reg.base.Put(key, buff)
+}
 
-	fi, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		} else {
-			return nil, erro.Wrap(err)
-		}
-	}
-
-	// 対象のスタンプを取得。
-
-	newCaStmp := &Stamp{Date: fi.ModTime(), ExpiDate: time.Now().Add(reg.expiDur), Digest: strconv.FormatInt(fi.Size(), 10)}
-	return newCaStmp, nil
+func (reg *fileKeyValueStore) Remove(key string) error {
+	return reg.base.Remove(key)
 }

@@ -1,129 +1,196 @@
 package driver
 
 import (
+	"encoding/json"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strconv"
+	"reflect"
 	"time"
 )
 
-// 非キャッシュ用。
-func NewFileJsRegistry(path string) JsRegistry {
-	return newFileDriver(path)
+// value を string として返す。
+func stringMarshal(value interface{}) ([]byte, error) {
+	return []byte(value.(string)), nil
 }
 
+// data を string として返す。
+func stringUnmarshal(data []byte) (interface{}, error) {
+	return string(data), nil
+}
+
+// コード本体と補助情報を分けて保存する。
 type objectHeader struct {
 	Service bool     `json:"service,omitempty"`
 	Library bool     `json:"library,omitempty"`
 	Include []string `json:"include,omitempty"`
 }
 
-func (reg *fileDriver) Object(dir, objName string) (*Object, error) {
-	headPath := filepath.Join(reg.path, dir, objName+".json")
-	codePath := filepath.Join(reg.path, dir, objName+".js")
-
-	var head objectHeader
-	if err := readFromJson(headPath, &head); err != nil {
+// data を JSON として、objectHeader にデコードする。
+func objectHeaderUnmarshal(data []byte) (interface{}, error) {
+	var res objectHeader
+	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, erro.Wrap(err)
 	}
-	code, err := ioutil.ReadFile(codePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, erro.Wrap(err)
-	}
-
-	return &Object{head.Service, head.Library, head.Include, string(code)}, nil
-}
-func (reg *fileDriver) AddObject(dir, objName string, obj *Object) error {
-	headPath := filepath.Join(reg.path, dir, objName+".json")
-	codePath := filepath.Join(reg.path, dir, objName+".js")
-
-	if err := os.MkdirAll(filepath.Join(reg.path, dir), dirPerm); err != nil {
-		return erro.Wrap(err)
-	}
-	if err := writeToJson(headPath, &objectHeader{obj.Service, obj.Library, obj.Include}); err != nil {
-		return erro.Wrap(err)
-	}
-	if err := ioutil.WriteFile(codePath, []byte(obj.Code), filePerm); err != nil {
-		return erro.Wrap(err)
-	}
-
-	return nil
-}
-func (reg *fileDriver) RemoveObject(dir, objName string) error {
-	headPath := filepath.Join(reg.path, dir, objName+".json")
-	codePath := filepath.Join(reg.path, dir, objName+".js")
-
-	if err := os.Remove(headPath); err != nil {
-		if !os.IsNotExist(err) {
-			return erro.Wrap(err)
-		}
-	}
-	if err := os.Remove(codePath); err != nil {
-		if !os.IsNotExist(err) {
-			return erro.Wrap(err)
-		}
-	}
-
-	return nil
+	return &res, nil
 }
 
-// キャッシュ用。
-func NewFileJsBackendRegistry(path string, expiDur time.Duration) JsBackendRegistry {
-	return newDatedFileDriver(path, expiDur)
+type fileJsRegistry struct {
+	code   KeyValueStore
+	header KeyValueStore
 }
 
-func (reg *datedFileDriver) StampedObject(dir, objName string, caStmp *Stamp) (*Object, *Stamp, error) {
-	headPath := filepath.Join(reg.path, dir, objName+".json")
-	codePath := filepath.Join(reg.path, dir, objName+".js")
+// スレッドセーフ。
+func NewFileJsRegistry(path string, expiDur time.Duration) JsRegistry {
+	return newSynchronizedFileJsRegistry(newFileJsRegistry(path, expiDur))
+}
 
-	headFi, err := os.Stat(headPath)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return nil, nil, erro.Wrap(err)
-		}
-	}
-	codeFi, err := os.Stat(codePath)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return nil, nil, erro.Wrap(err)
-		}
-	}
+func jsKeyGen(before string) string {
+	return before + ".js"
+}
 
-	if codeFi == nil {
+// スレッドセーフではない。
+func newFileJsRegistry(path string, expiDur time.Duration) *fileJsRegistry {
+	return &fileJsRegistry{
+		newCachingKeyValueStore(newFileKeyValueStore(path, jsKeyGen, stringMarshal, stringUnmarshal, expiDur)),
+		newCachingKeyValueStore(newFileKeyValueStore(path, jsonKeyGen, json.Marshal, objectHeaderUnmarshal, expiDur)),
+	}
+}
+
+func (reg *fileJsRegistry) Object(dir, objName string, caStmp *Stamp) (obj *Object, newCaStmp *Stamp, err error) {
+	var code string
+	if value, stmp, err := reg.code.Get(dir+"/"+objName, caStmp); err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if stmp == nil {
 		return nil, nil, nil
-	}
-
-	stmp := &Stamp{}
-	if headFi == nil {
-		stmp.Date = codeFi.ModTime()
-		stmp.Digest = strconv.FormatInt(codeFi.Size(), 10)
 	} else {
-		if headFi.ModTime().After(codeFi.ModTime()) {
-			stmp.Date = headFi.ModTime()
-		} else {
-			stmp.Date = codeFi.ModTime()
+		if value != nil {
+			code = value.(string)
 		}
-		stmp.Digest = strconv.FormatInt(headFi.Size()+codeFi.Size(), 10)
+		newCaStmp = stmp
 	}
 
-	// 対象のスタンプを取得。
+	if value, stmp, err := reg.header.Get(dir+"/"+objName, nil); err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else {
+		if value == nil {
+			obj = &Object{Code: code}
+		} else {
+			header := value.(*objectHeader)
+			obj = &Object{header.Service, header.Library, header.Include, code}
+		}
+		newCaStmp.Digest += stmp.Digest
+	}
 
-	newCaStmp := &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
-
-	if caStmp != nil && !stmp.Date.After(caStmp.Date) && caStmp.Digest == stmp.Digest {
+	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
 		return nil, newCaStmp, nil
 	}
 
-	// 無効なキャッシュだった。
-
-	obj, err := reg.Object(dir, objName)
-	if err != nil {
-		return nil, nil, erro.Wrap(err)
-	}
 	return obj, newCaStmp, nil
+}
+
+func (reg *fileJsRegistry) AddObject(dir, objName string, obj *Object) (*Stamp, error) {
+	newCaStmp, err := reg.code.Put(dir+"/"+objName, obj.Code)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	if obj.Service || obj.Library || len(obj.Include) > 0 {
+		if _, err := reg.header.Put(dir+"/"+objName, &objectHeader{obj.Service, obj.Library, obj.Include}); err != nil {
+			return nil, erro.Wrap(err)
+		}
+	}
+	return newCaStmp, nil
+}
+
+func (reg *fileJsRegistry) RemoveObject(dir, objName string) error {
+	if err := reg.code.Remove(dir + "/" + objName); err != nil {
+		return erro.Wrap(err)
+	}
+	if err := reg.header.Remove(dir + "/" + objName); err != nil {
+		return erro.Wrap(err)
+	}
+	return nil
+}
+
+// スレッドセーフ化。
+type synchronizedJsRegistry synchronizedDriver
+
+type objectRequest struct {
+	dir     string
+	objName string
+	caStmp  *Stamp
+
+	objCh       chan *Object
+	newCaStmpCh chan *Stamp
+}
+
+type addObjectRequest struct {
+	dir     string
+	objName string
+	obj     *Object
+
+	newCaStmpCh chan *Stamp
+}
+
+type removeObjectRequest struct {
+	dir     string
+	objName string
+}
+
+func newSynchronizedFileJsRegistry(base JsRegistry) JsRegistry {
+	return (*synchronizedJsRegistry)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+		reflect.TypeOf(&objectRequest{}): func(r interface{}, errCh chan<- error) {
+			req := r.(*objectRequest)
+			obj, stmp, err := base.Object(req.dir, req.objName, req.caStmp)
+			if err != nil {
+				errCh <- err
+			} else {
+				req.objCh <- obj
+				req.newCaStmpCh <- stmp
+			}
+		},
+		reflect.TypeOf(&addObjectRequest{}): func(r interface{}, errCh chan<- error) {
+			req := r.(*addObjectRequest)
+			stmp, err := base.AddObject(req.dir, req.objName, req.obj)
+			if err != nil {
+				errCh <- err
+			} else {
+				req.newCaStmpCh <- stmp
+			}
+		},
+		reflect.TypeOf(&removeObjectRequest{}): func(r interface{}, errCh chan<- error) {
+			req := r.(*removeObjectRequest)
+			errCh <- base.RemoveObject(req.dir, req.objName)
+		},
+	}))
+}
+
+func (reg *synchronizedJsRegistry) Object(dir, objName string, caStmp *Stamp) (obj *Object, newCaStmp *Stamp, err error) {
+	objCh := make(chan *Object, 1)
+	newCaStmpCh := make(chan *Stamp, 1)
+	errCh := make(chan error, 1)
+	reg.reqCh <- &synchronizedRequest{&objectRequest{dir, objName, caStmp, objCh, newCaStmpCh}, errCh}
+	select {
+	case obj := <-objCh:
+		return obj, <-newCaStmpCh, nil
+	case err := <-errCh:
+		return nil, nil, err
+	}
+}
+
+func (reg *synchronizedJsRegistry) AddObject(dir, objName string, obj *Object) (newCaStmp *Stamp, err error) {
+	newCaStmpCh := make(chan *Stamp, 1)
+	errCh := make(chan error, 1)
+	reg.reqCh <- &synchronizedRequest{&addObjectRequest{dir, objName, obj, newCaStmpCh}, errCh}
+	select {
+	case stmp := <-newCaStmpCh:
+		return stmp, nil
+	case err := <-errCh:
+		return nil, err
+	}
+}
+
+func (reg *synchronizedJsRegistry) RemoveObject(dir, objName string) error {
+	errCh := make(chan error, 1)
+	reg.reqCh <- &synchronizedRequest{&removeObjectRequest{dir, objName}, errCh}
+	return <-errCh
 }

@@ -4,11 +4,8 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMemoryNameRegistry(t *testing.T) {
-	reg := NewMemoryNameRegistry()
-	for name, addr := range testNameAddrMap {
-		reg.AddAddress(name, addr)
-	}
+	reg := NewMemoryNameRegistry(0)
+	reg.SetAddresses(testNameTree.toContainer())
 	testNameRegistry(t, reg)
 }

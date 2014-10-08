@@ -4,12 +4,10 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
-// 事前に、
-// abc-012 に a_b-c、
-// を登録しとく。
+// 要事前登録。
+
 func testLoginRegistry(t *testing.T, reg LoginRegistry) {
-	usrUuid, err := reg.User(testAccToken)
+	usrUuid, _, err := reg.User(testAccToken, nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if usrUuid != testUsrName {

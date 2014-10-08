@@ -7,11 +7,49 @@ import (
 	"strings"
 )
 
+// 非キャッシュ用。
 type NameRegistry interface {
 	// アドレスを引く。
-	Address(name string) (addr string, err error)
+	Address(name string, caStmp *Stamp) (addr string, newCaStmp *Stamp, err error)
 	// name はドメイン形式（. 区切りで後ろが親）の木構造のノードを表し、そのノード以下の部分木に含まれる全てのアドレスを返す。
-	Addresses(name string) (addrs []string, err error)
+	Addresses(name string, caStmp *Stamp) (addrs []string, newCaStmp *Stamp, err error)
+}
+
+// 骨組み。
+type nameRegistry struct {
+	base KeyValueStore
+}
+
+func newNameRegistry(base KeyValueStore) *nameRegistry {
+	return &nameRegistry{base}
+}
+
+func (reg *nameRegistry) Address(name string, caStmp *Stamp) (addr string, newCaStmp *Stamp, err error) {
+	value, newCaStmp, err := reg.base.Get("names", caStmp)
+	if err != nil {
+		return "", nil, erro.Wrap(err)
+	} else if value == nil {
+		return "", newCaStmp, nil
+	}
+	addr = value.(*nameTree).address(name)
+	if addr == "" {
+		return "", nil, nil
+	}
+	return addr, newCaStmp, nil
+}
+
+func (reg *nameRegistry) Addresses(name string, caStmp *Stamp) (addrs []string, newCaStmp *Stamp, err error) {
+	value, newCaStmp, err := reg.base.Get("names", caStmp)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if value == nil {
+		return nil, newCaStmp, nil
+	}
+	addrs = value.(*nameTree).addresses(name)
+	if addrs == nil {
+		return nil, nil, nil
+	}
+	return addrs, newCaStmp, nil
 }
 
 // NameRegistry の内部データ。
@@ -44,21 +82,21 @@ func (tree *nameTree) remove(name string) {
 }
 
 func (tree *nameTree) address(name string) (addr string) {
-	val := tree.Value(name)
-	if val == nil {
+	value := tree.Value(name)
+	if value == nil {
 		return ""
 	}
-	return val.(string)
+	return value.(string)
 }
 
 func (tree *nameTree) addresses(name string) (addrs []string) {
-	vals := tree.Values(name)
-	if vals == nil {
+	values := tree.Values(name)
+	if values == nil {
 		return nil
 	}
 	addrs = []string{}
-	for _, val := range vals {
-		addrs = append(addrs, val.(string))
+	for _, value := range values {
+		addrs = append(addrs, value.(string))
 	}
 	return addrs
 }
@@ -73,7 +111,7 @@ func ExpandName(reg NameRegistry, name string) (addrs []string, err error) {
 		name = name[:idx]
 	}
 
-	addrs, err = reg.Addresses(name)
+	addrs, _, err = reg.Addresses(name, nil)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
@@ -106,8 +144,8 @@ func (tree *nameTree) fromContainer(cont map[string]string) {
 func (tree *nameTree) toContainer() (cont map[string]string) {
 	c := tree.ToContainer()
 	cont = map[string]string{}
-	for label, val := range c {
-		cont[label] = val.(string)
+	for label, value := range c {
+		cont[label] = value.(string)
 	}
 	return cont
 }

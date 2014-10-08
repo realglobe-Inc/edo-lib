@@ -1,8 +1,11 @@
 package driver
 
-import ()
+import (
+	"encoding/json"
+	"time"
+)
 
-// 非キャッシュ用。
-func NewFileUserNameIndex(path string) UserNameIndex {
-	return newUserNameIndex(newSynchronizedKeyValueStore(newFileKeyValueStore(path)))
+// スレッドセーフ。
+func NewFileUserNameIndex(path string, expiDur time.Duration) UserNameIndex {
+	return newUserNameIndex(NewFileKeyValueStore(path, jsonKeyGen, json.Marshal, jsonUnmarshal, expiDur))
 }

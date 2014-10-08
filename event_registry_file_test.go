@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestFileEventRegistry(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -14,5 +13,5 @@ func TestFileEventRegistry(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testEventRegistry(t, NewFileEventRegistry(path))
+	testEventRegistry(t, NewFileEventRegistry(path, 0))
 }

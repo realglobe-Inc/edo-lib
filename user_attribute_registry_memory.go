@@ -1,24 +1,26 @@
 package driver
 
-import ()
+import (
+	"time"
+)
 
-// 非キャッシュ用。
 type MemoryUserAttributeRegistry struct {
-	keyValueStore
+	KeyValueStore
 }
 
-func NewMemoryUserAttributeRegistry() *MemoryUserAttributeRegistry {
-	return &MemoryUserAttributeRegistry{newSynchronizedKeyValueStore(newMemoryKeyValueStore())}
+// スレッドセーフ。
+func NewMemoryUserAttributeRegistry(expiDur time.Duration) *MemoryUserAttributeRegistry {
+	return &MemoryUserAttributeRegistry{NewMemoryKeyValueStore(expiDur)}
 }
 
-func (reg *MemoryUserAttributeRegistry) UserAttribute(usrUuid, attrName string) (usrAttr interface{}, err error) {
-	return reg.get(userAttributeKey(usrUuid, attrName))
+func (reg *MemoryUserAttributeRegistry) UserAttribute(usrUuid, attrName string, caStmp *Stamp) (usrAttr interface{}, newCaStmp *Stamp, err error) {
+	return reg.Get(usrUuid+"/"+attrName, caStmp)
 }
 
 func (reg *MemoryUserAttributeRegistry) AddUserAttribute(usrUuid, attrName string, usrAttr interface{}) {
-	reg.put(userAttributeKey(usrUuid, attrName), usrAttr)
+	reg.Put(usrUuid+"/"+attrName, usrAttr)
 }
 
 func (reg *MemoryUserAttributeRegistry) RemoveIdProvider(usrUuid, attrName string) {
-	reg.remove(userAttributeKey(usrUuid, attrName))
+	reg.Remove(usrUuid + "/" + attrName)
 }

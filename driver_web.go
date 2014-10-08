@@ -4,11 +4,10 @@ import (
 	"net/http"
 )
 
-// HTTP/HTTPS で取ってくるドライバ。
-
+// スレッドセーフ。
 type webDriver struct {
 	prefix string // https://localhost:8000 とか。
-	*http.Client
+	Client *http.Client
 }
 
 func newWebDriver(prefix string) *webDriver {

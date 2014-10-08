@@ -12,9 +12,8 @@ var testIdps = []*IdProvider{
 	&IdProvider{Uuid: testIdpUuid + "-2", Name: testIdpName + "-2"},
 }
 
-// 非キャッシュ用。
 func testIdProviderLister(t *testing.T, reg IdProviderLister) {
-	idps, err := reg.IdProviders()
+	idps, _, err := reg.IdProviders(nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(idps, testIdps) {
@@ -22,10 +21,9 @@ func testIdProviderLister(t *testing.T, reg IdProviderLister) {
 	}
 }
 
-// キャッシュ用。
-func testDatedIdProviderLister(t *testing.T, reg DatedIdProviderLister) {
+func testIdProviderListerStamp(t *testing.T, reg IdProviderLister) {
 
-	idps1, stmp1, err := reg.StampedIdProviders(nil)
+	idps1, stmp1, err := reg.IdProviders(nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(idps1, testIdps) || stmp1 == nil {
@@ -33,7 +31,7 @@ func testDatedIdProviderLister(t *testing.T, reg DatedIdProviderLister) {
 	}
 
 	// キャッシュと同じだから返らない。
-	idps2, stmp2, err := reg.StampedIdProviders(stmp1)
+	idps2, stmp2, err := reg.IdProviders(stmp1)
 	if err != nil {
 		t.Fatal(err)
 	} else if idps2 != nil || stmp2 == nil {
@@ -41,7 +39,7 @@ func testDatedIdProviderLister(t *testing.T, reg DatedIdProviderLister) {
 	}
 
 	// キャッシュが古いから返る。
-	idps3, stmp3, err := reg.StampedIdProviders(&Stamp{Date: stmp1.Date.Add(-time.Second), Digest: stmp1.Digest})
+	idps3, stmp3, err := reg.IdProviders(&Stamp{Date: stmp1.Date.Add(-time.Second), Digest: stmp1.Digest})
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(idps3, testIdps) || stmp3 == nil {
@@ -49,7 +47,7 @@ func testDatedIdProviderLister(t *testing.T, reg DatedIdProviderLister) {
 	}
 
 	// ダイジェストが違うから返る。
-	idps4, stmp4, err := reg.StampedIdProviders(&Stamp{Date: stmp1.Date, Digest: stmp1.Digest + "a"})
+	idps4, stmp4, err := reg.IdProviders(&Stamp{Date: stmp1.Date, Digest: stmp1.Digest + "a"})
 	if err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(idps4, testIdps) || stmp4 == nil {

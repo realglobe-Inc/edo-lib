@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// キャッシュ用。
 func TestFileJsRegistry(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -14,16 +13,15 @@ func TestFileJsRegistry(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testJsRegistry(t, NewFileJsRegistry(path))
+	testJsRegistry(t, NewFileJsRegistry(path, 0))
 }
 
-// 非キャッシュ用。
-func TestFileJsBackendRegistry(t *testing.T) {
+func TestFileJsRegistryStamp(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	testJsBackendRegistry(t, NewFileJsBackendRegistry(path, 0))
+	testJsRegistryStamp(t, NewFileJsRegistry(path, 0))
 }

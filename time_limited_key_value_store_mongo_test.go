@@ -4,17 +4,16 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMongoTimeLimitedKeyValueStore(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoTimeLimitedKeyValueStore(mongoAddr, testLabel, "time-limited-key-value-store", "key", "value")
+	reg, err := newMongoTimeLimitedKeyValueStore(mongoAddr, testLabel, "time-limited-key-value-store", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*mongoTimeLimitedKeyValueStore).DB(testLabel).DropDatabase()
+	defer reg.base.base.DB(testLabel).DropDatabase()
 
 	testTimeLimitedKeyValueStore(t, reg)
 }

@@ -1,8 +1,11 @@
 package driver
 
-import ()
+import (
+	"encoding/json"
+	"time"
+)
 
-// 非キャッシュ用。
-func NewFileUserAttributeRegistry(path string) UserAttributeRegistry {
-	return newUserAttributeRegistry(newSynchronizedKeyValueStore(newFileKeyValueStore(path)))
+// スレッドセーフ。
+func NewFileUserAttributeRegistry(path string, expiDur time.Duration) UserAttributeRegistry {
+	return newUserAttributeRegistry(NewFileKeyValueStore(path, jsonKeyGen, json.Marshal, jsonUnmarshal, expiDur))
 }

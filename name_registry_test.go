@@ -59,22 +59,26 @@ func TestNameTreeConversion(t *testing.T) {
 	}
 }
 
-var testNameAddrMap = map[string]string{
-	"c.b.a": "c.localhost",
-	"d.b.a": "d.localhost",
-	"b.a":   "localhost",
+var testNameTree *nameTree
+
+func init() {
+	testNameTree = newNameTree()
+	testNameTree.fromContainer(map[string]string{
+		"c.b.a": "c.localhost",
+		"d.b.a": "d.localhost",
+		"b.a":   "localhost",
+	})
 }
 
-// 非キャッシュ用。
 func testNameRegistry(t *testing.T, reg NameRegistry) {
-	addr, err := reg.Address("c.b.a")
+	addr, _, err := reg.Address("c.b.a", nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if addr != "c.localhost" {
 		t.Error(addr)
 	}
 
-	addrs, err := reg.Addresses("a")
+	addrs, _, err := reg.Addresses("a", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

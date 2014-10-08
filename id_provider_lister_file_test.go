@@ -3,11 +3,9 @@ package driver
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestFileIdProviderLister(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
@@ -15,24 +13,25 @@ func TestFileIdProviderLister(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "list.json"), testIdps); err != nil {
+	reg := NewFileIdProviderLister(path, 0)
+	if _, err := reg.(*idProviderLister).base.Put("list", testIdps); err != nil {
 		t.Fatal(err)
 	}
 
-	testIdProviderLister(t, NewFileIdProviderLister(path))
+	testIdProviderLister(t, reg)
 }
 
-// キャッシュ用。
-func TestFileDatedIdProviderLister(t *testing.T) {
+func TestFileIdProviderListerStamp(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(path)
 
-	if err := writeToJson(filepath.Join(path, "list.json"), testIdps); err != nil {
+	reg := NewFileIdProviderLister(path, 0)
+	if _, err := reg.(*idProviderLister).base.Put("list", testIdps); err != nil {
 		t.Fatal(err)
 	}
 
-	testDatedIdProviderLister(t, NewFileDatedIdProviderLister(path, 0))
+	testIdProviderListerStamp(t, reg)
 }

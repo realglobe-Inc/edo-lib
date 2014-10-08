@@ -4,19 +4,18 @@ import (
 	"testing"
 )
 
-// 非キャッシュ用。
 func TestMongoUserAttributeRegistry(t *testing.T) {
 	if mongoAddr == "" {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoUserAttributeRegistry(mongoAddr, testLabel, "user-attribute-registry")
+	reg, err := NewMongoUserAttributeRegistry(mongoAddr, testLabel, "user-attribute-registry", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reg.(*userAttributeRegistry).keyValueStore.(*mongoKeyValueStore).DB(testLabel).DropDatabase()
+	defer reg.(*userAttributeRegistry).base.(*mongoKeyValueStore).base.DB(testLabel).DropDatabase()
 
-	if err := reg.(*userAttributeRegistry).put(userAttributeKey(testUsrUuid, testAttrName), testAttr); err != nil {
+	if _, err := reg.(*userAttributeRegistry).base.Put(testUsrUuid+"/"+testAttrName, testAttr); err != nil {
 		t.Fatal(err)
 	}
 

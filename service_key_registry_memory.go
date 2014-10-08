@@ -5,54 +5,27 @@ import (
 	"time"
 )
 
-// メモリ上で完結する。デバッグ用。
-
-// 非キャッシュ用。
 type MemoryServiceKeyRegistry struct {
-	keyValueStore
+	base KeyValueStore
 }
 
-func NewMemoryServiceKeyRegistry() *MemoryServiceKeyRegistry {
-	return &MemoryServiceKeyRegistry{newSynchronizedKeyValueStore(newMemoryKeyValueStore())}
+// スレッドセーフ。
+func NewMemoryServiceKeyRegistry(expiDur time.Duration) *MemoryServiceKeyRegistry {
+	return &MemoryServiceKeyRegistry{NewMemoryKeyValueStore(expiDur)}
 }
 
-func (reg *MemoryServiceKeyRegistry) ServiceKey(servUuid string) (servKey *rsa.PublicKey, err error) {
-	val, err := reg.get(servUuid)
-	if val != nil {
-		servKey = val.(*rsa.PublicKey)
-	}
-	return servKey, err
-}
-
-func (reg *MemoryServiceKeyRegistry) AddServiceKey(servUuid string, servKey *rsa.PublicKey) {
-	reg.put(servUuid, servKey)
-}
-
-func (reg *MemoryServiceKeyRegistry) RemoveServiceKey(servUuid string) {
-	reg.remove(servUuid)
-}
-
-// キャッシュ用。
-type MemoryDatedServiceKeyRegistry struct {
-	datedKeyValueStore
-}
-
-func NewMemoryDatedServiceKeyRegistry(expiDur time.Duration) *MemoryDatedServiceKeyRegistry {
-	return &MemoryDatedServiceKeyRegistry{newSynchronizedDatedKeyValueStore(newMemoryDatedKeyValueStore(expiDur))}
-}
-
-func (reg *MemoryDatedServiceKeyRegistry) StampedServiceKey(servUuid string, caStmp *Stamp) (servKey *rsa.PublicKey, newCaStmp *Stamp, err error) {
-	val, newCaStmp, err := reg.stampedGet(servUuid, caStmp)
-	if val != nil {
-		servKey = val.(*rsa.PublicKey)
+func (reg *MemoryServiceKeyRegistry) ServiceKey(servUuid string, caStmp *Stamp) (servKey *rsa.PublicKey, newCaStmp *Stamp, err error) {
+	value, newCaStmp, err := reg.base.Get(servUuid, caStmp)
+	if value != nil {
+		servKey = value.(*rsa.PublicKey)
 	}
 	return servKey, newCaStmp, err
 }
 
-func (reg *MemoryDatedServiceKeyRegistry) AddServiceKey(servUuid string, servKey *rsa.PublicKey) {
-	reg.stampedPut(servUuid, servKey)
+func (reg *MemoryServiceKeyRegistry) AddServiceKey(servUuid string, servKey *rsa.PublicKey) {
+	reg.base.Put(servUuid, servKey)
 }
 
-func (reg *MemoryDatedServiceKeyRegistry) RemoveServiceKey(servUuid string) {
-	reg.remove(servUuid)
+func (reg *MemoryServiceKeyRegistry) RemoveServiceKey(servUuid string) {
+	reg.base.Remove(servUuid)
 }
