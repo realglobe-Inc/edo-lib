@@ -2,6 +2,9 @@ package util
 
 import (
 	"crypto"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"strings"
 )
@@ -53,5 +56,23 @@ func HashFunctionString(hash crypto.Hash) string {
 		return "RIPEMD160"
 	default:
 		return "unknown"
+	}
+}
+
+func ParseRsaPrivateKey(pemStr string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil {
+		return nil, erro.New("no private key.")
+	}
+
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		priKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		return priKey, nil
+	default:
+		return nil, erro.New("invalid private key type " + block.Type + ".")
 	}
 }
