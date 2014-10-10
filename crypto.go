@@ -59,6 +59,29 @@ func HashFunctionString(hash crypto.Hash) string {
 	}
 }
 
+func ParsePublicKey(pemStr string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil {
+		return nil, erro.New("no public key.")
+	}
+
+	switch block.Type {
+	case "PUBLIC KEY":
+		key, err := x509.ParsePKIXPublicKey(block.Bytes)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		switch k := key.(type) {
+		case *rsa.PublicKey:
+			return k, nil
+		default:
+			return nil, erro.New("not rsa public key.")
+		}
+	default:
+		return nil, erro.New("invalid public key type " + block.Type + ".")
+	}
+}
+
 func ParseRsaPrivateKey(pemStr string) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
