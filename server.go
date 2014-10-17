@@ -2,7 +2,6 @@ package util
 
 import (
 	"errors"
-	"fmt"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"math/rand"
 	"net"
@@ -11,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -55,7 +55,7 @@ func Serve(socType, socPath string, socPort int, protType string, routes map[str
 				}
 				log.Info("Wait on UNIX socket " + socPath + ".")
 			case "tcp":
-				lis, err = net.Listen("tcp", fmt.Sprint(":", socPort))
+				lis, err = net.Listen("tcp", ":"+strconv.Itoa(socPort))
 				if err != nil {
 					return false, erro.Wrap(err)
 				}
