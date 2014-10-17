@@ -32,7 +32,9 @@ func Serve(socType, socPath string, socPort int, protType string, routes map[str
 		shutCh <- struct{}{}
 	}()
 
+	// エラー発生時の冷却期間はだんだん延ばす。
 	var sleepTime time.Duration = 0
+	// 一定期間以上エラー無しで動作したら冷却期間をリセットする。
 	resetInterval := time.Minute
 	for {
 		if brk, err := func() (brk bool, err error) {
