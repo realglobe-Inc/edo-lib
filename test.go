@@ -41,13 +41,13 @@ type testHttpServerResponse struct {
 	reqCh chan<- *http.Request
 }
 
-func NewTestHttpServer(port, chCap int) (*TestHttpServer, error) {
+func NewTestHttpServer(port int) (*TestHttpServer, error) {
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	respCh := make(chan *testHttpServerResponse, chCap)
+	respCh := make(chan *testHttpServerResponse, 100)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
