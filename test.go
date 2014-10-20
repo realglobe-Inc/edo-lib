@@ -1,7 +1,9 @@
 package util
 
 import (
+	"bytes"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
@@ -51,8 +53,18 @@ func NewTestHttpServer(port int) (*TestHttpServer, error) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// ここを抜けるときに勝手に Close されるので、Close されても問題無いように置き換える。
+		req := *r
+		if buff, err := ioutil.ReadAll(r.Body); err != nil {
+			err := erro.Wrap(err)
+			log.Err(erro.Unwrap(err))
+			log.Debug(err)
+		} else {
+			req.Body = ioutil.NopCloser(bytes.NewReader(buff))
+		}
+
 		resp := <-respCh
-		resp.reqCh <- r
+		resp.reqCh <- &req
 		for key, values := range resp.header {
 			for _, value := range values {
 				w.Header().Add(key, value)
