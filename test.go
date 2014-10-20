@@ -37,6 +37,8 @@ type testHttpServerResponse struct {
 	status int
 	header http.Header
 	body   []byte
+
+	reqCh chan<- *http.Request
 }
 
 func NewTestHttpServer(port, chCap int) (*TestHttpServer, error) {
@@ -50,6 +52,7 @@ func NewTestHttpServer(port, chCap int) (*TestHttpServer, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		resp := <-respCh
+		resp.reqCh <- r
 		for key, values := range resp.header {
 			for _, value := range values {
 				w.Header().Add(key, value)
@@ -69,8 +72,10 @@ func NewTestHttpServer(port, chCap int) (*TestHttpServer, error) {
 }
 
 // 次に返させるレスポンスを与える。
-func (server *TestHttpServer) AddResponse(status int, header http.Header, body []byte) {
-	server.respCh <- &testHttpServerResponse{status, header, body}
+func (server *TestHttpServer) AddResponse(status int, header http.Header, body []byte) <-chan *http.Request {
+	reqCh := make(chan *http.Request, 1)
+	server.respCh <- &testHttpServerResponse{status, header, body, reqCh}
+	return reqCh
 }
 
 // 待ち受けソケットを閉じる。
