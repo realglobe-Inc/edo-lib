@@ -181,8 +181,10 @@ func serverPanicErrorWrapper(handler HandlerFunc) http.HandlerFunc {
 				log.Err(erro.Unwrap(err))
 				log.Debug(err)
 
+				body := ErrorToResponseJson(err)
 				w.Header().Set("Content-Type", ContentTypeJson)
-				http.Error(w, string(ErrorToResponseJson(err)), http.StatusInternalServerError)
+				w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+				http.Error(w, string(body), http.StatusInternalServerError)
 				return
 			}
 		}()
@@ -203,8 +205,10 @@ func serverPanicErrorWrapper(handler HandlerFunc) http.HandlerFunc {
 			default:
 				status = http.StatusInternalServerError
 			}
+			body := ErrorToResponseJson(err)
 			w.Header().Set("Content-Type", ContentTypeJson)
-			http.Error(w, string(ErrorToResponseJson(err)), status)
+			w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+			http.Error(w, string(body), status)
 			return
 		}
 	}
