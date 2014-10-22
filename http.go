@@ -50,3 +50,7 @@ func (err *HttpStatusError) Status() int {
 func (err *HttpStatusError) Message() string {
 	return err.msg
 }
+
+func (err *HttpStatusError) Cause() error {
+	return err.cause
+}
