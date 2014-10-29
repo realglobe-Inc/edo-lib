@@ -24,7 +24,7 @@ type Stamp struct {
 }
 
 func WriteStampToRequestHeader(stmp *Stamp, h http.Header) {
-	h.Set("If-Modified-Since", stmp.Date.Format(time.RFC1123))
+	h.Set("If-Modified-Since", stmp.Date.Format(http.TimeFormat))
 	h.Set("If-None-Match", stmp.Digest)
 }
 func ParseStampFromRequestHeader(h http.Header) (*Stamp, error) {
@@ -36,7 +36,7 @@ func ParseStampFromRequestHeader(h http.Header) (*Stamp, error) {
 	stmp := &Stamp{Digest: dig}
 	if dateStr != "" {
 		var err error
-		stmp.Date, err = time.Parse(time.RFC1123, dateStr)
+		stmp.Date, err = time.Parse(http.TimeFormat, dateStr)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
@@ -45,8 +45,8 @@ func ParseStampFromRequestHeader(h http.Header) (*Stamp, error) {
 	return stmp, nil
 }
 func WriteStampToResponseHeader(stmp *Stamp, h http.Header) {
-	h.Set("Last-Modified", stmp.Date.Format(time.RFC1123))
-	h.Set("Expires", stmp.ExpiDate.Format(time.RFC1123))
+	h.Set("Last-Modified", stmp.Date.Format(http.TimeFormat))
+	h.Set("Expires", stmp.ExpiDate.Format(http.TimeFormat))
 	h.Set("ETag", stmp.Digest)
 }
 func ParseStampFromResponseHeader(h http.Header) (*Stamp, error) {
@@ -58,14 +58,14 @@ func ParseStampFromResponseHeader(h http.Header) (*Stamp, error) {
 	stmp := &Stamp{Digest: dig}
 	if dateStr != "" {
 		var err error
-		stmp.Date, err = time.Parse(time.RFC1123, dateStr)
+		stmp.Date, err = time.Parse(http.TimeFormat, dateStr)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
 	}
 	if expiDateStr != "" {
 		var err error
-		stmp.ExpiDate, err = time.Parse(time.RFC1123, expiDateStr)
+		stmp.ExpiDate, err = time.Parse(http.TimeFormat, expiDateStr)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
