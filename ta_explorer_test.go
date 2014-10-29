@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-var testServExpTree *serviceExplorerTree
+var testServExpTree *taExplorerTree
 
 func init() {
-	testServExpTree = newServiceExplorerTree()
+	testServExpTree = newTaExplorerTree()
 	testServExpTree.add(testUri, testServUuid)
 }
 
-func testServiceExplorer(t *testing.T, reg ServiceExplorer) {
+func testTaExplorer(t *testing.T, reg TaExplorer) {
 	servUuid, _, err := reg.ServiceUuid(testUri+"/hoge", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -35,7 +35,7 @@ func testServiceExplorer(t *testing.T, reg ServiceExplorer) {
 	}
 }
 
-func testServiceExplorerStamp(t *testing.T, reg ServiceExplorer) {
+func testTaExplorerStamp(t *testing.T, reg TaExplorer) {
 
 	servUuid1, stmp1, err := reg.ServiceUuid(testUri, nil)
 	if err != nil {

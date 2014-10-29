@@ -6,28 +6,28 @@ import (
 	"strings"
 )
 
-type ServiceExplorer interface {
+type TaExplorer interface {
 	// サービスの URI から UUID を引く。
 	ServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error)
 }
 
 // 骨組み。
-type serviceExplorer struct {
+type taExplorer struct {
 	base KeyValueStore
 }
 
-func newServiceExplorer(base KeyValueStore) *serviceExplorer {
-	return &serviceExplorer{base}
+func newTaExplorer(base KeyValueStore) *taExplorer {
+	return &taExplorer{base}
 }
 
-func (reg *serviceExplorer) ServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
+func (reg *taExplorer) ServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
 	value, newCaStmp, err := reg.base.Get("list", caStmp)
 	if err != nil {
 		return "", nil, erro.Wrap(err)
 	} else if value == nil {
 		return "", newCaStmp, nil
 	}
-	servUuid = value.(*serviceExplorerTree).get(servUri)
+	servUuid = value.(*taExplorerTree).get(servUri)
 	if servUuid == "" {
 		return "", nil, nil
 	}
@@ -35,19 +35,19 @@ func (reg *serviceExplorer) ServiceUuid(servUri string, caStmp *Stamp) (servUuid
 }
 
 // 内部データ。
-type serviceExplorerTree struct {
+type taExplorerTree struct {
 	*util.Tree
 }
 
-func newServiceExplorerTree() *serviceExplorerTree {
-	return &serviceExplorerTree{util.NewTree(serviceExplorerTreeIsRoot, serviceExplorerTreeParent)}
+func newTaExplorerTree() *taExplorerTree {
+	return &taExplorerTree{util.NewTree(taExplorerTreeIsRoot, taExplorerTreeParent)}
 }
 
-func serviceExplorerTreeIsRoot(label string) bool {
+func taExplorerTreeIsRoot(label string) bool {
 	return label == ""
 }
 
-func serviceExplorerTreeParent(label string) string {
+func taExplorerTreeParent(label string) string {
 	if idx := strings.LastIndex(label, "/"); idx < 0 {
 		// localhost とか。
 		return ""
@@ -74,15 +74,15 @@ func serviceExplorerTreeParent(label string) string {
 	}
 }
 
-func (tree *serviceExplorerTree) add(servUri string, servUuid string) {
+func (tree *taExplorerTree) add(servUri string, servUuid string) {
 	tree.Add(servUri, servUuid)
 }
 
-func (tree *serviceExplorerTree) remove(servUri string) {
+func (tree *taExplorerTree) remove(servUri string) {
 	tree.Remove(servUri)
 }
 
-func (tree *serviceExplorerTree) get(servUri string) (servUuid string) {
+func (tree *taExplorerTree) get(servUri string) (servUuid string) {
 	value := tree.ParentValue(servUri)
 	if value == nil {
 		return ""
@@ -90,7 +90,7 @@ func (tree *serviceExplorerTree) get(servUri string) (servUuid string) {
 	return value.(string)
 }
 
-func (tree *serviceExplorerTree) fromContainer(cont map[string]string) {
+func (tree *taExplorerTree) fromContainer(cont map[string]string) {
 	c := map[string]interface{}{}
 	for name, addr := range cont {
 		c[name] = addr
@@ -98,7 +98,7 @@ func (tree *serviceExplorerTree) fromContainer(cont map[string]string) {
 	tree.FromContainer(c)
 }
 
-func (tree *serviceExplorerTree) toContainer() (cont map[string]string) {
+func (tree *taExplorerTree) toContainer() (cont map[string]string) {
 	c := tree.ToContainer()
 	cont = map[string]string{}
 	for label, value := range c {

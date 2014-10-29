@@ -23,16 +23,16 @@ func webServiceUuidUnmarshal(data []byte) (interface{}, error) {
 	return res.Service.Uuid, nil
 }
 
-type webServiceExplorer struct {
+type webTaExplorer struct {
 	base KeyValueStore
 }
 
 // スレッドセーフ。
-func NewWebServiceExplorer(prefix string) ServiceExplorer {
-	return &webServiceExplorer{NewWebKeyValueStore(prefix, nil, webServiceUuidUnmarshal)}
+func NewWebTaExplorer(prefix string) TaExplorer {
+	return &webTaExplorer{NewWebKeyValueStore(prefix, nil, webServiceUuidUnmarshal)}
 }
 
-func (reg *webServiceExplorer) ServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
+func (reg *webTaExplorer) ServiceUuid(servUri string, caStmp *Stamp) (servUuid string, newCaStmp *Stamp, err error) {
 	value, newCaStmp, err := reg.base.Get("?service_uri="+url.QueryEscape(servUri), caStmp)
 	if err != nil {
 		return "", nil, erro.Wrap(err)
