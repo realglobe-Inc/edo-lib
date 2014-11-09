@@ -184,7 +184,8 @@ func serverPanicErrorWrapper(handler HandlerFunc) http.HandlerFunc {
 				body := ErrorToResponseJson(err)
 				w.Header().Set("Content-Type", ContentTypeJson)
 				w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-				http.Error(w, string(body), http.StatusInternalServerError)
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write(body)
 				return
 			}
 		}()
@@ -208,7 +209,8 @@ func serverPanicErrorWrapper(handler HandlerFunc) http.HandlerFunc {
 			body := ErrorToResponseJson(err)
 			w.Header().Set("Content-Type", ContentTypeJson)
 			w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-			http.Error(w, string(body), status)
+			w.WriteHeader(status)
+			w.Write(body)
 			return
 		}
 	}
