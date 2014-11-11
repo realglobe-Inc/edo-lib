@@ -20,20 +20,20 @@ func webIdProviderAttributeUnmarshal(data []byte) (interface{}, error) {
 	return res.Id_provider, nil
 }
 
-type webIdProviderAttributeRegistry struct {
+type webIdpAttributeProvider struct {
 	KeyValueStore
 }
 
 // スレッドセーフ。
-func NewWebIdProviderAttributeRegistry(prefix string) IdProviderAttributeRegistry {
-	return newWebIdProviderAttributeRegistry(NewWebKeyValueStore(prefix, nil, webIdProviderAttributeUnmarshal))
+func NewWebIdpAttributeProvider(prefix string) IdpAttributeProvider {
+	return newWebIdpAttributeProvider(NewWebKeyValueStore(prefix, nil, webIdProviderAttributeUnmarshal))
 }
 
-func newWebIdProviderAttributeRegistry(base KeyValueStore) *webIdProviderAttributeRegistry {
-	return &webIdProviderAttributeRegistry{base}
+func newWebIdpAttributeProvider(base KeyValueStore) *webIdpAttributeProvider {
+	return &webIdpAttributeProvider{base}
 }
 
-func (reg *webIdProviderAttributeRegistry) IdProviderAttribute(idpUuid, attrName string, caStmp *Stamp) (idpAttr interface{}, newCaStmp *Stamp, err error) {
+func (reg *webIdpAttributeProvider) IdProviderAttribute(idpUuid, attrName string, caStmp *Stamp) (idpAttr interface{}, newCaStmp *Stamp, err error) {
 	value, newCaStmp, err := reg.Get(idpUuid+"/"+attrName, caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)

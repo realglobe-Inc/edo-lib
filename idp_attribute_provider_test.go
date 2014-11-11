@@ -8,7 +8,7 @@ import (
 
 // 要事前登録。
 
-func testIdProviderAttributeRegistry(t *testing.T, reg IdProviderAttributeRegistry) {
+func testIdpAttributeProvider(t *testing.T, reg IdpAttributeProvider) {
 	idpUuid := testIdpUuid
 	attrName := testAttrName
 	idpAttr := testAttr
@@ -37,7 +37,7 @@ func testIdProviderAttributeRegistry(t *testing.T, reg IdProviderAttributeRegist
 	}
 }
 
-func testIdProviderAttributeRegistryStamp(t *testing.T, reg IdProviderAttributeRegistry) {
+func testIdpAttributeProviderStamp(t *testing.T, reg IdpAttributeProvider) {
 	idpUuid := testIdpUuid
 	attrName := testAttrName
 	idpAttr := testAttr

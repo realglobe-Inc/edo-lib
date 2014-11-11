@@ -16,6 +16,6 @@ func jsonUnmarshal(data []byte) (interface{}, error) {
 }
 
 // スレッドセーフ。
-func NewFileIdProviderAttributeRegistry(path string, expiDur time.Duration) IdProviderAttributeRegistry {
-	return newIdProviderAttributeRegistry(NewFileKeyValueStore(path, jsonKeyGen, json.Marshal, jsonUnmarshal, expiDur))
+func NewFileIdpAttributeProvider(path string, expiDur time.Duration) IdpAttributeProvider {
+	return newIdpAttributeProvider(NewFileKeyValueStore(path, jsonKeyGen, json.Marshal, jsonUnmarshal, expiDur))
 }
