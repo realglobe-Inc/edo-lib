@@ -5,21 +5,21 @@ import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 )
 
-type ServiceKeyRegistry interface {
+type TaKeyProvider interface {
 	// サービスの公開鍵を返す。
 	ServiceKey(servUuid string, caStmp *Stamp) (servKey *rsa.PublicKey, newCaStmp *Stamp, err error)
 }
 
 // 骨組み。
-type serviceKeyRegistry struct {
+type taKeyProvider struct {
 	base KeyValueStore
 }
 
-func newServiceKeyRegistry(base KeyValueStore) *serviceKeyRegistry {
-	return &serviceKeyRegistry{base}
+func newTaKeyProvider(base KeyValueStore) *taKeyProvider {
+	return &taKeyProvider{base}
 }
 
-func (reg *serviceKeyRegistry) ServiceKey(servUuid string, caStmp *Stamp) (servKey *rsa.PublicKey, newCaStmp *Stamp, err error) {
+func (reg *taKeyProvider) ServiceKey(servUuid string, caStmp *Stamp) (servKey *rsa.PublicKey, newCaStmp *Stamp, err error) {
 	value, newCaStmp, err := reg.base.Get(servUuid, caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)

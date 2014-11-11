@@ -27,7 +27,7 @@ func pemToPublicKey(pemStr interface{}) (pubKey interface{}, err error) {
 }
 
 // スレッドセーフ。
-func NewMongoServiceKeyRegistry(url, dbName, collName string, expiDur time.Duration) (ServiceKeyRegistry, error) {
+func NewMongoTaKeyProvider(url, dbName, collName string, expiDur time.Duration) (TaKeyProvider, error) {
 	base, err := newMongoKeyValueStore(url, dbName, collName, expiDur)
 	if err != nil {
 		return nil, erro.Wrap(err)
@@ -36,5 +36,5 @@ func NewMongoServiceKeyRegistry(url, dbName, collName string, expiDur time.Durat
 	base.MongoUnmarshal = pemToPublicKey
 	// デコード後をキャッシュ。
 	// TODO キャッシュの並列化。
-	return newServiceKeyRegistry(newCachingKeyValueStore(base)), nil
+	return newTaKeyProvider(newCachingKeyValueStore(base)), nil
 }

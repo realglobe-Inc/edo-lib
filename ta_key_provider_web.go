@@ -24,6 +24,6 @@ func webServicePublicKeyUnmarshal(data []byte) (interface{}, error) {
 }
 
 // スレッドセーフ。
-func NewWebServiceKeyRegistry(prefix string) ServiceKeyRegistry {
-	return newServiceKeyRegistry(NewWebKeyValueStore(prefix, nil, webServicePublicKeyUnmarshal))
+func NewWebTaKeyProvider(prefix string) TaKeyProvider {
+	return newTaKeyProvider(NewWebKeyValueStore(prefix, nil, webServicePublicKeyUnmarshal))
 }

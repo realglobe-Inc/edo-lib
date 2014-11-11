@@ -28,6 +28,6 @@ func pemKeyGen(before string) string {
 }
 
 // スレッドセーフ。
-func NewFileServiceKeyRegistry(path string, expiDur time.Duration) ServiceKeyRegistry {
-	return newServiceKeyRegistry(NewFileKeyValueStore(path, pemKeyGen, publicKeyMarshal, publicKeyUnmarshal, expiDur))
+func NewFileTaKeyProvider(path string, expiDur time.Duration) TaKeyProvider {
+	return newTaKeyProvider(NewFileKeyValueStore(path, pemKeyGen, publicKeyMarshal, publicKeyUnmarshal, expiDur))
 }

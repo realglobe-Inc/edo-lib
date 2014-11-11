@@ -20,7 +20,7 @@ func init() {
 	testPublicKey = &testKey.PublicKey
 }
 
-func testServiceKeyRegistry(t *testing.T, reg ServiceKeyRegistry) {
+func testTaKeyProvider(t *testing.T, reg TaKeyProvider) {
 	key, _, err := reg.ServiceKey(testServUuid, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -29,7 +29,7 @@ func testServiceKeyRegistry(t *testing.T, reg ServiceKeyRegistry) {
 	}
 }
 
-func testServiceKeyRegistryStamp(t *testing.T, reg ServiceKeyRegistry) {
+func testTaKeyProviderStamp(t *testing.T, reg TaKeyProvider) {
 
 	key1, stmp1, err := reg.ServiceKey(testServUuid, nil)
 	if err != nil {
