@@ -12,7 +12,7 @@ var testIdps = []*IdProvider{
 	&IdProvider{Uuid: testIdpUuid + "-2", Name: testIdpName + "-2"},
 }
 
-func testIdProviderLister(t *testing.T, reg IdProviderLister) {
+func testIdpLister(t *testing.T, reg IdpLister) {
 	idps, _, err := reg.IdProviders(nil)
 	if err != nil {
 		t.Fatal(err)
@@ -21,7 +21,7 @@ func testIdProviderLister(t *testing.T, reg IdProviderLister) {
 	}
 }
 
-func testIdProviderListerStamp(t *testing.T, reg IdProviderLister) {
+func testIdpListerStamp(t *testing.T, reg IdpLister) {
 
 	idps1, stmp1, err := reg.IdProviders(nil)
 	if err != nil {

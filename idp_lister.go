@@ -14,22 +14,22 @@ func (idp *IdProvider) String() string {
 	return idp.Uuid + "," + idp.Name
 }
 
-type IdProviderLister interface {
+type IdpLister interface {
 	// ID プロバイダの列挙。
 	IdProviders(caStmp *Stamp) (idps []*IdProvider, newCaStmp *Stamp, err error)
 }
 
 // 骨組み。
 // バックエンドに ID プロバイダのリストそのものを保存。
-type idProviderLister struct {
+type idpLister struct {
 	base KeyValueStore
 }
 
-func newIdProviderLister(base KeyValueStore) *idProviderLister {
-	return &idProviderLister{base: base}
+func newIdpLister(base KeyValueStore) *idpLister {
+	return &idpLister{base: base}
 }
 
-func (reg *idProviderLister) IdProviders(caStmp *Stamp) (idps []*IdProvider, newCaStmp *Stamp, err error) {
+func (reg *idpLister) IdProviders(caStmp *Stamp) (idps []*IdProvider, newCaStmp *Stamp, err error) {
 	value, newCaStmp, err := reg.base.Get("list", caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)

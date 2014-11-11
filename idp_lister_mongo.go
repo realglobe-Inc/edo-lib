@@ -7,7 +7,7 @@ import (
 )
 
 // スレッドセーフ。
-func NewMongoIdProviderLister(url, dbName, collName string, expiDur time.Duration) (IdProviderLister, error) {
+func NewMongoIdpLister(url, dbName, collName string, expiDur time.Duration) (IdpLister, error) {
 	base, err := newMongoKeyValueStore(url, dbName, collName, expiDur)
 	if err != nil {
 		return nil, erro.Wrap(err)
@@ -22,5 +22,5 @@ func NewMongoIdProviderLister(url, dbName, collName string, expiDur time.Duratio
 		}
 		return res.Value, res.Stamp, nil
 	}
-	return newIdProviderLister(base), nil
+	return newIdpLister(base), nil
 }

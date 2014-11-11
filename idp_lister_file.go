@@ -16,6 +16,6 @@ func idProvidersUnmarshal(data []byte) (interface{}, error) {
 }
 
 // スレッドセーフ。
-func NewFileIdProviderLister(path string, expiDur time.Duration) IdProviderLister {
-	return newIdProviderLister(NewFileKeyValueStore(path, jsonKeyGen, json.Marshal, idProvidersUnmarshal, expiDur))
+func NewFileIdpLister(path string, expiDur time.Duration) IdpLister {
+	return newIdpLister(NewFileKeyValueStore(path, jsonKeyGen, json.Marshal, idProvidersUnmarshal, expiDur))
 }

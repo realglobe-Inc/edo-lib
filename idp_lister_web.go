@@ -22,6 +22,6 @@ func webIdProvidersUnmarshal(data []byte) (interface{}, error) {
 }
 
 // スレッドセーフ。
-func NewWebIdProviderLister(prefix string) IdProviderLister {
-	return newIdProviderLister(NewWebKeyValueStore(prefix, nil, webIdProvidersUnmarshal))
+func NewWebIdpLister(prefix string) IdpLister {
+	return newIdpLister(NewWebKeyValueStore(prefix, nil, webIdProvidersUnmarshal))
 }
