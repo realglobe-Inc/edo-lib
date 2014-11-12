@@ -7,63 +7,40 @@ import (
 	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 )
 
-var log rglog.Logger
+var log = rglog.Logger("github.com/realglobe-Inc/edo/util")
 
-func init() {
-	log = rglog.GetLogger("github.com/realglobe-Inc/edo/util")
-}
-
-func initLog(root string, lv level.Level, hndlGenerate func() (handler.Handler, error)) (handler.Handler, error) {
-	rootLog := rglog.GetLogger(root)
+func initLog(root string, lv level.Level, key string, hndl handler.Handler) handler.Handler {
+	rootLog := rglog.Logger(root)
 	rootLog.SetLevel(level.ALL)
 	rootLog.SetUseParent(false)
-	hndl, err := hndlGenerate()
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
 	hndl.SetLevel(lv)
-	rootLog.AddHandler(hndl)
-	return hndl, nil
-}
-
-func InitLog(root string) handler.Handler {
-	hndl, _ := initLog(root, level.INFO, func() (handler.Handler, error) {
-		return handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter), nil
-	})
+	rootLog.AddHandler(key, hndl)
 	return hndl
 }
 
-func InitFileLog(root string, lv level.Level, path string) error {
-	if _, err := initLog(root, lv, func() (handler.Handler, error) {
-		return handler.NewRotateHandler(path, 10*(1<<20), 10)
-	}); err != nil {
-		return erro.Wrap(err)
-	}
-	log.Debug("Logging into file " + path + ".")
-	return nil
+func InitLog(root string) handler.Handler {
+	return initLog(root, level.INFO, "console", handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter))
 }
 
-func InitFluentdLog(root string, lv level.Level, addr, tag string) error {
-	if _, err := initLog(root, lv, func() (handler.Handler, error) {
-		return handler.NewFluentdHandler(addr, tag)
-	}); err != nil {
-		return erro.Wrap(err)
-	}
+func initFileLog(root string, lv level.Level, path string) {
+	initLog(root, lv, "file", handler.NewRotateHandler(path, 10*(1<<20), 10))
+	log.Debug("Logging into file " + path + ".")
+	return
+}
+
+func initFluentdLog(root string, lv level.Level, addr, tag string) {
+	initLog(root, lv, "fluentd", handler.NewFluentdHandler(addr, tag))
 	log.Debug("Logging into fluentd " + addr + ".")
-	return nil
+	return
 }
 
 func SetupLog(root, logType string, logLv level.Level, logPath, fluAddr, fluTag string) error {
 	switch logType {
 	case "":
 	case "file":
-		if err := InitFileLog(root, logLv, logPath); err != nil {
-			return erro.Wrap(err)
-		}
+		initFileLog(root, logLv, logPath)
 	case "fluentd":
-		if err := InitFluentdLog(root, logLv, fluAddr, fluTag); err != nil {
-			return erro.Wrap(err)
-		}
+		initFluentdLog(root, logLv, fluAddr, fluTag)
 	default:
 		return erro.New("invalid log type " + logType + ".")
 	}
