@@ -6,7 +6,7 @@ import (
 
 func TestCachingKeyValueStoreStamp(t *testing.T) {
 	// ////////////////////////////////
-	// hndl := util.InitLog("github.com/realglobe-Inc")
+	// hndl := util.InitConsoleLog("github.com/realglobe-Inc")
 	// hndl.SetLevel(level.ALL)
 	// defer hndl.SetLevel(level.INFO)
 	// ////////////////////////////////
