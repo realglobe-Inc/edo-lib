@@ -18,7 +18,7 @@ func initLog(root string, lv level.Level, key string, hndl handler.Handler) hand
 	return hndl
 }
 
-func InitLog(root string) handler.Handler {
+func InitConsoleLog(root string) handler.Handler {
 	return initLog(root, level.INFO, "console", handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter))
 }
 
