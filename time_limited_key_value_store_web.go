@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"net/http"
 	"time"
 )
@@ -58,13 +59,13 @@ func (reg *webTimeLimitedKeyValueStore) Put(key string, value interface{}, expiD
 	}
 	req.Header.Set("Expires", expiDate.Format(http.TimeFormat))
 
-	util.LogRequest(req, true)
+	util.LogRequest(level.DEBUG, req, true)
 	resp, err := ((*webDriver)(reg.base.(*webRawDataStore))).Client.Do(req)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	util.LogResponse(resp, true)
+	util.LogResponse(level.DEBUG, resp, true)
 
 	// 200 OK, 201 Created 以外なら失敗。
 	switch resp.StatusCode {

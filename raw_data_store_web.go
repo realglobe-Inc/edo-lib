@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"io/ioutil"
 	"net/http"
 )
@@ -38,13 +39,13 @@ func (reg *webRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaSt
 		WriteStampToRequestHeader(caStmp, req.Header)
 	}
 
-	util.LogRequest(req, true)
+	util.LogRequest(level.DEBUG, req, true)
 	resp, err := reg.Client.Do(req)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	util.LogResponse(resp, true)
+	util.LogResponse(level.DEBUG, resp, true)
 
 	// 404 Not Found なら無し。
 	// 304 Not Modified なら変更無し。
@@ -79,13 +80,13 @@ func (reg *webRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 		return nil, erro.Wrap(err)
 	}
 
-	util.LogRequest(req, true)
+	util.LogRequest(level.DEBUG, req, true)
 	resp, err := reg.Client.Do(req)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	util.LogResponse(resp, true)
+	util.LogResponse(level.DEBUG, resp, true)
 
 	// 200 OK, 201 Created 以外なら失敗。
 	switch resp.StatusCode {
@@ -106,13 +107,13 @@ func (reg *webRawDataStore) Remove(key string) error {
 		return erro.Wrap(err)
 	}
 
-	util.LogRequest(req, true)
+	util.LogRequest(level.DEBUG, req, true)
 	resp, err := reg.Client.Do(req)
 	if err != nil {
 		return erro.Wrap(err)
 	}
 	defer resp.Body.Close()
-	util.LogResponse(resp, true)
+	util.LogResponse(level.DEBUG, resp, true)
 
 	// 200 OK 以外なら失敗。
 	if resp.StatusCode != http.StatusOK {
