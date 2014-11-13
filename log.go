@@ -11,15 +11,21 @@ var log = rglog.Logger("github.com/realglobe-Inc/edo/util")
 
 func initLog(root string, lv level.Level, key string, hndl handler.Handler) handler.Handler {
 	rootLog := rglog.Logger(root)
-	rootLog.SetLevel(level.ALL)
+	if curLv := rootLog.Level(); curLv.Higher(lv) {
+		rootLog.SetLevel(lv)
+	}
 	rootLog.SetUseParent(false)
 	hndl.SetLevel(lv)
 	rootLog.AddHandler(key, hndl)
 	return hndl
 }
 
-func InitConsoleLog(root string) handler.Handler {
-	return initLog(root, level.INFO, "console", handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter))
+func SetupConsoleLog(root string, lv level.Level) {
+	initLog(root, lv, "console", handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter))
+}
+
+func InitConsoleLog(root string) {
+	SetupConsoleLog(root, level.INFO)
 }
 
 func initFileLog(root string, lv level.Level, path string) {
