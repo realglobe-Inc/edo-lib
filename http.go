@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"net/http"
 	"net/http/httputil"
 )
@@ -12,13 +13,17 @@ const (
 )
 
 func LogRequest(r *http.Request, useBody bool) {
-	buff, _ := httputil.DumpRequest(r, useBody)
-	log.Debug("Request: " + string(buff))
+	if log.IsLoggable(level.DEBUG) {
+		buff, _ := httputil.DumpRequest(r, useBody)
+		log.Debug("Request: " + string(buff))
+	}
 }
 
 func LogResponse(r *http.Response, useBody bool) {
-	buff, _ := httputil.DumpResponse(r, useBody)
-	log.Debug("Response: " + string(buff))
+	if log.IsLoggable(level.DEBUG) {
+		buff, _ := httputil.DumpResponse(r, useBody)
+		log.Debug("Response: " + string(buff))
+	}
 }
 
 // HTTP のステータスコードを付加したエラー。
