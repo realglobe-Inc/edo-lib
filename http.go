@@ -12,17 +12,17 @@ const (
 	ContentTypeHtml        = "text/html"
 )
 
-func LogRequest(r *http.Request, useBody bool) {
-	if log.IsLoggable(level.DEBUG) {
+func LogRequest(lv level.Level, r *http.Request, useBody bool) {
+	if log.IsLoggable(lv) {
 		buff, _ := httputil.DumpRequest(r, useBody)
-		log.Debug("Request: " + string(buff))
+		log.Log(lv, "Request: "+string(buff))
 	}
 }
 
-func LogResponse(r *http.Response, useBody bool) {
-	if log.IsLoggable(level.DEBUG) {
+func LogResponse(lv level.Level, r *http.Response, useBody bool) {
+	if log.IsLoggable(lv) {
 		buff, _ := httputil.DumpResponse(r, useBody)
-		log.Debug("Response: " + string(buff))
+		log.Log(lv, "Response: "+string(buff))
 	}
 }
 

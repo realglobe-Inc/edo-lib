@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"math/rand"
 	"net"
 	"net/http"
@@ -191,7 +192,7 @@ func serverPanicErrorWrapper(handler HandlerFunc) http.HandlerFunc {
 		}()
 
 		//////////////////////////////
-		LogRequest(r, true)
+		LogRequest(level.DEBUG, r, true)
 		//////////////////////////////
 
 		if err := handler(w, r); err != nil {
