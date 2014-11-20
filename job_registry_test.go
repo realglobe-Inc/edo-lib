@@ -11,7 +11,7 @@ const testJobId = "job-no-id"
 var testJobRes = &JobResult{Status: 200, Body: "job-no-result"}
 
 func testJobRegistry(t *testing.T, reg JobRegistry) {
-	expiDur := 10 * time.Millisecond
+	expiDur := 50 * time.Millisecond
 
 	res1, _, err := reg.Result(testJobId, nil)
 	if err != nil {
