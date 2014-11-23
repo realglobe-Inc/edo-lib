@@ -24,7 +24,7 @@ func publicKeyUnmarshal(data []byte) (interface{}, error) {
 }
 
 func pemKeyGen(before string) string {
-	return before + ".pub.pem"
+	return before + ".pub"
 }
 
 // スレッドセーフ。
