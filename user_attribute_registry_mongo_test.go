@@ -9,7 +9,7 @@ func TestMongoUserAttributeRegistry(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoUserAttributeRegistry(mongoAddr, testLabel, "user-attribute-registry", 0)
+	reg, err := NewMongoUserAttributeRegistry(mongoAddr, testLabel, "user_attributes", 0)
 	if err != nil {
 		t.Fatal(err)
 	}

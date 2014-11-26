@@ -9,7 +9,7 @@ func TestMongoUserNameIndex(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := NewMongoUserNameIndex(mongoAddr, testLabel, "user-name-index", 0)
+	reg, err := NewMongoUserNameIndex(mongoAddr, testLabel, "user_ids", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
