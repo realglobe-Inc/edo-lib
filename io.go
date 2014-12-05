@@ -7,11 +7,11 @@ import (
 )
 
 func Read(scanner *bufio.Scanner) (token string, err error) {
-	if ok := scanner.Scan(); !ok {
+	if !scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			return "", erro.Wrap(err)
 		} else {
-			return "", erro.Wrap(io.EOF)
+			return "", io.EOF
 		}
 	}
 

@@ -3,28 +3,23 @@ package util
 import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"net/http"
+	"net/url"
 	"regexp"
-	"strings"
 )
 
 // URL を分解する。
 // <scheme>://<host><remain>
-func SplitUrl(url string) (scheme, host, remain string, err error) {
-	idx := strings.Index(url, "://")
-	if idx < 0 {
-		return "", "", "", erro.New("invalid url " + url + ".")
+func SplitUrl(rawUrl string) (scheme, host, remain string, err error) {
+	u, err := url.Parse(rawUrl)
+	if err != nil {
+		return "", "", "", erro.Wrap(err)
 	}
 
-	scheme = url[:idx]
-	host = url[idx+len("://"):]
-
-	idx = strings.Index(host, "/")
-	if idx >= 0 {
-		remain = host[idx:]
-		host = host[:idx]
+	path := u.Path
+	if u.RawQuery != "" {
+		path += "?" + u.RawQuery
 	}
-
-	return scheme, host, remain, nil
+	return u.Scheme, u.Host, path, nil
 }
 
 var slashes *regexp.Regexp

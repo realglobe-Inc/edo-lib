@@ -5,25 +5,21 @@ import (
 )
 
 func TestSplitUrl(t *testing.T) {
-	scheme, host, remain, err := SplitUrl("https://localhost:8000/index.html")
-	if err != nil {
-		t.Fatal(err)
-	} else if scheme != "https" {
-		t.Error(scheme + " " + host + " " + remain)
-	} else if host != "localhost:8000" {
-		t.Error(scheme + " " + host + " " + remain)
-	} else if remain != "/index.html" {
-		t.Error(scheme + " " + host + " " + remain)
-	}
-
-	scheme, host, remain, err = SplitUrl("https://@c.b.d")
-	if err != nil {
-		t.Fatal(err)
-	} else if scheme != "https" {
-		t.Error(scheme + " " + host + " " + remain)
-	} else if host != "@c.b.d" {
-		t.Error(scheme + " " + host + " " + remain)
-	} else if remain != "" {
-		t.Error(scheme + " " + host + " " + remain)
+	for _, s := range []string{"http", "https"} {
+		for _, h := range []string{"example.com", "example.com:8080"} {
+			for _, r := range []string{"/", "/index.html", "/a/index.html", "/index.html?a=b"} {
+				rawUrl := s + "://" + h + r
+				scheme, host, remain, err := SplitUrl(rawUrl)
+				if err != nil {
+					t.Fatal(err)
+				} else if scheme != s {
+					t.Error(scheme+" "+host+" "+remain, rawUrl)
+				} else if host != h {
+					t.Error(scheme+" "+host+" "+remain, rawUrl)
+				} else if remain != r {
+					t.Error(scheme+" "+host+" "+remain, rawUrl)
+				}
+			}
+		}
 	}
 }
