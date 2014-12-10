@@ -16,6 +16,14 @@ const (
 	mongoStampTag = "stamp"
 )
 
+type MongoKeyValueStore interface {
+	KeyValueStore
+	SetMarshal(MongoMarshal)
+	SetUnmarshal(MongoUnmarshal)
+	SetTake(MongoTake)
+	Clear() error
+}
+
 type MongoMarshal func(interface{}) (interface{}, error)
 type MongoUnmarshal func(interface{}) (interface{}, error)
 type MongoTake func(*mgo.Query) (interface{}, *Stamp, error)
@@ -38,7 +46,7 @@ type mongoKeyValueStore struct {
 }
 
 // スレッドセーフ。
-func NewMongoKeyValueStore(url, dbName, collName string, expiDur time.Duration) (KeyValueStore, error) {
+func NewMongoKeyValueStore(url, dbName, collName string, expiDur time.Duration) (MongoKeyValueStore, error) {
 	return newMongoKeyValueStore(url, dbName, collName, expiDur)
 }
 
@@ -58,6 +66,18 @@ func newMongoKeyValueStore(url, dbName, collName string, expiDur time.Duration) 
 		return nil, erro.Wrap(err)
 	}
 	return &mongoKeyValueStore{base: base}, nil
+}
+func (reg *mongoKeyValueStore) SetMarshal(marshal MongoMarshal) {
+	reg.MongoMarshal = marshal
+}
+func (reg *mongoKeyValueStore) SetUnmarshal(unmarshal MongoUnmarshal) {
+	reg.MongoUnmarshal = unmarshal
+}
+func (reg *mongoKeyValueStore) SetTake(take MongoTake) {
+	reg.MongoTake = take
+}
+func (reg *mongoKeyValueStore) Clear() error {
+	return reg.base.C().DropCollection()
 }
 
 func (reg *mongoKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {

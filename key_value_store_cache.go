@@ -13,6 +13,11 @@ type cachingKeyValueStore struct {
 }
 
 // スレッドセーフではない。
+func NewCachingKeyValueStore(base KeyValueStore) KeyValueStore {
+	return newCachingKeyValueStore(base)
+}
+
+// スレッドセーフではない。
 func newCachingKeyValueStore(base KeyValueStore) *cachingKeyValueStore {
 	return &cachingKeyValueStore{base: base, cache: util.NewCache(stampExpirationDateLess)}
 }
