@@ -13,7 +13,7 @@ func TestFileRawDataStore(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testRawDataStore(t, newFileRawDataStore(path, nil, 0))
+	testRawDataStore(t, newFileRawDataStore(path, nil, nil, 0, 0))
 }
 
 func TestFileRawDataStoreStamp(t *testing.T) {
@@ -23,5 +23,5 @@ func TestFileRawDataStoreStamp(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testRawDataStoreStamp(t, newFileRawDataStore(path, nil, 0))
+	testRawDataStoreStamp(t, newFileRawDataStore(path, nil, nil, 0, 0))
 }

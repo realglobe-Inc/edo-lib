@@ -10,59 +10,180 @@ import (
 type cachingRawDataStore struct {
 	base  RawDataStore
 	cache util.Cache
+
+	keyCache util.Cache
 }
 
 // スレッドセーフではない。
 func newCachingRawDataStore(base RawDataStore) *cachingRawDataStore {
-	return &cachingRawDataStore{base: base, cache: util.NewCache(stampExpirationDateLess)}
+	return &cachingRawDataStore{
+		base:     base,
+		cache:    util.NewCache(stampExpirationDateLess),
+		keyCache: util.NewCache(stampExpirationDateLess),
+	}
+}
+
+func (reg *cachingRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	now := time.Now()
+
+	// 古いキャッシュの削除。
+	cleanThres := &Stamp{ExpiDate: now}
+	reg.cache.CleanLower(cleanThres)
+	reg.keyCache.CleanLower(cleanThres)
+
+	var buffKeys map[string]bool
+	var buffStmp *Stamp
+	val, prio := reg.keyCache.Get("")
+	if prio != nil {
+		// キャッシュしてた。
+		buffKeys = val.(map[string]bool)
+		buffStmp = prio.(*Stamp)
+		if now.Before(buffStmp.StaleDate) {
+			// キャッシュが最新だと思って良い。
+			if caStmp != nil && !caStmp.Older(buffStmp) {
+				// 要求元のキャッシュより新しそうではなかった。
+				return nil, buffStmp, nil
+			}
+			// 要求元のキャッシュより新しそう。
+			keys := map[string]bool{}
+			for k, v := range buffKeys {
+				keys[k] = v
+			}
+			return keys, buffStmp, nil
+		} else {
+			// キャッシュが古くなっているかも。
+		}
+	} else {
+		// キャッシュしてない。
+	}
+
+	keys, newCaStmp, err = reg.base.Keys(buffStmp)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if newCaStmp == nil {
+		// 1 つも無い。
+		reg.keyCache.Update("", nil)
+		return nil, nil, nil
+	} else if keys == nil {
+		// キャッシュと同じ。
+		reg.keyCache.Update("", newCaStmp)
+		buffStmp = newCaStmp
+	} else {
+		// あった、または、新しくなってた。
+		reg.keyCache.Put("", keys, newCaStmp)
+		buffKeys = keys
+		buffStmp = newCaStmp
+	}
+
+	if caStmp != nil && !caStmp.Older(buffStmp) {
+		// 要求元のキャッシュより新しそうではなかった。
+		return nil, buffStmp, nil
+	} else {
+		// 要求元のキャッシュより新しそう。
+		keys := map[string]bool{}
+		for k, v := range buffKeys {
+			keys[k] = v
+		}
+		return keys, buffStmp, nil
+	}
 }
 
 func (reg *cachingRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {
 	now := time.Now()
-	reg.cache.CleanLower(&Stamp{ExpiDate: now})
 
-	// 残ってるキャッシュは有効。
+	// 古いキャッシュの削除。
+	cleanThres := &Stamp{ExpiDate: now}
+	reg.cache.CleanLower(cleanThres)
+	reg.keyCache.CleanLower(cleanThres)
 
-	value, prio := reg.cache.Get(key)
+	var buffData []byte
+	var buffStmp *Stamp
+	val, prio := reg.cache.Get(key)
 	if prio != nil {
 		// キャッシュしてた。
-		newCaStmp = prio.(*Stamp)
-		if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
-			return nil, newCaStmp, nil
+		buffData = val.([]byte)
+		buffStmp = prio.(*Stamp)
+		if now.Before(buffStmp.StaleDate) {
+			// キャッシュが最新だと思って良い。
+			if caStmp != nil && !caStmp.Older(buffStmp) {
+				// 要求元のキャッシュより新しそうではなかった。
+				return nil, buffStmp, nil
+			} else {
+				// 要求元のキャッシュより新しそう。
+				return buffData, newCaStmp, nil
+			}
+		} else {
+			// キャッシュが古くなっているかも。
 		}
-		return value.([]byte), newCaStmp, nil
+	} else {
+		// キャッシュしてない。
 	}
 
 	// キャッシュしてない。
-	data, newCaStmp, err = reg.base.Get(key, nil)
+	data, newCaStmp, err = reg.base.Get(key, buffStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		// 無い。
+		reg.cache.Update(key, nil)
+		// キー集合キャッシュの更新。
+		if v, _ := reg.keyCache.Get(""); v != nil {
+			delete(v.(map[string]bool), key)
+		}
 		return nil, nil, nil
+	} else if data == nil {
+		// キャッシュと同じ。
+		reg.cache.Update(key, newCaStmp)
+		buffStmp = newCaStmp
+	} else {
+		// あった、または、新しくなってた。
+		reg.cache.Put(key, data, newCaStmp)
+		// キー集合キャッシュの更新。
+		if v, _ := reg.keyCache.Get(""); v != nil {
+			v.(map[string]bool)[key] = true
+		}
+		buffData = data
+		buffStmp = newCaStmp
 	}
 
-	// あった。
-	reg.cache.Put(key, data, newCaStmp)
-	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
-		// 要求元のキャッシュと同じだった。
-		return nil, newCaStmp, nil
+	if caStmp != nil && !caStmp.Older(buffStmp) {
+		// 要求元のキャッシュより新しそうではなかった。
+		return nil, buffStmp, nil
 	} else {
-		return data, newCaStmp, nil
+		// 要求元のキャッシュより新しそう。
+		return buffData, buffStmp, nil
 	}
 }
 
 func (reg *cachingRawDataStore) Put(key string, data []byte) (*Stamp, error) {
+	// 古いキャッシュの削除。
+	cleanThres := &Stamp{ExpiDate: time.Now()}
+	reg.cache.CleanLower(cleanThres)
+	reg.keyCache.CleanLower(cleanThres)
+
 	if newCaStmp, err := reg.base.Put(key, data); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
+		// キャッシュの更新。
 		reg.cache.Put(key, data, newCaStmp)
+		if v, _ := reg.keyCache.Get(""); v != nil {
+			v.(map[string]bool)[key] = true
+		}
 		return newCaStmp, nil
 	}
 }
 
 func (reg *cachingRawDataStore) Remove(key string) error {
 	reg.cache.Update(key, nil)
-	reg.cache.CleanLower(nil)
+
+	// 古いキャッシュの削除。
+	cleanThres := &Stamp{ExpiDate: time.Now()}
+	reg.cache.CleanLower(cleanThres)
+	reg.keyCache.CleanLower(cleanThres)
+
+	// キャッシュの更新。
+	if v, _ := reg.keyCache.Get(""); v != nil {
+		delete(v.(map[string]bool), key)
+	}
 	return reg.base.Remove(key)
 }

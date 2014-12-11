@@ -6,23 +6,45 @@ import (
 )
 
 type memoryKeyValueStore struct {
-	keyToValue map[string]interface{}
-	keyToStmp  map[string]*Stamp
-	expiDur    time.Duration
+	date      time.Time
+	digest    int
+	keyToVal  map[string]interface{}
+	keyToStmp map[string]*Stamp
+	staleDur  time.Duration
+	expiDur   time.Duration
 }
 
 // スレッドセーフ。
-func NewMemoryKeyValueStore(expiDur time.Duration) KeyValueStore {
-	return newSynchronizedKeyValueStore(newMemoryKeyValueStore(expiDur))
+func NewMemoryKeyValueStore(staleDur, expiDur time.Duration) KeyValueStore {
+	return newSynchronizedKeyValueStore(newMemoryKeyValueStore(staleDur, expiDur))
 }
 
 // スレッドセーフではない。
-func newMemoryKeyValueStore(expiDur time.Duration) *memoryKeyValueStore {
+func newMemoryKeyValueStore(staleDur, expiDur time.Duration) *memoryKeyValueStore {
 	return &memoryKeyValueStore{
-		map[string]interface{}{},
-		map[string]*Stamp{},
-		expiDur,
+		date:      time.Now(),
+		digest:    0,
+		keyToVal:  map[string]interface{}{},
+		keyToStmp: map[string]*Stamp{},
+		staleDur:  staleDur,
+		expiDur:   expiDur,
 	}
+}
+
+func (reg *memoryKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	newCaStmp = &Stamp{Date: reg.date, Digest: strconv.FormatInt(int64(reg.digest), 16)}
+	if caStmp != nil && !caStmp.Older(newCaStmp) {
+		// 要求元のキャッシュより新しそうではなかった。
+		return nil, newCaStmp, nil
+	}
+
+	// 要求元のキャッシュより新しそう。
+
+	keys = map[string]bool{}
+	for key, _ := range reg.keyToVal {
+		keys[key] = true
+	}
+	return keys, newCaStmp, nil
 }
 
 func (reg *memoryKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
@@ -30,26 +52,42 @@ func (reg *memoryKeyValueStore) Get(key string, caStmp *Stamp) (value interface{
 	if stmp == nil {
 		return nil, nil, nil
 	}
-	newCaStmp = &Stamp{Date: stmp.Date, ExpiDate: time.Now().Add(reg.expiDur), Digest: stmp.Digest}
-
-	if caStmp == nil || caStmp.Date.Before(stmp.Date) || caStmp.Digest != stmp.Digest {
-		value, _ = reg.keyToValue[key]
-		return value, newCaStmp, nil
+	now := time.Now()
+	newCaStmp = &Stamp{
+		Date:      stmp.Date,
+		StaleDate: now.Add(reg.staleDur),
+		ExpiDate:  now.Add(reg.expiDur),
+		Digest:    stmp.Digest,
 	}
 
-	return nil, newCaStmp, nil
+	if caStmp != nil && !caStmp.Older(newCaStmp) {
+		// 要求元のキャッシュより新しそうではなかった。
+		return nil, newCaStmp, nil
+	}
+
+	// 要求元のキャッシュより新しそう。
+
+	return reg.keyToVal[key], newCaStmp, nil
 }
 
-func (reg *memoryKeyValueStore) Put(key string, value interface{}) (newCaStmp *Stamp, err error) {
-	reg.keyToValue[key] = value
-
-	newCaStmp = &Stamp{Date: time.Now(), Digest: strconv.FormatInt(time.Now().UnixNano(), 10)}
+func (reg *memoryKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
+	now := time.Now()
+	newCaStmp = &Stamp{Date: now, Digest: strconv.FormatInt(int64(now.Nanosecond()), 16)}
+	reg.keyToVal[key] = val
 	reg.keyToStmp[key] = newCaStmp
+	reg.date = now
+	reg.digest++
 	return newCaStmp, nil
 }
 
 func (reg *memoryKeyValueStore) Remove(key string) error {
-	delete(reg.keyToValue, key)
+	if _, ok := reg.keyToVal[key]; !ok {
+		return nil
+	}
+
+	delete(reg.keyToVal, key)
 	delete(reg.keyToStmp, key)
+	reg.date = time.Now()
+	reg.digest++
 	return nil
 }

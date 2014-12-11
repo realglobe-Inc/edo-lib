@@ -14,7 +14,7 @@ func TestFileKeyValueStore(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testKeyValueStore(t, newFileKeyValueStore(path, nil, json.Marshal, jsonUnmarshal, 0))
+	testKeyValueStore(t, newFileKeyValueStore(path, nil, nil, json.Marshal, jsonUnmarshal, 0, 0))
 }
 
 func TestFileKeyValueStoreStamp(t *testing.T) {
@@ -24,5 +24,5 @@ func TestFileKeyValueStoreStamp(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testKeyValueStoreStamp(t, newFileKeyValueStore(path, nil, json.Marshal, jsonUnmarshal, 0))
+	testKeyValueStoreStamp(t, newFileKeyValueStore(path, nil, nil, json.Marshal, jsonUnmarshal, 0, 0))
 }

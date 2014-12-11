@@ -15,14 +15,19 @@ type fileKeyValueStore struct {
 }
 
 // スレッドセーフ。
-func NewFileKeyValueStore(path string, keyGen func(string) string, marshal Marshal, unmarshal Unmarshal, expiDur time.Duration) KeyValueStore {
-	return newSynchronizedKeyValueStore(newCachingKeyValueStore(newFileKeyValueStore(path, keyGen, marshal, unmarshal, expiDur)))
+func NewFileKeyValueStore(path string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) KeyValueStore {
+	return newSynchronizedKeyValueStore(newCachingKeyValueStore(newFileKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
 }
 
 // スレッドセーフではない。
-func newFileKeyValueStore(path string, keyGen func(string) string, marshal Marshal, unmarshal Unmarshal, expiDur time.Duration) *fileKeyValueStore {
-	return &fileKeyValueStore{newFileRawDataStore(path, keyGen, expiDur), marshal, unmarshal}
+func newFileKeyValueStore(path string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileKeyValueStore {
+	return &fileKeyValueStore{newFileRawDataStore(path, keyToPath, pathToKey, staleDur, expiDur), marshal, unmarshal}
 }
+
+func (reg *fileKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	return reg.base.Keys(caStmp)
+}
+
 func (reg *fileKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
 	buff, newCaStmp, err := reg.base.Get(key, caStmp)
 	if err != nil {

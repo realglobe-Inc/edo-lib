@@ -5,9 +5,9 @@ import (
 )
 
 func TestSynchronizedRawDataStore(t *testing.T) {
-	testRawDataStore(t, newSynchronizedRawDataStore(newMemoryRawDataStore(0)))
+	testRawDataStore(t, newSynchronizedRawDataStore(newMemoryRawDataStore(0, 0)))
 }
 
 func TestSynchronizedRawDataStoreStamp(t *testing.T) {
-	testRawDataStoreStamp(t, newSynchronizedRawDataStore(newMemoryRawDataStore(0)))
+	testRawDataStoreStamp(t, newSynchronizedRawDataStore(newMemoryRawDataStore(0, 0)))
 }

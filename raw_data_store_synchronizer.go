@@ -6,6 +6,13 @@ import (
 
 type synchronizedRawDataStore synchronizedDriver
 
+type keysRequest struct {
+	caStmp *Stamp
+
+	keysCh      chan map[string]bool
+	newCaStmpCh chan *Stamp
+}
+
 type getRequest struct {
 	key    string
 	caStmp *Stamp
@@ -28,6 +35,16 @@ type removeRequest struct {
 // もちろん、スレッドセーフ。
 func newSynchronizedRawDataStore(base RawDataStore) *synchronizedRawDataStore {
 	return (*synchronizedRawDataStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+		reflect.TypeOf(&keysRequest{}): func(r interface{}, errCh chan<- error) {
+			req := r.(*keysRequest)
+			keys, newCaStmp, err := base.Keys(req.caStmp)
+			if err != nil {
+				errCh <- err
+			} else {
+				req.keysCh <- keys
+				req.newCaStmpCh <- newCaStmp
+			}
+		},
 		reflect.TypeOf(&getRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*getRequest)
 			data, newCaStmp, err := base.Get(req.key, req.caStmp)
@@ -52,6 +69,19 @@ func newSynchronizedRawDataStore(base RawDataStore) *synchronizedRawDataStore {
 			errCh <- base.Remove(req.key)
 		},
 	}))
+}
+
+func (reg *synchronizedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	keysCh := make(chan map[string]bool, 1)
+	newCaStmpCh := make(chan *Stamp, 1)
+	errCh := make(chan error, 1)
+	reg.reqCh <- &synchronizedRequest{&keysRequest{caStmp, keysCh, newCaStmpCh}, errCh}
+	select {
+	case newCaStmp := <-newCaStmpCh:
+		return <-keysCh, newCaStmp, nil
+	case err := <-errCh:
+		return nil, nil, err
+	}
 }
 
 func (reg *synchronizedRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {

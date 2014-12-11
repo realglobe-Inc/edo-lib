@@ -18,7 +18,7 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// 入れる。
-	if _, err := reg.Put(testKey, testValue, time.Now().Add(expiDur)); err != nil {
+	if _, err := reg.Put(testKey, testVal, time.Now().Add(expiDur)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -26,8 +26,8 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	value2, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(value2, testValue) {
-		if !jsonEqual(value2, testValue) {
+	} else if !reflect.DeepEqual(value2, testVal) {
+		if !jsonEqual(value2, testVal) {
 			t.Error(value2)
 		}
 	}
@@ -46,7 +46,7 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// また入れる。
-	if _, err := reg.Put(testKey, testValue, time.Now().Add(expiDur)); err != nil {
+	if _, err := reg.Put(testKey, testVal, time.Now().Add(expiDur)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -54,8 +54,8 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	value4, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(value4, testValue) {
-		if !jsonEqual(value4, testValue) {
+	} else if !reflect.DeepEqual(value4, testVal) {
+		if !jsonEqual(value4, testVal) {
 			t.Error(value4)
 		}
 	}

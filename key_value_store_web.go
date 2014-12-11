@@ -21,6 +21,10 @@ func newWebKeyValueStore(prefix string, marshal Marshal, unmarshal Unmarshal) *w
 	return &webKeyValueStore{NewWebRawDataStore(prefix), marshal, unmarshal}
 }
 
+func (reg *webKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	return reg.base.Keys(caStmp)
+}
+
 func (reg *webKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
 	buff, newCaStmp, err := reg.base.Get(key, caStmp)
 	if err != nil {

@@ -13,58 +13,90 @@ type cachingTimeLimitedKeyValueStore struct {
 
 // スレッドセーフではない。
 func newCachingTimeLimitedKeyValueStore(base TimeLimitedKeyValueStore) *cachingTimeLimitedKeyValueStore {
-	return &cachingTimeLimitedKeyValueStore{base: base, cache: util.NewCache(stampExpirationDateLess)}
+	return &cachingTimeLimitedKeyValueStore{
+		base:  base,
+		cache: util.NewCache(stampExpirationDateLess),
+	}
 }
 
-func (reg *cachingTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+func (reg *cachingTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
-	reg.cache.CleanLower(&Stamp{ExpiDate: now})
 
-	// 残ってるキャッシュは有効。
+	// 古いキャッシュの削除。
+	cleanThres := &Stamp{ExpiDate: now}
+	reg.cache.CleanLower(cleanThres)
 
-	value, prio := reg.cache.Get(key)
+	var buffVal interface{}
+	var buffStmp *Stamp
+	val, prio := reg.cache.Get(key)
 	if prio != nil {
 		// キャッシュしてた。
-		newCaStmp = prio.(*Stamp)
-		if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
-			// 要求元のキャッシュと同じだった。
-			return nil, newCaStmp, nil
+		buffVal = val.(interface{})
+		buffStmp = prio.(*Stamp)
+		if now.Before(buffStmp.StaleDate) {
+			// キャッシュが最新だと思って良い。
+			if caStmp != nil && !caStmp.Older(buffStmp) {
+				// 要求元のキャッシュより新しそうではなかった。
+				return nil, buffStmp, nil
+			} else {
+				// 要求元のキャッシュより新しそう。
+				return buffVal, newCaStmp, nil
+			}
+		} else {
+			// キャッシュが古くなっているかも。
 		}
-		return value, newCaStmp, nil
-
+	} else {
+		// キャッシュしてない。
 	}
 
 	// キャッシュしてない。
-	value, newCaStmp, err = reg.base.Get(key, nil)
+	val, newCaStmp, err = reg.base.Get(key, buffStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		// 無い。
+		reg.cache.Update(key, nil)
 		return nil, nil, nil
-	}
-
-	// あった。
-	reg.cache.Put(key, value, newCaStmp)
-	if caStmp != nil && !newCaStmp.Date.After(caStmp.Date) && caStmp.Digest == newCaStmp.Digest {
-		// 要求元のキャッシュと同じだった。
-		return nil, newCaStmp, nil
+	} else if val == nil {
+		// キャッシュと同じ。
+		reg.cache.Update(key, newCaStmp)
+		buffStmp = newCaStmp
 	} else {
-		return value, newCaStmp, nil
+		// あった、または、新しくなってた。
+		reg.cache.Put(key, val, newCaStmp)
+		buffVal = val
+		buffStmp = newCaStmp
 	}
 
+	if caStmp != nil && !caStmp.Older(buffStmp) {
+		// 要求元のキャッシュより新しそうではなかった。
+		return nil, buffStmp, nil
+	} else {
+		// 要求元のキャッシュより新しそう。
+		return buffVal, buffStmp, nil
+	}
 }
 
-func (reg *cachingTimeLimitedKeyValueStore) Put(key string, value interface{}, expiDate time.Time) (*Stamp, error) {
-	if newCaStmp, err := reg.base.Put(key, value, expiDate); err != nil {
+func (reg *cachingTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (*Stamp, error) {
+	// 古いキャッシュの削除。
+	cleanThres := &Stamp{ExpiDate: time.Now()}
+	reg.cache.CleanLower(cleanThres)
+
+	if newCaStmp, err := reg.base.Put(key, val, expiDate); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
-		reg.cache.Put(key, value, newCaStmp)
+		// キャッシュの更新。
+		reg.cache.Put(key, val, newCaStmp)
 		return newCaStmp, nil
 	}
 }
 
 func (reg *cachingTimeLimitedKeyValueStore) Remove(key string) error {
 	reg.cache.Update(key, nil)
-	reg.cache.CleanLower(nil)
+
+	// 古いキャッシュの削除。
+	cleanThres := &Stamp{ExpiDate: time.Now()}
+	reg.cache.CleanLower(cleanThres)
+
 	return reg.base.Remove(key)
 }

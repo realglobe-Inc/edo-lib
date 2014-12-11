@@ -30,6 +30,13 @@ func testRawDataStore(t *testing.T, reg RawDataStore) {
 		t.Error(data2)
 	}
 
+	keys, _, err := reg.Keys(nil)
+	if err != nil {
+		t.Fatal(err)
+	} else if len(keys) != 1 || !keys[testKey] {
+		t.Error(keys)
+	}
+
 	// 消す。
 	if err := reg.Remove(testKey); err != nil {
 		t.Fatal(err)

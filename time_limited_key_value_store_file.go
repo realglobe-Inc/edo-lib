@@ -13,21 +13,15 @@ type fileTimeLimitedKeyValueStore struct {
 }
 
 // スレッドセーフ。
-func NewFileTimeLimitedKeyValueStore(path string, keyGen func(string) string, marshal Marshal, unmarshal Unmarshal, expiDur time.Duration) TimeLimitedKeyValueStore {
-	return newSynchronizedTimeLimitedKeyValueStore(newCachingTimeLimitedKeyValueStore(newFileTimeLimitedKeyValueStore(path, keyGen, marshal, unmarshal, expiDur)))
+func NewFileTimeLimitedKeyValueStore(path string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) TimeLimitedKeyValueStore {
+	return newSynchronizedTimeLimitedKeyValueStore(newCachingTimeLimitedKeyValueStore(newFileTimeLimitedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
 }
 
 // スレッドセーフではない。
-func newFileTimeLimitedKeyValueStore(path string, keyGen func(string) string, marshal Marshal, unmarshal Unmarshal, expiDur time.Duration) *fileTimeLimitedKeyValueStore {
+func newFileTimeLimitedKeyValueStore(path string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileTimeLimitedKeyValueStore {
 	return &fileTimeLimitedKeyValueStore{
-		NewFileKeyValueStore(path,
-			func(before string) string {
-				if keyGen != nil {
-					before = keyGen(before)
-				}
-				return before + ".expires"
-			}, marshal, unmarshal, expiDur),
-		NewFileKeyValueStore(path, keyGen,
+		NewFileKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
+		NewFileKeyValueStore(path+".expires", keyToPath, pathToKey,
 			func(value interface{}) ([]byte, error) {
 				return []byte(value.(time.Time).Format(time.RFC3339Nano)), nil
 			},
@@ -38,7 +32,7 @@ func newFileTimeLimitedKeyValueStore(path string, keyGen func(string) string, ma
 				}
 				return date, nil
 			},
-			expiDur),
+			staleDur, expiDur),
 	}
 }
 
@@ -48,6 +42,8 @@ func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value i
 	} else if value == nil {
 		return nil, nil, nil
 	} else if expires := value.(time.Time); time.Now().After(expires) {
+		reg.expires.Remove(key)
+		reg.base.Remove(key)
 		return nil, nil, nil
 	}
 

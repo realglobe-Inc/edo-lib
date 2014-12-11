@@ -14,5 +14,5 @@ func TestFileTimeLimitedKeyValueStore(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	testTimeLimitedKeyValueStore(t, newFileTimeLimitedKeyValueStore(path, nil, json.Marshal, jsonUnmarshal, 0))
+	testTimeLimitedKeyValueStore(t, newFileTimeLimitedKeyValueStore(path, nil, nil, json.Marshal, jsonUnmarshal, 0, 0))
 }

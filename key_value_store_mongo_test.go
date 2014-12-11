@@ -9,25 +9,23 @@ func TestMongoKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer reg.base.DB(testLabel).DropDatabase()
+	reg := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", nil, nil, nil, 0, 0)
+	defer reg.Clear()
 
 	testKeyValueStore(t, reg)
 }
 
 func TestMongoKeyValueStoreStamp(t *testing.T) {
+	// ////////////////////////////////
+	// util.SetupConsoleLog("github.com/realglobe-Inc", level.ALL)
+	// defer util.SetupConsoleLog("github.com/realglobe-Inc", level.OFF)
+	// ////////////////////////////////
 	if mongoAddr == "" {
 		t.SkipNow()
 	}
 
-	reg, err := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer reg.base.DB(testLabel).DropDatabase()
+	reg := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", nil, nil, nil, 0, 0)
+	defer reg.Clear()
 
 	testKeyValueStoreStamp(t, reg)
 }

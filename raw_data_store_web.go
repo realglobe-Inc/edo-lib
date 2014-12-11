@@ -2,6 +2,7 @@ package driver
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
@@ -9,6 +10,8 @@ import (
 	"net/http"
 )
 
+// GET http://example.com/
+// でボディに JSON で keys が返り、
 // GET http://example.com/{key}
 // でボディに JSON で value が返り、
 // PUT http://example.com/{key}
@@ -27,6 +30,50 @@ func NewWebRawDataStore(prefix string) RawDataStore {
 // スレッドセーフ。
 func newWebRawDataStore(prefix string) *webRawDataStore {
 	return (*webRawDataStore)(newWebDriver(prefix))
+}
+
+func (reg *webRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	req, err := http.NewRequest("GET", reg.prefix+"/", nil)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	}
+
+	if caStmp != nil {
+		WriteStampToRequestHeader(caStmp, req.Header)
+	}
+
+	util.LogRequest(level.DEBUG, req, true)
+	resp, err := reg.Client.Do(req)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	}
+	defer resp.Body.Close()
+	util.LogResponse(level.DEBUG, resp, true)
+
+	// 404 Not Found なら無し。
+	// 304 Not Modified なら変更無し。
+	// 200 OK 以外なら失敗。
+	switch resp.StatusCode {
+	case http.StatusNotFound:
+		return nil, nil, nil
+	case http.StatusNotModified:
+		newCaStmp, err := ParseStampFromResponseHeader(resp.Header)
+		if err != nil {
+			return nil, nil, erro.Wrap(err)
+		}
+		return nil, newCaStmp, nil
+	case http.StatusOK:
+		newCaStmp, err := ParseStampFromResponseHeader(resp.Header)
+		if err != nil {
+			return nil, nil, erro.Wrap(err)
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&keys); err != nil {
+			return nil, nil, erro.Wrap(err)
+		}
+		return keys, newCaStmp, nil
+	default:
+		return nil, nil, erro.New("invalid status ", resp.StatusCode, " "+http.StatusText(resp.StatusCode))
+	}
 }
 
 func (reg *webRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {

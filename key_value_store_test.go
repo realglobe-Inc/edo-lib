@@ -16,7 +16,7 @@ func testKeyValueStore(t *testing.T, reg KeyValueStore) {
 	}
 
 	// 入れる。
-	if _, err := reg.Put(testKey, testValue); err != nil {
+	if _, err := reg.Put(testKey, testVal); err != nil {
 		t.Fatal(err)
 	}
 
@@ -24,10 +24,17 @@ func testKeyValueStore(t *testing.T, reg KeyValueStore) {
 	value2, _, err := reg.Get(testKey, nil)
 	if err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(value2, testValue) {
-		if !jsonEqual(value2, testValue) {
+	} else if !reflect.DeepEqual(value2, testVal) {
+		if !jsonEqual(value2, testVal) {
 			t.Error(value2)
 		}
+	}
+
+	keys, _, err := reg.Keys(nil)
+	if err != nil {
+		t.Fatal(err)
+	} else if len(keys) != 1 || !keys[testKey] {
+		t.Error(keys)
 	}
 
 	// 消す。
@@ -54,7 +61,7 @@ func testKeyValueStoreStamp(t *testing.T, reg KeyValueStore) {
 	}
 
 	// 入れる。
-	stmp2, err := reg.Put(testKey, testValue)
+	stmp2, err := reg.Put(testKey, testVal)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,8 +72,8 @@ func testKeyValueStoreStamp(t *testing.T, reg KeyValueStore) {
 		t.Fatal(err)
 	} else if stmp3 == nil {
 		t.Error(stmp3)
-	} else if !reflect.DeepEqual(value3, testValue) {
-		if !jsonEqual(value3, testValue) {
+	} else if !reflect.DeepEqual(value3, testVal) {
+		if !jsonEqual(value3, testVal) {
 			t.Error(value3)
 		}
 	}
@@ -85,8 +92,8 @@ func testKeyValueStoreStamp(t *testing.T, reg KeyValueStore) {
 		t.Fatal(err)
 	} else if stmp5 == nil {
 		t.Error(stmp5)
-	} else if !reflect.DeepEqual(value5, testValue) {
-		if !jsonEqual(value5, testValue) {
+	} else if !reflect.DeepEqual(value5, testVal) {
+		if !jsonEqual(value5, testVal) {
 			t.Error(value5)
 		}
 	}
@@ -97,8 +104,8 @@ func testKeyValueStoreStamp(t *testing.T, reg KeyValueStore) {
 		t.Fatal(err)
 	} else if stmp6 == nil {
 		t.Error(stmp6)
-	} else if !reflect.DeepEqual(value6, testValue) {
-		if !jsonEqual(value6, testValue) {
+	} else if !reflect.DeepEqual(value6, testVal) {
+		if !jsonEqual(value6, testVal) {
 			t.Error(value6)
 		}
 	}

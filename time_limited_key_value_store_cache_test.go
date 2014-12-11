@@ -5,5 +5,5 @@ import (
 )
 
 func TestCachingTimeLimitedKeyValueStore(t *testing.T) {
-	testTimeLimitedKeyValueStore(t, newCachingTimeLimitedKeyValueStore(newMemoryTimeLimitedKeyValueStore(0)))
+	testTimeLimitedKeyValueStore(t, newCachingTimeLimitedKeyValueStore(newMemoryTimeLimitedKeyValueStore(0, 0)))
 }

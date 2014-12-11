@@ -5,5 +5,5 @@ import (
 )
 
 func TestMemoryTimeLimitedKeyValueStore(t *testing.T) {
-	testTimeLimitedKeyValueStore(t, newMemoryTimeLimitedKeyValueStore(0))
+	testTimeLimitedKeyValueStore(t, newMemoryTimeLimitedKeyValueStore(0, 0))
 }

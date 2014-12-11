@@ -7,13 +7,17 @@ import (
 type memoryRawDataStore memoryKeyValueStore
 
 // スレッドセーフ。
-func NewMemoryRawDataStore(expiDur time.Duration) RawDataStore {
-	return newSynchronizedRawDataStore(newMemoryRawDataStore(expiDur))
+func NewMemoryRawDataStore(staleDur, expiDur time.Duration) RawDataStore {
+	return newSynchronizedRawDataStore(newMemoryRawDataStore(staleDur, expiDur))
 }
 
 // スレッドセーフではない。
-func newMemoryRawDataStore(expiDur time.Duration) *memoryRawDataStore {
-	return (*memoryRawDataStore)(newMemoryKeyValueStore(expiDur))
+func newMemoryRawDataStore(staleDur, expiDur time.Duration) *memoryRawDataStore {
+	return (*memoryRawDataStore)(newMemoryKeyValueStore(staleDur, expiDur))
+}
+
+func (reg *memoryRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	return ((*memoryKeyValueStore)(reg)).Keys(caStmp)
 }
 
 func (reg *memoryRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {

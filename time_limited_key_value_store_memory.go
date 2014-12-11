@@ -11,18 +11,19 @@ func stampExpirationDateLess(a1 interface{}, a2 interface{}) bool {
 }
 
 type memoryTimeLimitedKeyValueStore struct {
-	base    util.Cache
-	expiDur time.Duration
+	base     util.Cache
+	staleDur time.Duration
+	expiDur  time.Duration
 }
 
 // スレッドセーフ。
-func NewMemoryTimeLimitedKeyValueStore(expiDur time.Duration) TimeLimitedKeyValueStore {
-	return newSynchronizedTimeLimitedKeyValueStore(newMemoryTimeLimitedKeyValueStore(expiDur))
+func NewMemoryTimeLimitedKeyValueStore(staleDur, expiDur time.Duration) TimeLimitedKeyValueStore {
+	return newSynchronizedTimeLimitedKeyValueStore(newMemoryTimeLimitedKeyValueStore(staleDur, expiDur))
 }
 
 // スレッドセーフではない。
-func newMemoryTimeLimitedKeyValueStore(expiDur time.Duration) *memoryTimeLimitedKeyValueStore {
-	return &memoryTimeLimitedKeyValueStore{util.NewCache(stampExpirationDateLess), expiDur}
+func newMemoryTimeLimitedKeyValueStore(staleDur, expiDur time.Duration) *memoryTimeLimitedKeyValueStore {
+	return &memoryTimeLimitedKeyValueStore{util.NewCache(stampExpirationDateLess), staleDur, expiDur}
 }
 
 func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
@@ -35,7 +36,12 @@ func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value
 	}
 	stmp := prio.(*Stamp)
 
-	newCaStmp = &Stamp{Date: stmp.Date, ExpiDate: now.Add(reg.expiDur), Digest: stmp.Digest}
+	newCaStmp = &Stamp{
+		Date:      stmp.Date,
+		StaleDate: now.Add(reg.staleDur),
+		ExpiDate:  now.Add(reg.expiDur),
+		Digest:    stmp.Digest,
+	}
 	if newCaStmp.ExpiDate.After(stmp.ExpiDate) {
 		// newCaStmp.ExpiDate は stmp.ExpiDate 以前。
 		newCaStmp.ExpiDate = stmp.ExpiDate
@@ -50,10 +56,15 @@ func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value
 func (reg *memoryTimeLimitedKeyValueStore) Put(key string, value interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	now := time.Now()
 
-	stmp := &Stamp{Date: now, ExpiDate: expiDate, Digest: strconv.FormatInt(now.UnixNano(), 10)}
+	stmp := &Stamp{Date: now, ExpiDate: expiDate, Digest: strconv.FormatInt(int64(now.Nanosecond()), 16)}
 	reg.base.Put(key, value, stmp)
 
-	newCaStmp = &Stamp{Date: stmp.Date, ExpiDate: now.Add(reg.expiDur), Digest: stmp.Digest}
+	newCaStmp = &Stamp{
+		Date:      stmp.Date,
+		StaleDate: now.Add(reg.staleDur),
+		ExpiDate:  now.Add(reg.expiDur),
+		Digest:    stmp.Digest,
+	}
 	if newCaStmp.ExpiDate.After(expiDate) {
 		// newCaStmp.ExpiDate は expiDate 以前。
 		newCaStmp.ExpiDate = expiDate

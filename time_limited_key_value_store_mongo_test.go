@@ -9,11 +9,8 @@ func TestMongoTimeLimitedKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg, err := newMongoTimeLimitedKeyValueStore(mongoAddr, testLabel, "time-limited-key-value-store", 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer reg.base.base.DB(testLabel).DropDatabase()
+	reg := newMongoTimeLimitedKeyValueStore(mongoAddr, testLabel, "time-limited-key-value-store", nil, nil, nil, 0, 0)
+	defer reg.Clear()
 
 	testTimeLimitedKeyValueStore(t, reg)
 }

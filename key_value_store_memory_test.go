@@ -5,9 +5,9 @@ import (
 )
 
 func TestMemoryKeyValueStore(t *testing.T) {
-	testKeyValueStore(t, newMemoryKeyValueStore(0))
+	testKeyValueStore(t, newMemoryKeyValueStore(0, 0))
 }
 
 func TestMemoryKeyValueStoreStamp(t *testing.T) {
-	testKeyValueStoreStamp(t, newMemoryKeyValueStore(0))
+	testKeyValueStoreStamp(t, newMemoryKeyValueStore(0, 0))
 }
