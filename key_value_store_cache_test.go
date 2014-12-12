@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
@@ -28,20 +29,35 @@ func TestCachingKeyValueStoreExpiration(t *testing.T) {
 	}
 
 	end := time.Now().Add(2 * expiDur)
+	var caData interface{}
+	var caDataStmp *Stamp
 	var caKeys map[string]bool
-	var caStmp *Stamp
+	var caKeysStmp *Stamp
 	for time.Now().Before(end) {
-		keys, newCaStmp, err := reg.Keys(caStmp)
+		data, newCaStmp, err := reg.Get(testKey, caDataStmp)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if data != nil {
+			caData = data
+		}
+		caDataStmp = newCaStmp
+		if !reflect.DeepEqual(caData, testData) {
+			t.Error(caData)
+		}
+
+		keys, newCaStmp, err := reg.Keys(caKeysStmp)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if keys != nil {
 			caKeys = keys
 		}
-		caStmp = newCaStmp
+		caKeysStmp = newCaStmp
 		if len(caKeys) != 2 {
 			t.Error(caKeys)
 		}
+
 		time.Sleep(staleDur / 3)
 	}
 }
