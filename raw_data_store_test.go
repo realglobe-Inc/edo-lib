@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-var testData = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
 func testRawDataStore(t *testing.T, reg RawDataStore) {
 	// まだ無い。
 	data1, _, err := reg.Get(testKey, nil)
