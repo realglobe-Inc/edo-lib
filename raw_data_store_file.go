@@ -86,7 +86,8 @@ func (reg *fileRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 	}
 	defer f.Close()
 
-	if _, err := f.Write(data); err != nil {
+	n, err := f.Write(data)
+	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
@@ -95,6 +96,15 @@ func (reg *fileRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 	fi, err := f.Stat()
 	if err != nil {
 		return nil, erro.Wrap(err)
+	} else if int64(n) < fi.Size() {
+		// 前の内容の方が大きかった。
+		if err := f.Truncate(int64(n)); err != nil {
+			return nil, erro.Wrap(err)
+		}
+		fi, err = f.Stat()
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
 	}
 
 	return reg.getStamp(fi), nil
