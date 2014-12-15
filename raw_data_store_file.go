@@ -84,6 +84,7 @@ func (reg *fileRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 			return nil, erro.Wrap(err)
 		}
 	}
+	defer f.Close()
 
 	if _, err := f.Write(data); err != nil {
 		return nil, erro.Wrap(err)
