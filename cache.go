@@ -38,7 +38,16 @@ type cache struct {
 }
 
 func (ca *cache) Put(key, value, prio interface{}) {
-	ca.Push(&cacheElement{key, value, prio})
+	idx, ok := ca.keyToIdx[key]
+	if !ok {
+		ca.Push(&cacheElement{key, value, prio})
+		return
+	}
+	elem := ca.prioQueue[idx]
+	elem.value = value
+	elem.prio = prio
+	heap.Fix(ca, idx)
+	return
 }
 
 func (ca *cache) Get(key interface{}) (value, prio interface{}) {
