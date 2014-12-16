@@ -37,17 +37,35 @@ func newFileTimeLimitedKeyValueStore(path string, keyToPath, pathToKey func(stri
 }
 
 func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
-	if value, _, err := reg.expires.Get(key, caStmp); err != nil {
+	var expiDate time.Time
+	if value, newCaStmp, err := reg.expires.Get(key, nil); err != nil {
 		return nil, nil, erro.Wrap(err)
-	} else if value == nil {
+	} else if newCaStmp == nil {
 		return nil, nil, nil
-	} else if expires := value.(time.Time); time.Now().After(expires) {
+	} else {
+		expiDate = value.(time.Time)
+	}
+
+	if time.Now().After(expiDate) {
 		reg.expires.Remove(key)
 		reg.base.Remove(key)
 		return nil, nil, nil
 	}
 
-	return reg.base.Get(key, caStmp)
+	value, newCaStmp, err = reg.base.Get(key, caStmp)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if newCaStmp == nil {
+		return nil, nil, nil
+	}
+
+	if newCaStmp.ExpiDate.After(expiDate) {
+		newCaStmp.ExpiDate = expiDate
+		if newCaStmp.StaleDate.After(newCaStmp.ExpiDate) {
+			newCaStmp.StaleDate = newCaStmp.ExpiDate
+		}
+	}
+	return value, newCaStmp, nil
 }
 
 func (reg *fileTimeLimitedKeyValueStore) Put(key string, value interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
@@ -55,13 +73,23 @@ func (reg *fileTimeLimitedKeyValueStore) Put(key string, value interface{}, expi
 		return nil, erro.Wrap(err)
 	}
 
-	return reg.base.Put(key, value)
+	newCaStmp, err = reg.base.Put(key, value)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	if newCaStmp.ExpiDate.After(expiDate) {
+		newCaStmp.ExpiDate = expiDate
+		if newCaStmp.StaleDate.After(newCaStmp.ExpiDate) {
+			newCaStmp.StaleDate = newCaStmp.ExpiDate
+		}
+	}
+	return newCaStmp, nil
 }
 
 func (reg *fileTimeLimitedKeyValueStore) Remove(key string) error {
 	if err := reg.expires.Remove(key); err != nil {
 		return erro.Wrap(err)
 	}
-
 	return reg.base.Remove(key)
 }

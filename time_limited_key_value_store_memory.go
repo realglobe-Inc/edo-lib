@@ -42,15 +42,22 @@ func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value
 		ExpiDate:  now.Add(reg.expiDur),
 		Digest:    stmp.Digest,
 	}
+
 	if newCaStmp.ExpiDate.After(stmp.ExpiDate) {
-		// newCaStmp.ExpiDate は stmp.ExpiDate 以前。
 		newCaStmp.ExpiDate = stmp.ExpiDate
+		if newCaStmp.StaleDate.After(newCaStmp.ExpiDate) {
+			newCaStmp.StaleDate = newCaStmp.ExpiDate
+		}
 	}
 
-	if caStmp == nil || caStmp.Date.Before(newCaStmp.Date) || caStmp.Digest != newCaStmp.Digest {
-		return value, newCaStmp, nil
+	if caStmp != nil && !caStmp.Older(newCaStmp) {
+		// 要求元のキャッシュより新しそうではなかった。
+		return nil, newCaStmp, nil
 	}
-	return nil, newCaStmp, nil
+
+	// 要求元のキャッシュより新しそう。
+
+	return value, newCaStmp, nil
 }
 
 func (reg *memoryTimeLimitedKeyValueStore) Put(key string, value interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
@@ -66,8 +73,10 @@ func (reg *memoryTimeLimitedKeyValueStore) Put(key string, value interface{}, ex
 		Digest:    stmp.Digest,
 	}
 	if newCaStmp.ExpiDate.After(expiDate) {
-		// newCaStmp.ExpiDate は expiDate 以前。
 		newCaStmp.ExpiDate = expiDate
+		if newCaStmp.StaleDate.After(newCaStmp.ExpiDate) {
+			newCaStmp.StaleDate = newCaStmp.ExpiDate
+		}
 	}
 
 	reg.base.CleanLower(&Stamp{ExpiDate: now})
