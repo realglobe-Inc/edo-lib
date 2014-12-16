@@ -13,15 +13,15 @@ type fileTimeLimitedKeyValueStore struct {
 }
 
 // スレッドセーフ。
-func NewFileTimeLimitedKeyValueStore(path string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) TimeLimitedKeyValueStore {
-	return newSynchronizedTimeLimitedKeyValueStore(newCachingTimeLimitedKeyValueStore(newFileTimeLimitedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
+func NewFileTimeLimitedKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) TimeLimitedKeyValueStore {
+	return newSynchronizedTimeLimitedKeyValueStore(newCachingTimeLimitedKeyValueStore(newFileTimeLimitedKeyValueStore(path, expiPath, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
 }
 
 // スレッドセーフではない。
-func newFileTimeLimitedKeyValueStore(path string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileTimeLimitedKeyValueStore {
+func newFileTimeLimitedKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileTimeLimitedKeyValueStore {
 	return &fileTimeLimitedKeyValueStore{
 		NewFileListedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
-		NewFileListedKeyValueStore(path+".expires", keyToPath, pathToKey,
+		NewFileListedKeyValueStore(expiPath, keyToPath, pathToKey,
 			func(value interface{}) ([]byte, error) {
 				return []byte(value.(time.Time).Format(time.RFC3339Nano)), nil
 			},
