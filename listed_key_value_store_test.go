@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func testKeyValueStore(t *testing.T, reg KeyValueStore) {
+func testListedKeyValueStore(t *testing.T, reg ListedKeyValueStore) {
 	// まだ無い。
 	value1, _, err := reg.Get(testKey, nil)
 	if err != nil {
@@ -51,7 +51,7 @@ func testKeyValueStore(t *testing.T, reg KeyValueStore) {
 	}
 }
 
-func testKeyValueStoreStamp(t *testing.T, reg KeyValueStore) {
+func testListedKeyValueStoreStamp(t *testing.T, reg ListedKeyValueStore) {
 	// まだ無い。
 	value1, stmp1, err := reg.Get(testKey, nil)
 	if err != nil {

@@ -4,7 +4,7 @@ import (
 	"reflect"
 )
 
-type synchronizedRawDataStore synchronizedDriver
+type synchronizedListedRawDataStore synchronizedDriver
 
 type keysRequest struct {
 	caStmp *Stamp
@@ -33,8 +33,8 @@ type removeRequest struct {
 }
 
 // もちろん、スレッドセーフ。
-func newSynchronizedRawDataStore(base RawDataStore) *synchronizedRawDataStore {
-	return (*synchronizedRawDataStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+func newSynchronizedListedRawDataStore(base ListedRawDataStore) *synchronizedListedRawDataStore {
+	return (*synchronizedListedRawDataStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&keysRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*keysRequest)
 			keys, newCaStmp, err := base.Keys(req.caStmp)
@@ -71,7 +71,7 @@ func newSynchronizedRawDataStore(base RawDataStore) *synchronizedRawDataStore {
 	}))
 }
 
-func (reg *synchronizedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+func (reg *synchronizedListedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
 	keysCh := make(chan map[string]bool, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
@@ -84,7 +84,7 @@ func (reg *synchronizedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, 
 	}
 }
 
-func (reg *synchronizedRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {
+func (reg *synchronizedListedRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {
 	dataCh := make(chan []byte, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
@@ -97,7 +97,7 @@ func (reg *synchronizedRawDataStore) Get(key string, caStmp *Stamp) (data []byte
 	}
 }
 
-func (reg *synchronizedRawDataStore) Put(key string, data []byte) (*Stamp, error) {
+func (reg *synchronizedListedRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&putRequest{key, data, newCaStmpCh}, errCh}
@@ -109,7 +109,7 @@ func (reg *synchronizedRawDataStore) Put(key string, data []byte) (*Stamp, error
 	}
 }
 
-func (reg *synchronizedRawDataStore) Remove(key string) error {
+func (reg *synchronizedListedRawDataStore) Remove(key string) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func testRawDataStore(t *testing.T, reg RawDataStore) {
+func testListedRawDataStore(t *testing.T, reg ListedRawDataStore) {
 	// まだ無い。
 	data1, _, err := reg.Get(testKey, nil)
 	if err != nil {
@@ -28,6 +28,13 @@ func testRawDataStore(t *testing.T, reg RawDataStore) {
 		t.Error(data2)
 	}
 
+	keys, _, err := reg.Keys(nil)
+	if err != nil {
+		t.Fatal(err)
+	} else if len(keys) != 1 || !keys[testKey] {
+		t.Error(keys)
+	}
+
 	// 消す。
 	if err := reg.Remove(testKey); err != nil {
 		t.Fatal(err)
@@ -42,7 +49,7 @@ func testRawDataStore(t *testing.T, reg RawDataStore) {
 	}
 }
 
-func testRawDataStoreStamp(t *testing.T, reg RawDataStore) {
+func testListedRawDataStoreStamp(t *testing.T, reg ListedRawDataStore) {
 	// まだ無い。
 	data1, stmp1, err := reg.Get(testKey, nil)
 	if err != nil {

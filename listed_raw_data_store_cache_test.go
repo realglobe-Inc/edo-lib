@@ -6,18 +6,18 @@ import (
 	"time"
 )
 
-func TestCachingRawDataStore(t *testing.T) {
-	testRawDataStore(t, newCachingRawDataStore(newMemoryRawDataStore(0, 0)))
+func TestCachingListedRawDataStore(t *testing.T) {
+	testListedRawDataStore(t, newCachingListedRawDataStore(newMemoryListedRawDataStore(0, 0)))
 }
 
-func TestCachingRawDataStoreStamp(t *testing.T) {
-	testRawDataStoreStamp(t, newCachingRawDataStore(newMemoryRawDataStore(0, 0)))
+func TestCachingListedRawDataStoreStamp(t *testing.T) {
+	testListedRawDataStoreStamp(t, newCachingListedRawDataStore(newMemoryListedRawDataStore(0, 0)))
 }
 
-func TestCachingRawDataStoreExpiration(t *testing.T) {
+func TestCachingListedRawDataStoreExpiration(t *testing.T) {
 	staleDur := 10 * time.Millisecond
 	expiDur := 50 * time.Millisecond
-	reg := newCachingRawDataStore(newMemoryRawDataStore(staleDur, expiDur))
+	reg := newCachingListedRawDataStore(newMemoryListedRawDataStore(staleDur, expiDur))
 
 	// 入れる。
 	if _, err := reg.Put(testKey, testData); err != nil {

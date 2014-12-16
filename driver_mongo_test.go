@@ -4,7 +4,7 @@ import (
 	"gopkg.in/mgo.v2"
 )
 
-// テストするなら、ローカルにデフォルトポートで mongodb をたてる必要あり。
+// テストするなら、mongodb をたてる必要あり。
 var mongoAddr = "localhost"
 
 func init() {

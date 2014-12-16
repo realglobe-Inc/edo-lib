@@ -20,8 +20,8 @@ func NewFileTimeLimitedKeyValueStore(path string, keyToPath, pathToKey func(stri
 // スレッドセーフではない。
 func newFileTimeLimitedKeyValueStore(path string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileTimeLimitedKeyValueStore {
 	return &fileTimeLimitedKeyValueStore{
-		NewFileKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
-		NewFileKeyValueStore(path+".expires", keyToPath, pathToKey,
+		NewFileListedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
+		NewFileListedKeyValueStore(path+".expires", keyToPath, pathToKey,
 			func(value interface{}) ([]byte, error) {
 				return []byte(value.(time.Time).Format(time.RFC3339Nano)), nil
 			},

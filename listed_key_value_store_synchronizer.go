@@ -4,7 +4,7 @@ import (
 	"reflect"
 )
 
-type synchronizedKeyValueStore synchronizedDriver
+type synchronizedListedKeyValueStore synchronizedDriver
 
 type kvsGetRequest struct {
 	key    string
@@ -22,8 +22,8 @@ type kvsPutRequest struct {
 }
 
 // もちろん、スレッドセーフ。
-func newSynchronizedKeyValueStore(base KeyValueStore) *synchronizedKeyValueStore {
-	return (*synchronizedKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+func newSynchronizedListedKeyValueStore(base ListedKeyValueStore) *synchronizedListedKeyValueStore {
+	return (*synchronizedListedKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&keysRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*keysRequest)
 			keys, stmp, err := base.Keys(req.caStmp)
@@ -60,7 +60,7 @@ func newSynchronizedKeyValueStore(base KeyValueStore) *synchronizedKeyValueStore
 	}))
 }
 
-func (reg *synchronizedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+func (reg *synchronizedListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
 	keysCh := make(chan map[string]bool, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
@@ -73,7 +73,7 @@ func (reg *synchronizedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool,
 	}
 }
 
-func (reg *synchronizedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (reg *synchronizedListedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	valCh := make(chan interface{}, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
@@ -86,7 +86,7 @@ func (reg *synchronizedKeyValueStore) Get(key string, caStmp *Stamp) (val interf
 	}
 }
 
-func (reg *synchronizedKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
+func (reg *synchronizedListedKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&kvsPutRequest{key, val, newCaStmpCh}, errCh}
@@ -98,7 +98,7 @@ func (reg *synchronizedKeyValueStore) Put(key string, val interface{}) (newCaStm
 	}
 }
 
-func (reg *synchronizedKeyValueStore) Remove(key string) error {
+func (reg *synchronizedListedKeyValueStore) Remove(key string) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh

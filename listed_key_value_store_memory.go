@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type memoryKeyValueStore struct {
+type memoryListedKeyValueStore struct {
 	date      time.Time
 	digest    int
 	keyToVal  map[string]interface{}
@@ -15,13 +15,13 @@ type memoryKeyValueStore struct {
 }
 
 // スレッドセーフ。
-func NewMemoryKeyValueStore(staleDur, expiDur time.Duration) KeyValueStore {
-	return newSynchronizedKeyValueStore(newMemoryKeyValueStore(staleDur, expiDur))
+func NewMemoryListedKeyValueStore(staleDur, expiDur time.Duration) ListedKeyValueStore {
+	return newSynchronizedListedKeyValueStore(newMemoryListedKeyValueStore(staleDur, expiDur))
 }
 
 // スレッドセーフではない。
-func newMemoryKeyValueStore(staleDur, expiDur time.Duration) *memoryKeyValueStore {
-	return &memoryKeyValueStore{
+func newMemoryListedKeyValueStore(staleDur, expiDur time.Duration) *memoryListedKeyValueStore {
+	return &memoryListedKeyValueStore{
 		date:      time.Now(),
 		digest:    0,
 		keyToVal:  map[string]interface{}{},
@@ -31,7 +31,7 @@ func newMemoryKeyValueStore(staleDur, expiDur time.Duration) *memoryKeyValueStor
 	}
 }
 
-func (reg *memoryKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+func (reg *memoryListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
 	newCaStmp = &Stamp{Date: reg.date, Digest: strconv.FormatInt(int64(reg.digest), 16)}
 	if caStmp != nil && !caStmp.Older(newCaStmp) {
 		// 要求元のキャッシュより新しそうではなかった。
@@ -47,7 +47,7 @@ func (reg *memoryKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCa
 	return keys, newCaStmp, nil
 }
 
-func (reg *memoryKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+func (reg *memoryListedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
 	stmp := reg.keyToStmp[key]
 	if stmp == nil {
 		return nil, nil, nil
@@ -70,7 +70,7 @@ func (reg *memoryKeyValueStore) Get(key string, caStmp *Stamp) (value interface{
 	return reg.keyToVal[key], newCaStmp, nil
 }
 
-func (reg *memoryKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
+func (reg *memoryListedKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
 	now := time.Now()
 	newCaStmp = &Stamp{Date: now, Digest: strconv.FormatInt(int64(now.Nanosecond()), 16)}
 	reg.keyToVal[key] = val
@@ -80,7 +80,7 @@ func (reg *memoryKeyValueStore) Put(key string, val interface{}) (newCaStmp *Sta
 	return newCaStmp, nil
 }
 
-func (reg *memoryKeyValueStore) Remove(key string) error {
+func (reg *memoryListedKeyValueStore) Remove(key string) error {
 	if _, ok := reg.keyToVal[key]; !ok {
 		return nil
 	}

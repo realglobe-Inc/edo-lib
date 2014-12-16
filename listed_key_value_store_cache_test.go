@@ -6,19 +6,19 @@ import (
 	"time"
 )
 
-func TestCachingKeyValueStoreStamp(t *testing.T) {
+func TestCachingListedKeyValueStoreStamp(t *testing.T) {
 	// ////////////////////////////////
 	// util.SetupConsoleLog("github.com/realglobe-Inc", level.ALL)
 	// defer util.SetupConsoleLog("github.com/realglobe-Inc", level.OFF)
 	// ////////////////////////////////
 
-	testKeyValueStoreStamp(t, newCachingKeyValueStore(newMemoryKeyValueStore(0, 0)))
+	testListedKeyValueStoreStamp(t, newCachingListedKeyValueStore(newMemoryListedKeyValueStore(0, 0)))
 }
 
-func TestCachingKeyValueStoreExpiration(t *testing.T) {
+func TestCachingListedKeyValueStoreExpiration(t *testing.T) {
 	staleDur := 10 * time.Millisecond
 	expiDur := 50 * time.Millisecond
-	reg := newCachingKeyValueStore(newMemoryKeyValueStore(staleDur, expiDur))
+	reg := newCachingListedKeyValueStore(newMemoryListedKeyValueStore(staleDur, expiDur))
 
 	// 入れる。
 	if _, err := reg.Put(testKey, testData); err != nil {

@@ -7,23 +7,23 @@ import (
 )
 
 // キャッシュする。
-type cachingRawDataStore struct {
-	base  RawDataStore
+type cachingListedRawDataStore struct {
+	base  ListedRawDataStore
 	cache util.Cache
 
 	keyCache util.Cache
 }
 
 // スレッドセーフではない。
-func newCachingRawDataStore(base RawDataStore) *cachingRawDataStore {
-	return &cachingRawDataStore{
+func newCachingListedRawDataStore(base ListedRawDataStore) *cachingListedRawDataStore {
+	return &cachingListedRawDataStore{
 		base:     base,
 		cache:    util.NewCache(stampExpirationDateLess),
 		keyCache: util.NewCache(stampExpirationDateLess),
 	}
 }
 
-func (reg *cachingRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+func (reg *cachingListedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	// 古いキャッシュの削除。
@@ -88,7 +88,7 @@ func (reg *cachingRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCa
 	}
 }
 
-func (reg *cachingRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {
+func (reg *cachingListedRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	// 古いキャッシュの削除。
@@ -155,7 +155,7 @@ func (reg *cachingRawDataStore) Get(key string, caStmp *Stamp) (data []byte, new
 	}
 }
 
-func (reg *cachingRawDataStore) Put(key string, data []byte) (*Stamp, error) {
+func (reg *cachingListedRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
 	reg.cache.CleanLower(cleanThres)
@@ -173,7 +173,7 @@ func (reg *cachingRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 	}
 }
 
-func (reg *cachingRawDataStore) Remove(key string) error {
+func (reg *cachingListedRawDataStore) Remove(key string) error {
 	reg.cache.Update(key, nil)
 
 	// 古いキャッシュの削除。

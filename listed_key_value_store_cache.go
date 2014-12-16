@@ -7,27 +7,27 @@ import (
 )
 
 // キャッシュする。
-type cachingKeyValueStore struct {
-	base     KeyValueStore
+type cachingListedKeyValueStore struct {
+	base     ListedKeyValueStore
 	cache    util.Cache
 	keyCache util.Cache
 }
 
 // スレッドセーフではない。
-func NewCachingKeyValueStore(base KeyValueStore) KeyValueStore {
-	return newCachingKeyValueStore(base)
+func NewCachingListedKeyValueStore(base ListedKeyValueStore) ListedKeyValueStore {
+	return newCachingListedKeyValueStore(base)
 }
 
 // スレッドセーフではない。
-func newCachingKeyValueStore(base KeyValueStore) *cachingKeyValueStore {
-	return &cachingKeyValueStore{
+func newCachingListedKeyValueStore(base ListedKeyValueStore) *cachingListedKeyValueStore {
+	return &cachingListedKeyValueStore{
 		base:     base,
 		cache:    util.NewCache(stampExpirationDateLess),
 		keyCache: util.NewCache(stampExpirationDateLess),
 	}
 }
 
-func (reg *cachingKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+func (reg *cachingListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	// 古いキャッシュの削除。
@@ -92,7 +92,7 @@ func (reg *cachingKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newC
 	}
 }
 
-func (reg *cachingKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (reg *cachingListedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	// 古いキャッシュの削除。
@@ -159,7 +159,7 @@ func (reg *cachingKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}
 	}
 }
 
-func (reg *cachingKeyValueStore) Put(key string, val interface{}) (*Stamp, error) {
+func (reg *cachingListedKeyValueStore) Put(key string, val interface{}) (*Stamp, error) {
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
 	reg.cache.CleanLower(cleanThres)
@@ -177,7 +177,7 @@ func (reg *cachingKeyValueStore) Put(key string, val interface{}) (*Stamp, error
 	}
 }
 
-func (reg *cachingKeyValueStore) Remove(key string) error {
+func (reg *cachingListedKeyValueStore) Remove(key string) error {
 	reg.cache.Update(key, nil)
 
 	// 古いキャッシュの削除。

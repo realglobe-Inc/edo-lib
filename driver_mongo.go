@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// 接続が切れても次は接続し直す。
 // スレッドセーフ。
 type mongoDriver struct {
 	url     string
@@ -14,8 +15,8 @@ type mongoDriver struct {
 	coll    string
 	indices []mgo.Index
 
-	sLock sync.Mutex
-	s     *mgo.Session
+	sessLock sync.Mutex
+	sess     *mgo.Session
 }
 
 func newMongoDriver(url, db, coll string, indices []mgo.Index) *mongoDriver {
@@ -36,11 +37,11 @@ func (reg *mongoDriver) collection() (*mgo.Collection, error) {
 }
 
 func (reg *mongoDriver) session() (*mgo.Session, error) {
-	reg.sLock.Lock()
-	defer reg.sLock.Unlock()
+	reg.sessLock.Lock()
+	defer reg.sessLock.Unlock()
 
-	if reg.s != nil {
-		return reg.s, nil
+	if reg.sess != nil {
+		return reg.sess, nil
 	}
 
 	sess, err := mgo.Dial(reg.url)
@@ -71,17 +72,17 @@ func (reg *mongoDriver) session() (*mgo.Session, error) {
 		}
 	}
 
-	reg.s = sess
-	return reg.s, nil
+	reg.sess = sess
+	return reg.sess, nil
 }
 
-// reg.s が oldSess なら reg.s を newSess に変えて true を返す。
+// reg.sess が oldSess なら reg.sess を newSess に変えて true を返す。
 // そうでなければ false を返す。
 func (reg *mongoDriver) replaceSession(newSess, oldSess *mgo.Session) bool {
-	reg.sLock.Lock()
-	defer reg.sLock.Unlock()
-	if reg.s == oldSess {
-		reg.s = newSess
+	reg.sessLock.Lock()
+	defer reg.sessLock.Unlock()
+	if reg.sess == oldSess {
+		reg.sess = newSess
 		return true
 	} else {
 		return false
@@ -89,9 +90,9 @@ func (reg *mongoDriver) replaceSession(newSess, oldSess *mgo.Session) bool {
 }
 
 func (reg *mongoDriver) closeIfError() error {
-	reg.sLock.Lock()
-	sess := reg.s
-	reg.sLock.Unlock()
+	reg.sessLock.Lock()
+	sess := reg.sess
+	reg.sessLock.Unlock()
 
 	if sess == nil {
 		return nil
