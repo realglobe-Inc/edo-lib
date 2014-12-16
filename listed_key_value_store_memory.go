@@ -72,12 +72,15 @@ func (reg *memoryListedKeyValueStore) Get(key string, caStmp *Stamp) (value inte
 
 func (reg *memoryListedKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
 	now := time.Now()
-	newCaStmp = &Stamp{Date: now, Digest: strconv.FormatInt(int64(now.Nanosecond()), 16)}
+	stmp := &Stamp{Date: now, Digest: strconv.FormatInt(int64(now.Nanosecond()), 16)}
 	reg.keyToVal[key] = val
-	reg.keyToStmp[key] = newCaStmp
+	reg.keyToStmp[key] = stmp
+	s := *stmp
+	s.StaleDate = now.Add(reg.staleDur)
+	s.ExpiDate = now.Add(reg.expiDur)
 	reg.date = now
 	reg.digest++
-	return newCaStmp, nil
+	return &s, nil
 }
 
 func (reg *memoryListedKeyValueStore) Remove(key string) error {
