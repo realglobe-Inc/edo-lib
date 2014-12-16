@@ -68,7 +68,7 @@ func (reg *fileRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaS
 func (reg *fileRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 	path := filepath.Join(reg.path, reg.keyToPath(key))
 
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_APPEND|os.O_CREATE, filePerm)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, filePerm)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, erro.Wrap(err)
@@ -79,7 +79,7 @@ func (reg *fileRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 		if err := os.MkdirAll(filepath.Dir(path), dirPerm); err != nil {
 			return nil, erro.Wrap(err)
 		}
-		f, err = os.OpenFile(path, os.O_RDWR|os.O_APPEND|os.O_CREATE, filePerm)
+		f, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE, filePerm)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
