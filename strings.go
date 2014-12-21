@@ -1,6 +1,8 @@
 package util
 
 import (
+	"encoding/base64"
+	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"unicode"
 )
 
@@ -68,4 +70,12 @@ func Fields(s string) []string {
 	}
 
 	return fields
+}
+
+func SecureRandomString(length int) (string, error) {
+	buff, err := SecureRandomBytes(length * 6 / 8)
+	if err != nil {
+		return "", erro.Wrap(err)
+	}
+	return base64.URLEncoding.EncodeToString(buff), nil
 }
