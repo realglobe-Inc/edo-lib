@@ -9,11 +9,11 @@ import (
 
 type Cache interface {
 	// 入れる。
-	Put(key, value, prio interface{})
+	Put(key, val, prio interface{})
 	// 取り出す。
-	Get(key interface{}) (value, prio interface{})
+	Get(key interface{}) (val, prio interface{})
 	// 優先度を変えつつ取り出す。LRU のとき使う。
-	Update(key, prio interface{}) (value interface{})
+	Update(key, prio interface{}) (val interface{})
 	// 基準以下を削除。
 	// 優先度 nil はいかなる非 nil な優先度より低いとする。
 	// よって、Update で優先度を nil にしてから、CleanLower すれば削除できる。
@@ -37,29 +37,29 @@ type cache struct {
 	keyToIdx  map[interface{}]int
 }
 
-func (ca *cache) Put(key, value, prio interface{}) {
+func (ca *cache) Put(key, val, prio interface{}) {
 	idx, ok := ca.keyToIdx[key]
 	if !ok {
-		ca.Push(&cacheElement{key, value, prio})
+		ca.Push(&cacheElement{key, val, prio})
 		return
 	}
 	elem := ca.prioQueue[idx]
-	elem.value = value
+	elem.val = val
 	elem.prio = prio
 	heap.Fix(ca, idx)
 	return
 }
 
-func (ca *cache) Get(key interface{}) (value, prio interface{}) {
+func (ca *cache) Get(key interface{}) (val, prio interface{}) {
 	idx, ok := ca.keyToIdx[key]
 	if !ok {
 		return nil, nil
 	}
 	elem := ca.prioQueue[idx]
-	return elem.value, elem.prio
+	return elem.val, elem.prio
 }
 
-func (ca *cache) Update(key, prio interface{}) (value interface{}) {
+func (ca *cache) Update(key, prio interface{}) (val interface{}) {
 	idx, ok := ca.keyToIdx[key]
 	if !ok {
 		return nil
@@ -67,7 +67,7 @@ func (ca *cache) Update(key, prio interface{}) (value interface{}) {
 	elem := ca.prioQueue[idx]
 	elem.prio = prio
 	heap.Fix(ca, idx)
-	return elem.value
+	return elem.val
 }
 
 func (ca *cache) CleanLower(prioThres interface{}) {
@@ -85,9 +85,9 @@ func (ca *cache) CleanLower(prioThres interface{}) {
 }
 
 type cacheElement struct {
-	key   interface{}
-	value interface{}
-	prio  interface{}
+	key  interface{}
+	val  interface{}
+	prio interface{}
 }
 
 func (ca *cache) Len() int {

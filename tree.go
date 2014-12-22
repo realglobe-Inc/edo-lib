@@ -26,7 +26,7 @@ func (tree *Tree) String() string {
 }
 
 type treeNode struct {
-	value    interface{}
+	val      interface{}
 	children map[string]bool // 子のラベル。
 }
 
@@ -35,7 +35,7 @@ func newTreeNode() *treeNode {
 }
 
 func (node *treeNode) String() string {
-	return fmt.Sprint(node.value, toStringSlice(node.children))
+	return fmt.Sprint(node.val, toStringSlice(node.children))
 }
 
 func toStringSlice(set map[string]bool) []string {
@@ -48,8 +48,8 @@ func toStringSlice(set map[string]bool) []string {
 
 // 通信形式から変換する。
 func (tree *Tree) FromContainer(cont map[string]interface{}) {
-	for label, value := range cont {
-		tree.Add(label, value)
+	for label, val := range cont {
+		tree.Add(label, val)
 	}
 }
 
@@ -57,8 +57,8 @@ func (tree *Tree) FromContainer(cont map[string]interface{}) {
 func (tree *Tree) ToContainer() (cont map[string]interface{}) {
 	cont = map[string]interface{}{}
 	for label, node := range tree.nodes {
-		if node.value != nil {
-			cont[label] = node.value
+		if node.val != nil {
+			cont[label] = node.val
 		}
 	}
 	return cont
@@ -66,14 +66,14 @@ func (tree *Tree) ToContainer() (cont map[string]interface{}) {
 
 // 使用形式の木にノードを加える。
 // 親が居なければ勝手に生成する。
-func (tree *Tree) Add(label string, value interface{}) {
+func (tree *Tree) Add(label string, val interface{}) {
 	curNode := tree.nodes[label]
 	if curNode == nil {
 		curNode = newTreeNode()
 		tree.nodes[label] = curNode
 	}
 
-	curNode.value = value
+	curNode.val = val
 
 	// 親を作成。
 	for curLabel := label; !tree.isRoot(curLabel); {
@@ -97,7 +97,7 @@ func (tree *Tree) Remove(label string) {
 	}
 	for child, _ := range node.children {
 		if tree.nodes[child] != nil {
-			node.value = nil
+			node.val = nil
 			return
 		}
 	}
@@ -108,7 +108,7 @@ func (tree *Tree) Remove(label string) {
 		parent := tree.parent(curLabel)
 		parentNode := tree.nodes[parent]
 		delete(parentNode.children, curLabel)
-		if parentNode.value != nil || len(parentNode.children) > 0 {
+		if parentNode.val != nil || len(parentNode.children) > 0 {
 			break
 		}
 		curLabel = parent
@@ -116,46 +116,46 @@ func (tree *Tree) Remove(label string) {
 }
 
 // 値を取り出す。
-func (tree *Tree) Value(label string) (value interface{}) {
+func (tree *Tree) Value(label string) (val interface{}) {
 	node := tree.nodes[label]
 	if node == nil {
 		return nil
 	}
-	return node.value
+	return node.val
 }
 
 // 使用形式の木から部分木 + αに含まれる値を列挙する。
-func (tree *Tree) Values(label string) (values []interface{}) {
+func (tree *Tree) Values(label string) (vals []interface{}) {
 	node := tree.nodes[label]
 	if node == nil {
 		return nil
 	}
 
-	values = []interface{}{}
-	tree._subTree(&values, label)
-	return values
+	vals = []interface{}{}
+	tree._subTree(&vals, label)
+	return vals
 }
 
-func (tree *Tree) _subTree(values *[]interface{}, label string) {
+func (tree *Tree) _subTree(vals *[]interface{}, label string) {
 	node := tree.nodes[label]
 	if node == nil {
 		return
 	}
 
-	if node.value != nil {
-		*values = append(*values, node.value)
+	if node.val != nil {
+		*vals = append(*vals, node.val)
 	}
 	for child, _ := range node.children {
-		tree._subTree(values, child)
+		tree._subTree(vals, child)
 	}
 }
 
 // 自分か直近の親の値を取り出す。
-func (tree *Tree) ParentValue(label string) (value interface{}) {
+func (tree *Tree) ParentValue(label string) (val interface{}) {
 	for curLabel := label; ; {
 		node := tree.nodes[curLabel]
-		if node != nil && node.value != nil {
-			return node.value
+		if node != nil && node.val != nil {
+			return node.val
 		}
 
 		if tree.isRoot(curLabel) {

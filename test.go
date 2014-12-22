@@ -65,9 +65,9 @@ func NewTestHttpServer(port int) (*TestHttpServer, error) {
 
 		resp := <-respCh
 		resp.reqCh <- &req
-		for key, values := range resp.header {
-			for _, value := range values {
-				w.Header().Add(key, value)
+		for key, vals := range resp.header {
+			for _, val := range vals {
+				w.Header().Add(key, val)
 			}
 		}
 		w.WriteHeader(resp.status)
