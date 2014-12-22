@@ -21,11 +21,11 @@ func (reg *memoryListedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, 
 }
 
 func (reg *memoryListedRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {
-	value, newCaStmp, err := ((*memoryListedKeyValueStore)(reg)).Get(key, caStmp)
-	if value == nil {
+	val, newCaStmp, err := ((*memoryListedKeyValueStore)(reg)).Get(key, caStmp)
+	if val == nil {
 		return nil, newCaStmp, err
 	}
-	return value.([]byte), newCaStmp, nil
+	return val.([]byte), newCaStmp, nil
 }
 
 func (reg *memoryListedRawDataStore) Put(key string, data []byte) (*Stamp, error) {

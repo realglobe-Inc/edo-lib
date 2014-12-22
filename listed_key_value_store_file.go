@@ -31,7 +31,7 @@ func (this *fileListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, 
 	return this.base.Keys(caStmp)
 }
 
-func (reg *fileListedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+func (reg *fileListedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	buff, newCaStmp, err := reg.base.Get(key, caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
@@ -39,15 +39,15 @@ func (reg *fileListedKeyValueStore) Get(key string, caStmp *Stamp) (value interf
 		return nil, newCaStmp, nil
 	}
 
-	value, err = reg.Unmarshal(buff)
+	val, err = reg.Unmarshal(buff)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
-	return value, newCaStmp, nil
+	return val, newCaStmp, nil
 }
 
-func (reg *fileListedKeyValueStore) Put(key string, value interface{}) (*Stamp, error) {
-	buff, err := reg.Marshal(value)
+func (reg *fileListedKeyValueStore) Put(key string, val interface{}) (*Stamp, error) {
+	buff, err := reg.Marshal(val)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}

@@ -26,11 +26,11 @@ func newMemoryTimeLimitedKeyValueStore(staleDur, expiDur time.Duration) *memoryT
 	return &memoryTimeLimitedKeyValueStore{util.NewCache(stampExpirationDateLess), staleDur, expiDur}
 }
 
-func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
 	reg.base.CleanLower(&Stamp{ExpiDate: now})
 
-	value, prio := reg.base.Get(key)
+	val, prio := reg.base.Get(key)
 	if prio == nil {
 		return nil, nil, nil
 	}
@@ -57,14 +57,14 @@ func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value
 
 	// 要求元のキャッシュより新しそう。
 
-	return value, newCaStmp, nil
+	return val, newCaStmp, nil
 }
 
-func (reg *memoryTimeLimitedKeyValueStore) Put(key string, value interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (reg *memoryTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	stmp := &Stamp{Date: now, ExpiDate: expiDate, Digest: strconv.FormatInt(int64(now.Nanosecond()), 16)}
-	reg.base.Put(key, value, stmp)
+	reg.base.Put(key, val, stmp)
 
 	newCaStmp = &Stamp{
 		Date:      stmp.Date,

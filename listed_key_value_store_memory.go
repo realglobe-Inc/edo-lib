@@ -47,7 +47,7 @@ func (reg *memoryListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool,
 	return keys, newCaStmp, nil
 }
 
-func (reg *memoryListedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+func (reg *memoryListedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	stmp := reg.keyToStmp[key]
 	if stmp == nil {
 		return nil, nil, nil

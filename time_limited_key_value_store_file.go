@@ -22,8 +22,8 @@ func newFileTimeLimitedKeyValueStore(path, expiPath string, keyToPath, pathToKey
 	return &fileTimeLimitedKeyValueStore{
 		NewFileListedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
 		NewFileListedKeyValueStore(expiPath, keyToPath, pathToKey,
-			func(value interface{}) ([]byte, error) {
-				return []byte(value.(time.Time).Format(time.RFC3339Nano)), nil
+			func(val interface{}) ([]byte, error) {
+				return []byte(val.(time.Time).Format(time.RFC3339Nano)), nil
 			},
 			func(data []byte) (interface{}, error) {
 				date, err := time.Parse(time.RFC3339Nano, string(data))
@@ -36,14 +36,14 @@ func newFileTimeLimitedKeyValueStore(path, expiPath string, keyToPath, pathToKey
 	}
 }
 
-func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value interface{}, newCaStmp *Stamp, err error) {
+func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	var expiDate time.Time
-	if value, newCaStmp, err := reg.expires.Get(key, nil); err != nil {
+	if val, newCaStmp, err := reg.expires.Get(key, nil); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		return nil, nil, nil
 	} else {
-		expiDate = value.(time.Time)
+		expiDate = val.(time.Time)
 	}
 
 	if time.Now().After(expiDate) {
@@ -52,7 +52,7 @@ func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value i
 		return nil, nil, nil
 	}
 
-	value, newCaStmp, err = reg.base.Get(key, caStmp)
+	val, newCaStmp, err = reg.base.Get(key, caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
@@ -65,15 +65,15 @@ func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (value i
 			newCaStmp.StaleDate = newCaStmp.ExpiDate
 		}
 	}
-	return value, newCaStmp, nil
+	return val, newCaStmp, nil
 }
 
-func (reg *fileTimeLimitedKeyValueStore) Put(key string, value interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (reg *fileTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	if _, err := reg.expires.Put(key, expiDate); err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	newCaStmp, err = reg.base.Put(key, value)
+	newCaStmp, err = reg.base.Put(key, val)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
