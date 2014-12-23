@@ -17,7 +17,7 @@ type Cache interface {
 	// 基準以下を削除。
 	// 優先度 nil はいかなる非 nil な優先度より低いとする。
 	// よって、Update で優先度を nil にしてから、CleanLower すれば削除できる。
-	// nil で CleanLower したときは優先度を nil のものだけを削除する。
+	// nil で CleanLower したときは優先度 nil のものだけを削除する。
 	CleanLower(prioThres interface{})
 }
 
@@ -95,21 +95,23 @@ func (ca *cache) Len() int {
 }
 
 func (ca *cache) Less(i, j int) bool {
-	if ca.prioQueue[i].prio == nil {
+	prio1, prio2 := ca.prioQueue[i].prio, ca.prioQueue[j].prio
+	if prio1 == nil {
 		// nil < 非 nil。
 		// nil == nil。
-		return ca.prioQueue[j].prio != nil
-	} else if ca.prioQueue[j].prio == nil {
+		return prio2 != nil
+	} else if prio2 == nil {
 		// 非 nil > nil。
 		return false
 	} else {
 		// 非 nil ? 非 nil。
-		return ca.less(ca.prioQueue[i].prio, ca.prioQueue[j].prio)
+		return ca.less(prio1, prio2)
 	}
 }
 func (ca *cache) Swap(i, j int) {
-	ca.prioQueue[i], ca.prioQueue[j] = ca.prioQueue[j], ca.prioQueue[i]
-	ca.keyToIdx[ca.prioQueue[i].key], ca.keyToIdx[ca.prioQueue[j].key] = i, j
+	elem1, elem2 := ca.prioQueue[i], ca.prioQueue[j]
+	ca.prioQueue[i], ca.prioQueue[j] = elem2, elem1
+	ca.keyToIdx[elem1.key], ca.keyToIdx[elem2.key] = j, i
 }
 
 func (ca *cache) Push(x interface{}) {

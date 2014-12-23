@@ -3,48 +3,42 @@ package util
 import (
 	"encoding/json"
 	"errors"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"net/http"
 	"testing"
 )
 
 func TestErrorToResponseJson(t *testing.T) {
-	before := errors.New("aaa")
+	before := errors.New("abcde")
 	errJson := ErrorToResponseJson(before)
 
-	var after map[string]interface{}
+	var after struct {
+		Status  int
+		Message string
+	}
 	if err := json.Unmarshal(errJson, &after); err != nil {
 		t.Fatal(err, string(errJson))
 	}
-	if after["name"] != "Error" {
+	if int(after.Status) != http.StatusInternalServerError {
 		t.Error(after)
-	} else if after["message"] != "aaa" {
-		t.Error(after)
-	} else if after["sys_type"] == "" {
-		t.Error(after)
-	} else if _, ok := after["sys_data"]; !ok {
-		t.Error(after)
-	} else if _, ok := after["sys_stack"]; ok {
+	} else if after.Message != "abcde" {
 		t.Error(after)
 	}
 }
 
-func TestErrorToResponseJsonWithStack(t *testing.T) {
-	before := erro.New("aaa")
+func TestHttpStatusErrorToResponseJson(t *testing.T) {
+	before := NewHttpStatusError(http.StatusNotFound, "abcde", nil)
 	errJson := ErrorToResponseJson(before)
 
-	var after map[string]interface{}
+	var after struct {
+		Status  int
+		Message string
+	}
 	if err := json.Unmarshal(errJson, &after); err != nil {
 		t.Fatal(err, string(errJson))
 	}
-	if after["name"] != "Error" {
+	if after.Status != http.StatusNotFound {
 		t.Error(after)
-	} else if after["message"] != "aaa" {
-		t.Error(after)
-	} else if after["sys_type"] == "" {
-		t.Error(after)
-	} else if _, ok := after["sys_data"]; !ok {
-		t.Error(after)
-	} else if _, ok := after["sys_stack"]; !ok {
+	} else if after.Message != "abcde" {
 		t.Error(after)
 	}
 }

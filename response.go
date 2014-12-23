@@ -3,10 +3,11 @@ package util
 import (
 	"encoding/json"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"reflect"
+	"net/http"
+	"strconv"
 )
 
-func jsonEscape(s string) string {
+func JsonStringEscape(s string) string {
 	output := ""
 	for _, r := range s {
 		switch r {
@@ -33,111 +34,40 @@ func jsonEscape(s string) string {
 	return output
 }
 
-func toResponseJson(res interface{}) []byte {
-	output, err := json.Marshal(res)
+// {
+//   "status": 500,
+//   "message": "nani mo kamo oshimai dayo",
+// }
+func ErrorToResponseJson(err error) []byte {
+	resp := errorToResponse(err)
+	buff, err := json.Marshal(resp)
 	if err != nil {
 		err = erro.Wrap(err)
-		log.Err("Marshal failed: ", res)
+		log.Err("Json marshaling failed: ", resp)
+
 		log.Err(erro.Unwrap(err))
 		log.Debug(err)
 
-		trc := err.(*erro.Tracer)
-		t := reflect.TypeOf(trc.Cause())
-		if t.Kind() == reflect.Ptr {
-			t = t.Elem()
-		}
-		sysType := t.Name()
-		if sysType == "" {
-			sysType = "Unknown"
-		}
-
 		// 最後の手段。
-		return []byte(`{` +
-			`"name":"Error",` +
-			`"message":"` + jsonEscape(trc.Cause().Error()) + `",` +
-			`"sys_type":""` + sysType + `",` +
-			`"sys_data":{}` +
-			`"sys_stack":"` + jsonEscape(trc.Stack()) + `"` +
-			`}`)
+		return []byte(`{"status":` + strconv.Itoa(http.StatusInternalServerError) + `,` +
+			`"message":"` + JsonStringEscape(erro.Unwrap(err).Error()) + `"}`)
 	}
-	return output
-}
-
-// edo-interpreter の出力にならう。
-// {
-//   "name": "Error",
-//   "message": "hoge is not exist",
-//   "stack": "...",
-//   "sys_type": "eventNotFound",
-//   "sys_data": {
-//     "event": "hoge"
-//   },
-//   "sys_stack": "..."
-// }
-func ErrorToResponseJson(err error) []byte {
-	return toResponseJson(errorToResponse(err))
+	return buff
 }
 
 func errorToResponse(err error) interface{} {
-	raw := erro.Unwrap(err)
+	var resp struct {
+		Stat int    `json:"status"`
+		Msg  string `json:"message"`
+	}
 
-	switch e := raw.(type) {
+	switch e := erro.Unwrap(err).(type) {
 	case *HttpStatusError:
-		return httpStatusErrorToResponse(e)
+		resp.Stat = e.Status()
+		resp.Msg = e.Message()
 	default:
-		var res struct {
-			Name     string      `json:"name"`
-			Message  string      `json:"message"`
-			SysType  string      `json:"sys_type"`
-			SysData  interface{} `json:"sys_data"`
-			SysStack string      `json:"sys_stack,omitempty"`
-		}
-
-		res.Name = "Error"
-		res.Message = raw.Error()
-
-		// sysType.
-		t := reflect.TypeOf(raw)
-		for t.Kind() == reflect.Ptr {
-			t = t.Elem()
-		}
-
-		sysType := t.Name()
-		if sysType == "" {
-			sysType = "Unknown"
-		}
-		res.SysType = sysType
-
-		res.SysData = raw
-
-		// sysStack.
-		var sysStack string
-		switch r := raw.(type) {
-		case *PanicWrapper:
-			sysStack += r.stack
-		}
-
-		trc, ok := err.(*erro.Tracer)
-		if ok {
-			if len(sysStack) < 0 {
-				sysStack += "\n"
-			}
-			sysStack += trc.Stack()
-		}
-		res.SysStack = sysStack
-
-		return &res
+		resp.Stat = http.StatusInternalServerError
+		resp.Msg = e.Error()
 	}
-}
-
-func httpStatusErrorToResponse(err *HttpStatusError) interface{} {
-	var res struct {
-		Status  int    `json:"status"`
-		Message string `json:"message"`
-	}
-
-	res.Status = err.Status()
-	res.Message = err.Message()
-
-	return &res
+	return &resp
 }
