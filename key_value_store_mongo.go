@@ -62,8 +62,10 @@ func newMongoKeyValueStore(url, dbName, collName, keyTag string, beforeWr, after
 	}
 	if getStmp == nil {
 		getStmp = func(val interface{}) *Stamp {
-			m := val.(map[string]interface{})
-			return &Stamp{Date: m["date"].(time.Time), Digest: m["digest"].(string)}
+			m, _ := val.(map[string]interface{})
+			date, _ := m["date"].(time.Time)
+			dig, _ := m["digest"].(string)
+			return &Stamp{Date: date, Digest: dig}
 		}
 	}
 	return &mongoKeyValueStore{
