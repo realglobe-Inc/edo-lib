@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // JSON にしたときに要素の配列になる文字列集合型。
@@ -50,6 +51,26 @@ func (this *StringSet) MarshalJSON() ([]byte, error) {
 func (this *StringSet) UnmarshalJSON(data []byte) error {
 	var a []string
 	if err := json.Unmarshal(data, &a); err != nil {
+		return err
+	}
+	this.m = map[string]bool{}
+	for _, elem := range a {
+		this.m[elem] = true
+	}
+	return nil
+}
+
+func (this *StringSet) GetBSON() (interface{}, error) {
+	a := []string{}
+	for elem := range this.m {
+		a = append(a, elem)
+	}
+	return a, nil
+}
+
+func (this *StringSet) SetBSON(raw bson.Raw) error {
+	var a []string
+	if err := raw.Unmarshal(&a); err != nil {
 		return err
 	}
 	this.m = map[string]bool{}
