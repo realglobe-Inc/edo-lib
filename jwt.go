@@ -15,6 +15,9 @@ type Jwt interface {
 	Claim(tag string) interface{}
 	SetClaim(tag string, val interface{})
 
+	HeaderNames() map[string]bool
+	ClaimNames() map[string]bool
+
 	Encode() ([]byte, error)
 }
 
@@ -94,6 +97,20 @@ func (this *jwt) Claim(clm string) interface{} {
 }
 func (this *jwt) SetClaim(tag string, val interface{}) {
 	this.clms[tag] = val
+}
+func (this *jwt) HeaderNames() map[string]bool {
+	m := map[string]bool{}
+	for k := range this.head {
+		m[k] = true
+	}
+	return m
+}
+func (this *jwt) ClaimNames() map[string]bool {
+	m := map[string]bool{}
+	for k := range this.clms {
+		m[k] = true
+	}
+	return m
 }
 func (this *jwt) Encode() ([]byte, error) {
 	headJson, err := json.Marshal(this.head)
