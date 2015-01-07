@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"io/ioutil"
 	"strings"
 )
 
@@ -98,4 +99,62 @@ func ParseRsaPrivateKey(pemStr string) (*rsa.PrivateKey, error) {
 	default:
 		return nil, erro.New("invalid private key type " + block.Type + ".")
 	}
+}
+
+func ParsePublicKey(pemData []byte) (crypto.PublicKey, error) {
+	block, _ := pem.Decode(pemData)
+	if block == nil {
+		return nil, erro.New("no public key.")
+	}
+
+	switch block.Type {
+	case "PUBLIC KEY":
+		key, err := x509.ParsePKIXPublicKey(block.Bytes)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		return key, nil
+	default:
+		return nil, erro.New("invalid public key type " + block.Type + ".")
+	}
+}
+
+func ParsePrivateKey(pemData []byte) (crypto.PrivateKey, error) {
+	block, _ := pem.Decode(pemData)
+	if block == nil {
+		return nil, erro.New("no private key.")
+	}
+
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		return key, nil
+	case "EC PRIVATE KEY":
+		key, err := x509.ParseECPrivateKey(block.Bytes)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		return key, nil
+	default:
+		return nil, erro.New("invalid private key type " + block.Type + ".")
+	}
+}
+
+func ReadPublicKey(path string) (crypto.PublicKey, error) {
+	pemData, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return ParsePublicKey(pemData)
+}
+
+func ReadPrivateKey(path string) (crypto.PrivateKey, error) {
+	pemData, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return ParsePrivateKey(pemData)
 }
