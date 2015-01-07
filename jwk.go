@@ -86,7 +86,7 @@ func parseEcdsaPublicKeyFromJwkMap(m map[string]interface{}) (*ecdsa.PublicKey, 
 	return &key, nil
 }
 
-func EncodePublicKeyToJwkMap(kid string, key crypto.PublicKey) (map[string]interface{}, error) {
+func EncodePublicKeyToJwkMap(kid string, key crypto.PublicKey) map[string]interface{} {
 	m := map[string]interface{}{}
 	if kid != "" {
 		m["kid"] = kid
@@ -97,18 +97,18 @@ func EncodePublicKeyToJwkMap(kid string, key crypto.PublicKey) (map[string]inter
 	case *ecdsa.PublicKey:
 		return encodeEcdsaPublicKeyToJwkMap(k, m)
 	default:
-		return nil, nil
+		return nil
 	}
 }
 
-func encodeRsaPublicKeyToJwkMap(key *rsa.PublicKey, m map[string]interface{}) (map[string]interface{}, error) {
+func encodeRsaPublicKeyToJwkMap(key *rsa.PublicKey, m map[string]interface{}) map[string]interface{} {
 	m["kty"] = "RSA"
 	m["n"] = base64UrlEncodeToString(key.N.Bytes())
 	m["e"] = base64UrlEncodeToString(big.NewInt(int64(key.E)).Bytes())
-	return m, nil
+	return m
 }
 
-func encodeEcdsaPublicKeyToJwkMap(key *ecdsa.PublicKey, m map[string]interface{}) (map[string]interface{}, error) {
+func encodeEcdsaPublicKeyToJwkMap(key *ecdsa.PublicKey, m map[string]interface{}) map[string]interface{} {
 	m["kty"] = "EC"
 	size := key.Params().BitSize
 	switch size {
@@ -119,7 +119,7 @@ func encodeEcdsaPublicKeyToJwkMap(key *ecdsa.PublicKey, m map[string]interface{}
 	case 521:
 		m["crv"] = "P-521"
 	default:
-		return nil, nil
+		return nil
 	}
 	xBuff := key.X.Bytes()
 	if len(xBuff)*8 < size {
@@ -135,5 +135,5 @@ func encodeEcdsaPublicKeyToJwkMap(key *ecdsa.PublicKey, m map[string]interface{}
 	}
 	m["x"] = base64UrlEncodeToString(xBuff)
 	m["y"] = base64UrlEncodeToString(yBuff)
-	return m, nil
+	return m
 }

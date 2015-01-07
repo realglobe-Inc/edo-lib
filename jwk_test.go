@@ -17,12 +17,7 @@ func TestJwkRsa(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	buff, err := EncodePublicKeyToJwkMap("", key)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(m, buff) {
+	if buff := EncodePublicKeyToJwkMap("", key); !reflect.DeepEqual(m, buff) {
 		t.Error(m)
 		t.Error(buff)
 	}
@@ -41,12 +36,7 @@ func TestJwkEcdsa(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	buff, err := EncodePublicKeyToJwkMap("", key)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(m, buff) {
+	if buff := EncodePublicKeyToJwkMap("", key); !reflect.DeepEqual(m, buff) {
 		t.Error(m)
 		t.Error(buff)
 	}
