@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"reflect"
+	"time"
 )
 
 const (
@@ -13,7 +14,11 @@ const (
 
 var testData = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-var testVal = map[string]interface{}{"array": []interface{}{"elem-1", "elem-2"}}
+var testVal = map[string]interface{}{
+	"array":  []interface{}{"elem-1", "elem-2"},
+	"date":   time.Now(),
+	"digest": "xyz",
+}
 
 // JSON を通して等しいかどうか調べる。
 func jsonEqual(v1 interface{}, v2 interface{}) (equal bool) {
