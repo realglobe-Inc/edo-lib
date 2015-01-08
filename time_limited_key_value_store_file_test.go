@@ -17,7 +17,7 @@ func TestFileTimeLimitedKeyValueStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(path)
+	defer os.RemoveAll(expiPath)
 
 	testTimeLimitedKeyValueStore(t, newFileTimeLimitedKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, 0, 0))
 }
