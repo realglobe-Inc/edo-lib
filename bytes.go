@@ -16,7 +16,8 @@ func SecureRandomBytes(length int) ([]byte, error) {
 
 	// 上位 8 ビット以上が全部 0 だと短い値になり得るため。
 	for len(buff) < length {
-		buff = append([]byte{0}, buff...) // ビッグエンディアンなので、前に 0 を足さないと、一様性に影響が出る。
+		// ビッグエンディアンなので、前に 0 を足さないと、一様性に影響が出る。
+		buff = append([]byte{0}, buff...)
 	}
 
 	return buff, nil
