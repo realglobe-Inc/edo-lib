@@ -8,11 +8,10 @@ import (
 
 func testListedRawDataStore(t *testing.T, reg ListedRawDataStore) {
 	// まだ無い。
-	data1, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if d, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if data1 != nil {
-		t.Error(data1)
+	} else if d != nil {
+		t.Error(d)
 	}
 
 	// 入れる。
@@ -21,11 +20,10 @@ func testListedRawDataStore(t *testing.T, reg ListedRawDataStore) {
 	}
 
 	// ある。
-	data2, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if d, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if data2 == nil || !reflect.DeepEqual(data2, testData) {
-		t.Error(data2)
+	} else if d == nil || !reflect.DeepEqual(d, testData) {
+		t.Error(d)
 	}
 
 	keys, _, err := reg.Keys(nil)
@@ -41,59 +39,53 @@ func testListedRawDataStore(t *testing.T, reg ListedRawDataStore) {
 	}
 
 	// もう無い。
-	data3, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if d, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if data3 != nil {
-		t.Error(data3)
+	} else if d != nil {
+		t.Error(d)
 	}
 }
 
 func testListedRawDataStoreStamp(t *testing.T, reg ListedRawDataStore) {
 	// まだ無い。
-	data1, stmp1, err := reg.Get(testKey, nil)
-	if err != nil {
+	if d, s, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if data1 != nil || stmp1 != nil {
-		t.Error(data1, stmp1)
+	} else if d != nil || s != nil {
+		t.Error(d, s)
 	}
 
 	// 入れる。
-	stmp2, err := reg.Put(testKey, testData)
+	stmp, err := reg.Put(testKey, testData)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	data3, stmp3, err := reg.Get(testKey, nil)
-	if err != nil {
+	if d, s, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if data3 == nil || !reflect.DeepEqual(data3, testData) || stmp3 == nil {
-		t.Error(data3, stmp3)
+	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
+		t.Error(d, s)
 	}
 
 	// キャッシュと同じだから返らない。
-	data4, stmp4, err := reg.Get(testKey, stmp2)
-	if err != nil {
+	if d, s, err := reg.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
-	} else if data4 != nil || stmp4 == nil {
-		t.Error(data4, stmp4)
+	} else if d != nil || s == nil {
+		t.Error(d, s)
 	}
 
 	// キャッシュが古いから返る。
-	data5, stmp5, err := reg.Get(testKey, &Stamp{Date: stmp2.Date.Add(-time.Second), Digest: stmp2.Digest})
-	if err != nil {
+	if d, s, err := reg.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
 		t.Fatal(err)
-	} else if data5 == nil || !reflect.DeepEqual(data5, testData) || stmp5 == nil {
-		t.Error(data5, stmp5)
+	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
+		t.Error(d, s)
 	}
 
 	// ダイジェストが違うから返る。
-	data6, stmp6, err := reg.Get(testKey, &Stamp{Date: stmp2.Date, Digest: stmp2.Digest + "a"})
-	if err != nil {
+	if d, s, err := reg.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
 		t.Fatal(err)
-	} else if data6 == nil || !reflect.DeepEqual(data6, testData) || stmp6 == nil {
-		t.Error(data6, stmp6)
+	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
+		t.Error(d, s)
 	}
 
 	// 消す。
@@ -102,10 +94,9 @@ func testListedRawDataStoreStamp(t *testing.T, reg ListedRawDataStore) {
 	}
 
 	// もう無い。
-	data7, stmp7, err := reg.Get(testKey, stmp2)
-	if err != nil {
+	if d, s, err := reg.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
-	} else if data7 != nil || stmp7 != nil {
-		t.Error(data7, stmp7)
+	} else if d != nil || s != nil {
+		t.Error(d, s)
 	}
 }

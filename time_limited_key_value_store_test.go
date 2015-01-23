@@ -10,11 +10,10 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	expiDur := 10 * time.Millisecond
 
 	// まだ無い。
-	val1, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if val1 != nil {
-		t.Error(val1)
+	} else if v != nil {
+		t.Error(v)
 	}
 
 	// 入れる。
@@ -23,12 +22,11 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// ある。
-	val2, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(val2, testVal) {
-		if !jsonEqual(val2, testVal) {
-			t.Error(val2)
+	} else if !reflect.DeepEqual(v, testVal) {
+		if !jsonEqual(v, testVal) {
+			t.Error(v)
 		}
 	}
 
@@ -38,11 +36,10 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// もう無い。
-	val3, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if val3 != nil {
-		t.Error(val3)
+	} else if v != nil {
+		t.Error(v)
 	}
 
 	// また入れる。
@@ -51,12 +48,11 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	}
 
 	// ある。
-	val4, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(val4, testVal) {
-		if !jsonEqual(val4, testVal) {
-			t.Error(val4)
+	} else if !reflect.DeepEqual(v, testVal) {
+		if !jsonEqual(v, testVal) {
+			t.Error(v)
 		}
 	}
 
@@ -64,10 +60,9 @@ func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
 	time.Sleep(2 * expiDur)
 
 	// もう無い。
-	val5, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if val5 != nil {
-		t.Error(val5)
+	} else if v != nil {
+		t.Error(v)
 	}
 }

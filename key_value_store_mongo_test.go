@@ -19,11 +19,10 @@ func TestMongoKeyValueStore(t *testing.T) {
 	defer reg.Clear()
 
 	// まだ無い。
-	val1, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if val1 != nil {
-		t.Error(val1)
+	} else if v != nil {
+		t.Error(v)
 	}
 
 	// 入れる。
@@ -39,12 +38,11 @@ func TestMongoKeyValueStore(t *testing.T) {
 	}
 
 	// ある。
-	val2, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(val2, val) {
-		if !jsonEqual(val2, val) {
-			t.Error(val2, val)
+	} else if !reflect.DeepEqual(v, val) {
+		if !jsonEqual(v, val) {
+			t.Error(v, val)
 		}
 	}
 
@@ -54,11 +52,10 @@ func TestMongoKeyValueStore(t *testing.T) {
 	}
 
 	// もう無い。
-	val3, _, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, _, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if val3 != nil {
-		t.Error(val3)
+	} else if v != nil {
+		t.Error(v)
 	}
 }
 
@@ -78,11 +75,10 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	defer reg.Clear()
 
 	// まだ無い。
-	val1, stmp1, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, s, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if val1 != nil || stmp1 != nil {
-		t.Error(val1, stmp1)
+	} else if v != nil || s != nil {
+		t.Error(v, s)
 	}
 
 	// 入れる。
@@ -93,52 +89,48 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 		"digest": "abcde",
 		"array":  []interface{}{"elem-1", "elem-2"},
 	}
-	stmp2, err := reg.Put(testKey, val)
+	stmp, err := reg.Put(testKey, val)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	val3, stmp3, err := reg.Get(testKey, nil)
-	if err != nil {
+	if v, s, err := reg.Get(testKey, nil); err != nil {
 		t.Fatal(err)
-	} else if stmp3 == nil {
-		t.Error(stmp3)
-	} else if !reflect.DeepEqual(val3, val) {
-		if !jsonEqual(val3, val) {
-			t.Error(val3)
+	} else if s == nil {
+		t.Error(s)
+	} else if !reflect.DeepEqual(v, val) {
+		if !jsonEqual(v, val) {
+			t.Error(v)
 		}
 	}
 
 	// キャッシュと同じだから返らない。
-	val4, stmp4, err := reg.Get(testKey, stmp2)
-	if err != nil {
+	if v, s, err := reg.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
-	} else if val4 != nil || stmp4 == nil {
-		t.Error(val4, stmp4)
+	} else if v != nil || s == nil {
+		t.Error(v, s)
 	}
 
 	// キャッシュが古いから返る。
-	val5, stmp5, err := reg.Get(testKey, &Stamp{Date: stmp2.Date.Add(-time.Second), Digest: stmp2.Digest})
-	if err != nil {
+	if v, s, err := reg.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
 		t.Fatal(err)
-	} else if stmp5 == nil {
-		t.Error(stmp5)
-	} else if !reflect.DeepEqual(val5, val) {
-		if !jsonEqual(val5, val) {
-			t.Error(val5)
+	} else if s == nil {
+		t.Error(s)
+	} else if !reflect.DeepEqual(v, val) {
+		if !jsonEqual(v, val) {
+			t.Error(v)
 		}
 	}
 
 	// ダイジェストが違うから返る。
-	val6, stmp6, err := reg.Get(testKey, &Stamp{Date: stmp2.Date, Digest: stmp2.Digest + "a"})
-	if err != nil {
+	if v, s, err := reg.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
 		t.Fatal(err)
-	} else if stmp6 == nil {
-		t.Error(stmp6)
-	} else if !reflect.DeepEqual(val6, val) {
-		if !jsonEqual(val6, val) {
-			t.Error(val6)
+	} else if s == nil {
+		t.Error(s)
+	} else if !reflect.DeepEqual(v, val) {
+		if !jsonEqual(v, val) {
+			t.Error(v)
 		}
 	}
 
@@ -148,11 +140,10 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	}
 
 	// もう無い。
-	val7, stmp7, err := reg.Get(testKey, stmp2)
-	if err != nil {
+	if v, s, err := reg.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
-	} else if val7 != nil || stmp7 != nil {
-		t.Error(val7, stmp7)
+	} else if v != nil || s != nil {
+		t.Error(v, s)
 	}
 }
 
@@ -171,11 +162,10 @@ func TestMongoNKeyValueStore(t *testing.T) {
 	tagKeys := bson.M{"key1": testKey, "key2": testKey2}
 
 	// まだ無い。
-	val1, _, err := reg.NGet(tagKeys, nil)
-	if err != nil {
+	if v, _, err := reg.NGet(tagKeys, nil); err != nil {
 		t.Fatal(err)
-	} else if val1 != nil {
-		t.Error(val1)
+	} else if v != nil {
+		t.Error(v)
 	}
 
 	// 入れる。
@@ -192,20 +182,18 @@ func TestMongoNKeyValueStore(t *testing.T) {
 	}
 
 	// ある。
-	val2, _, err := reg.NGet(tagKeys, nil)
-	if err != nil {
+	if v, _, err := reg.NGet(tagKeys, nil); err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(val2, val) {
-		if !jsonEqual(val2, val) {
-			t.Error(val2, val)
+	} else if !reflect.DeepEqual(v, val) {
+		if !jsonEqual(v, val) {
+			t.Error(v, val)
 		}
 	}
 	// キーが 1 つ違うので無い。
-	val3, _, err := reg.NGet(bson.M{"key1": testKey, "key2": testKey}, nil)
-	if err != nil {
+	if v, _, err := reg.NGet(bson.M{"key1": testKey, "key2": testKey}, nil); err != nil {
 		t.Fatal(err)
-	} else if val3 != nil {
-		t.Error(val3, val)
+	} else if v != nil {
+		t.Error(v, val)
 	}
 
 	// 消す。
@@ -214,10 +202,9 @@ func TestMongoNKeyValueStore(t *testing.T) {
 	}
 
 	// もう無い。
-	val4, _, err := reg.NGet(tagKeys, nil)
-	if err != nil {
+	if v, _, err := reg.NGet(tagKeys, nil); err != nil {
 		t.Fatal(err)
-	} else if val4 != nil {
-		t.Error(val4)
+	} else if v != nil {
+		t.Error(v)
 	}
 }
