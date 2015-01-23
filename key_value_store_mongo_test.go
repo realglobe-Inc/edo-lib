@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"gopkg.in/mgo.v2/bson"
 	"reflect"
 	"testing"
 	"time"
@@ -11,7 +12,7 @@ func TestMongoKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
+	reg := NewMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
@@ -70,7 +71,7 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg := newMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
+	reg := NewMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
@@ -152,5 +153,71 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 		t.Fatal(err)
 	} else if val7 != nil || stmp7 != nil {
 		t.Error(val7, stmp7)
+	}
+}
+
+func TestMongoNKeyValueStore(t *testing.T) {
+	if mongoAddr == "" {
+		t.SkipNow()
+	}
+
+	reg := NewMongoNKeyValueStore(mongoAddr, testLabel, "key-value-store", []string{"key1", "key2"}, nil, func(val interface{}) (interface{}, error) {
+		delete(val.(map[string]interface{}), "_id")
+		return val, nil
+	}, nil, nil, 0, 0)
+	defer reg.Clear()
+
+	testKey2 := testKey + "2"
+	tagKeys := bson.M{"key1": testKey, "key2": testKey2}
+
+	// まだ無い。
+	val1, _, err := reg.NGet(tagKeys, nil)
+	if err != nil {
+		t.Fatal(err)
+	} else if val1 != nil {
+		t.Error(val1)
+	}
+
+	// 入れる。
+	now := time.Now() // mongodb の時間粒度がミリ秒なので細工する。
+	val := map[string]interface{}{
+		"key1":   testKey,
+		"key2":   testKey2,
+		"date":   time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), now.Nanosecond()-now.Nanosecond()%1000000, now.Location()),
+		"digest": "abcde",
+		"array":  []interface{}{"elem-1", "elem-2"},
+	}
+	if _, err := reg.NPut(tagKeys, val); err != nil {
+		t.Fatal(err)
+	}
+
+	// ある。
+	val2, _, err := reg.NGet(tagKeys, nil)
+	if err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(val2, val) {
+		if !jsonEqual(val2, val) {
+			t.Error(val2, val)
+		}
+	}
+	// キーが 1 つ違うので無い。
+	val3, _, err := reg.NGet(bson.M{"key1": testKey, "key2": testKey}, nil)
+	if err != nil {
+		t.Fatal(err)
+	} else if val3 != nil {
+		t.Error(val3, val)
+	}
+
+	// 消す。
+	if err := reg.NRemove(tagKeys); err != nil {
+		t.Fatal(err)
+	}
+
+	// もう無い。
+	val4, _, err := reg.NGet(tagKeys, nil)
+	if err != nil {
+		t.Fatal(err)
+	} else if val4 != nil {
+		t.Error(val4)
 	}
 }
