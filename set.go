@@ -64,3 +64,13 @@ func (this *StringSet) SetBSON(raw bson.Raw) error {
 	*this = StringSet(s)
 	return nil
 }
+
+func (this StringSet) Copy() StringSet {
+	c := StringSet{}
+	for elem, ok := range this {
+		if ok {
+			c[elem] = true
+		}
+	}
+	return c
+}
