@@ -128,3 +128,36 @@ func (this *jwt) Encode() ([]byte, error) {
 
 	return buff, nil
 }
+
+func ParseJwtToJson(raw string) (string, error) {
+	parts := strings.Split(raw, ".")
+	if len(parts) < 2 {
+		return "", erro.New("lack of JWT parts")
+	}
+	return parseJwtToJson(parts[0], parts[1])
+}
+func parseJwtToJson(headPart, clmsPart string) (string, error) {
+	const indent = "    "
+
+	var buff bytes.Buffer
+
+	headJson, err := base64UrlDecodeString(headPart)
+	if err != nil {
+		return "", erro.Wrap(err)
+	}
+	if err := json.Indent(&buff, headJson, "", indent); err != nil {
+		return "", erro.Wrap(err)
+	}
+
+	buff.Write([]byte("\n.\n"))
+
+	clmsJson, err := base64UrlDecodeString(clmsPart)
+	if err != nil {
+		return "", erro.Wrap(err)
+	}
+	if err := json.Indent(&buff, clmsJson, "", indent); err != nil {
+		return "", erro.Wrap(err)
+	}
+
+	return buff.String(), nil
+}
