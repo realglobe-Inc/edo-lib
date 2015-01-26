@@ -74,3 +74,10 @@ func (this StringSet) Copy() StringSet {
 	}
 	return c
 }
+
+func OneOfStringSet(s StringSet) string {
+	for elem := range s {
+		return elem
+	}
+	return ""
+}
