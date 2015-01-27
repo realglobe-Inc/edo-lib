@@ -21,8 +21,13 @@ type HandlerFunc func(http.ResponseWriter, *http.Request) error
 var invalidProtocol = errors.New("invalid protocol.")
 
 func Serve(socType, socPath string, socPort int, protType string, routes map[string]HandlerFunc) error {
+	return TerminableServe(socType, socPath, socPort, protType, routes, make(chan struct{}, 1))
+}
 
-	shutCh := make(chan struct{}, 1)
+func TerminableServe(socType, socPath string, socPort int, protType string, routes map[string]HandlerFunc, shutCh chan struct{}) error {
+	if shutCh == nil {
+		shutCh = make(chan struct{}, 1)
+	}
 
 	// SIGINT、SIGKILL、SIGTERM を受け取ったら終了。
 	sigCh := make(chan os.Signal, 1)
