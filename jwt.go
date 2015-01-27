@@ -11,8 +11,10 @@ import (
 // JSON Web Token
 type Jwt interface {
 	Header(tag string) interface{}
+	// val が nil や空文字列の場合は削除する。
 	SetHeader(tag string, val interface{})
 	Claim(tag string) interface{}
+	// val が nil や空文字列の場合は削除する。
 	SetClaim(tag string, val interface{})
 
 	HeaderNames() map[string]bool
@@ -90,13 +92,21 @@ func (this *jwt) Header(tag string) interface{} {
 	return this.head[tag]
 }
 func (this *jwt) SetHeader(tag string, val interface{}) {
-	this.head[tag] = val
+	if val == nil || val == "" {
+		delete(this.head, tag)
+	} else {
+		this.head[tag] = val
+	}
 }
 func (this *jwt) Claim(clm string) interface{} {
 	return this.clms[clm]
 }
 func (this *jwt) SetClaim(tag string, val interface{}) {
-	this.clms[tag] = val
+	if val == nil || val == "" {
+		delete(this.clms, tag)
+	} else {
+		this.clms[tag] = val
+	}
 }
 func (this *jwt) HeaderNames() map[string]bool {
 	m := map[string]bool{}
