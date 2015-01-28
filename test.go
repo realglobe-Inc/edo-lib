@@ -49,7 +49,7 @@ func NewTestHttpServer(port int) (*TestHttpServer, error) {
 		return nil, erro.Wrap(err)
 	}
 
-	respCh := make(chan *testHttpServerResponse, 100)
+	respCh := make(chan *testHttpServerResponse, 1024)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
