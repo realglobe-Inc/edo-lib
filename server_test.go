@@ -24,7 +24,7 @@ func TestServerShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	shutCh := make(chan struct{}, 10)
-	go TerminableServe("tcp", "", port, "http", map[string]HandlerFunc{"/": func(http.ResponseWriter, *http.Request) error { return nil }}, shutCh)
+	go TerminableServe("tcp", "", port, "http", map[string]HandlerFunc{"/": func(http.ResponseWriter, *http.Request) error { return nil }}, shutCh, serverPanicErrorWrapper)
 	defer func() { shutCh <- struct{}{} }()
 
 	// サーバー起動待ち。

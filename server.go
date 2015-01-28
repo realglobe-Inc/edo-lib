@@ -22,10 +22,12 @@ type HandlerFunc func(http.ResponseWriter, *http.Request) error
 var invalidProtocol = errors.New("invalid protocol.")
 
 func Serve(socType, socPath string, socPort int, protType string, routes map[string]HandlerFunc) error {
-	return TerminableServe(socType, socPath, socPort, protType, routes, make(chan struct{}, 1))
+	return TerminableServe(socType, socPath, socPort, protType, routes, make(chan struct{}, 1), serverPanicErrorWrapper)
 }
 
-func TerminableServe(socType, socPath string, socPort int, protType string, routes map[string]HandlerFunc, shutCh chan struct{}) error {
+func TerminableServe(socType, socPath string, socPort int, protType string,
+	routes map[string]HandlerFunc, shutCh chan struct{},
+	wrapper func(handler HandlerFunc) http.HandlerFunc) error {
 
 	var serv func(net.Listener, http.Handler) error
 	switch protType {
@@ -39,7 +41,7 @@ func TerminableServe(socType, socPath string, socPort int, protType string, rout
 
 	mux := http.NewServeMux()
 	for path, handler := range routes {
-		mux.HandleFunc(path, serverPanicErrorWrapper(handler))
+		mux.HandleFunc(path, wrapper(handler))
 	}
 
 	if shutCh == nil {
