@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -25,17 +26,51 @@ func Serve(socType, socPath string, socPort int, protType string, routes map[str
 }
 
 func TerminableServe(socType, socPath string, socPort int, protType string, routes map[string]HandlerFunc, shutCh chan struct{}) error {
+
+	var serv func(net.Listener, http.Handler) error
+	switch protType {
+	case "http":
+		serv = http.Serve
+	case "fcgi":
+		serv = fcgi.Serve
+	default:
+		return erro.New("invalid protocol type " + protType)
+	}
+
+	mux := http.NewServeMux()
+	for path, handler := range routes {
+		mux.HandleFunc(path, serverPanicErrorWrapper(handler))
+	}
+
 	if shutCh == nil {
 		shutCh = make(chan struct{}, 1)
 	}
+	var lis net.Listener
+	var lisLock sync.Mutex
 
-	// SIGINT、SIGKILL、SIGTERM を受け取ったら終了。
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, os.Kill, syscall.SIGTERM)
+	// SIGINT、SIGTERM を受け取ったら正常終了。
+	sigCh := make(chan os.Signal, 10)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	// 別スレッドで終了を監視する。
 	go func() {
-		sig := <-sigCh
-		log.Info("Signal ", sig, " was caught.")
+		select {
+		case sig := <-sigCh:
+			log.Info("Signal ", sig, " was caught")
+		case <-shutCh:
+			log.Info("Shutdown was operated")
+		}
 		shutCh <- struct{}{}
+		lisLock.Lock()
+		l := lis
+		lisLock.Unlock()
+
+		if l != nil {
+			l.Close()
+			log.Info("Socket was closed")
+		} else {
+			log.Info("No socket to close")
+		}
 	}()
 
 	// エラー発生時の冷却期間はだんだん延ばす。
@@ -43,66 +78,60 @@ func TerminableServe(socType, socPath string, socPort int, protType string, rout
 	// 一定期間以上エラー無しで動作したら冷却期間をリセットする。
 	resetInterval := time.Minute
 	for {
-		if brk, err := func() (brk bool, err error) {
+		if retry, err := func() (retry bool, err error) {
 
-			var lis net.Listener
+			var l net.Listener
 			defer func() {
-				if lis != nil {
-					lis.Close()
+				if l != nil {
+					l.Close()
 				}
 			}()
 
 			switch socType {
 			case "unix":
-				lis, err = net.Listen("unix", socPath)
+				l, err = net.Listen("unix", socPath)
 				if err != nil {
-					return false, erro.Wrap(err)
+					return true, erro.Wrap(err)
 				}
 				if err := os.Chmod(socPath, 0777); err != nil {
-					return false, erro.Wrap(err)
+					return true, erro.Wrap(err)
 				}
-				log.Info("Wait on UNIX socket " + socPath + ".")
+				log.Info("Wait on UNIX socket " + socPath)
 			case "tcp":
-				lis, err = net.Listen("tcp", ":"+strconv.Itoa(socPort))
+				l, err = net.Listen("tcp", ":"+strconv.Itoa(socPort))
 				if err != nil {
-					return false, erro.Wrap(err)
+					return true, erro.Wrap(err)
 				}
-				log.Info("Wait on TCP socket ", socPort, ".")
+				log.Info("Wait on TCP socket ", socPort)
 			default:
-				return true, erro.New("invalid socket type " + socType + ".")
+				return false, erro.New("invalid socket type " + socType)
 			}
 
-			stopCh := make(chan struct{}, 1)
-			subShutCh := make(chan bool, 1)
-			go func() {
-				select {
-				case <-shutCh:
-					shutCh <- struct{}{}
-					subShutCh <- true
-					lis.Close()
-				case <-stopCh:
-					subShutCh <- false
-				}
-			}()
-			defer func() { stopCh <- struct{}{} }()
+			lisLock.Lock()
+			lis = l
+			lisLock.Unlock()
+			select {
+			case <-shutCh:
+				// 既に終了信号を受け取っていた。
+				shutCh <- struct{}{}
+				return false, nil
+			default:
+			}
 
 			start := time.Now()
-			if err := serveCore(protType, routes, lis); err != nil {
+			if err := func() error {
+				log.Debug("Service starts.")
+				defer log.Debug("Service exits.")
+				return erro.Wrap(serv(l, mux))
+			}(); err != nil {
 				err := erro.Wrap(err)
 
-				// 正常な終了処理としてソケットが閉じられたかもしれないので調べる。
 				select {
-				case <-subShutCh:
-					return true, nil
+				case <-shutCh:
+					// 既に終了信号を受け取っていた。
+					shutCh <- struct{}{}
+					return false, nil
 				default:
-				}
-
-				stopCh <- struct{}{}
-				brk = <-subShutCh
-
-				if brk || erro.Unwrap(err) == invalidProtocol {
-					// どうしようもない。
-					return true, err
 				}
 
 				end := time.Now()
@@ -110,12 +139,11 @@ func TerminableServe(socType, socPath string, socPort int, protType string, rout
 					sleepTime = 0
 				}
 
-				return false, err
+				return true, err
 			}
 
-			stopCh <- struct{}{}
-			return <-subShutCh, nil
-		}(); brk {
+			return true, nil
+		}(); !retry {
 			return erro.Wrap(err)
 		} else {
 			if err != nil {
@@ -129,6 +157,7 @@ func TerminableServe(socType, socPath string, socPort int, protType string, rout
 			timeCh := time.After(sleepTime)
 			select {
 			case <-shutCh:
+				shutCh <- struct{}{}
 				return nil
 			case <-timeCh:
 			}
@@ -144,33 +173,6 @@ func serverNextSleepTime(cur, max time.Duration) time.Duration {
 		next = time.Minute
 	}
 	return next
-}
-
-func serveCore(protType string, routes map[string]HandlerFunc, lis net.Listener) error {
-	var serv func(net.Listener, http.Handler) error
-	switch protType {
-	case "http":
-		serv = http.Serve
-	case "fcgi":
-		serv = fcgi.Serve
-	default:
-		return erro.Wrap(invalidProtocol)
-	}
-
-	log.Debug("Server starts.")
-	defer log.Debug("Server exits.")
-
-	mux := http.NewServeMux()
-
-	for path, handler := range routes {
-		mux.HandleFunc(path, serverPanicErrorWrapper(handler))
-	}
-
-	if err := serv(lis, mux); err != nil {
-		return erro.Wrap(err)
-	}
-
-	return nil
 }
 
 // パニックとエラーの処理をまとめる。
