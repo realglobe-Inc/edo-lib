@@ -35,12 +35,13 @@ func TestServerShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	req.Header.Set("Connection", "close")
-	if resp, err := (&http.Client{}).Do(req); err != nil {
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
 		t.Fatal(err)
-	} else if resp.StatusCode != http.StatusOK {
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
 		t.Error(resp)
-	} else {
-		resp.Body.Close()
 	}
 
 	shutCh <- struct{}{}
