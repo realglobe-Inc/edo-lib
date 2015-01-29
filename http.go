@@ -10,6 +10,7 @@ import (
 const (
 	ContentTypeJson string = "application/json"
 	ContentTypeHtml        = "text/html"
+	ContentTypeForm        = "application/x-www-form-urlencoded"
 )
 
 func LogRequest(lv level.Level, r *http.Request, useBody bool) {
