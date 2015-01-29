@@ -167,7 +167,7 @@ func TerminableServe(socType, socPath string, socPort int, protType string,
 }
 
 func serverNextSleepTime(cur, max time.Duration) time.Duration {
-	next := 2*cur + time.Duration(rand.Int63n(int64(time.Second)))
+	next := 2*cur + time.Duration(rand.Int63n(int64(100*time.Millisecond)))
 	if next >= max {
 		next = time.Minute
 	}
