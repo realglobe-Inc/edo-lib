@@ -1,7 +1,7 @@
 package util
 
 import (
-	"errors"
+	"encoding/json"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"math/rand"
@@ -10,7 +10,6 @@ import (
 	"net/http/fcgi"
 	"os"
 	"os/signal"
-	"runtime"
 	"strconv"
 	"sync"
 	"syscall"
@@ -19,10 +18,8 @@ import (
 
 type HandlerFunc func(http.ResponseWriter, *http.Request) error
 
-var invalidProtocol = errors.New("invalid protocol.")
-
 func Serve(socType, socPath string, socPort int, protType string, routes map[string]HandlerFunc) error {
-	return TerminableServe(socType, socPath, socPort, protType, routes, make(chan struct{}, 1), serverPanicErrorWrapper)
+	return TerminableServe(socType, socPath, socPort, protType, routes, make(chan struct{}, 1), PanicErrorWrapper)
 }
 
 func TerminableServe(socType, socPath string, socPort int, protType string,
@@ -178,24 +175,12 @@ func serverNextSleepTime(cur, max time.Duration) time.Duration {
 }
 
 // パニックとエラーの処理をまとめる。
-func serverPanicErrorWrapper(handler HandlerFunc) http.HandlerFunc {
+func PanicErrorWrapper(handler HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// panic時にプロセス終了しないようにrecoverする
 		defer func() {
 			if rcv := recover(); rcv != nil {
-				buff := make([]byte, 8192)
-				stackLen := runtime.Stack(buff, false)
-				stack := string(buff[:stackLen])
-				err := erro.Wrap(NewPanicWrapper(rcv, stack))
-
-				log.Err(erro.Unwrap(err))
-				log.Debug(err)
-
-				body := ErrorToResponseJson(err)
-				w.Header().Set("Content-Type", ContentTypeJson)
-				w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write(body)
+				responseError(w, erro.New(rcv))
 				return
 			}
 		}()
@@ -205,23 +190,48 @@ func serverPanicErrorWrapper(handler HandlerFunc) http.HandlerFunc {
 		//////////////////////////////
 
 		if err := handler(w, r); err != nil {
-			err = erro.Wrap(err)
-			log.Err(erro.Unwrap(err))
-			log.Debug(err)
-
-			var status int
-			switch e := erro.Unwrap(err).(type) {
-			case *HttpStatusError:
-				status = e.Status()
-			default:
-				status = http.StatusInternalServerError
-			}
-			body := ErrorToResponseJson(err)
-			w.Header().Set("Content-Type", ContentTypeJson)
-			w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-			w.WriteHeader(status)
-			w.Write(body)
+			responseError(w, erro.Wrap(err))
 			return
 		}
 	}
+}
+
+func responseError(w http.ResponseWriter, err error) {
+
+	var v struct {
+		Stat int    `json:"status"`
+		Msg  string `json:"message"`
+	}
+	switch e := erro.Unwrap(err).(type) {
+	case *HttpStatusError:
+		log.Err(e.Message())
+		log.Debug(e)
+		v.Stat = e.Status()
+		v.Msg = e.Message()
+	default:
+		log.Err(e)
+		log.Debug(err)
+		v.Stat = http.StatusInternalServerError
+		v.Msg = e.Error()
+	}
+
+	buff, err := json.Marshal(&v)
+	if err != nil {
+		err = erro.Wrap(err)
+		log.Err(erro.Unwrap(err))
+		log.Debug(err)
+		// 最後の手段。たぶん正しい変換。
+		buff = []byte(`{status="` + JsonStringEscape(strconv.Itoa(v.Stat)) +
+			`",message="` + JsonStringEscape(v.Msg) + `"}`)
+	}
+
+	w.Header().Set("Content-Type", ContentTypeJson)
+	w.Header().Set("Content-Length", strconv.Itoa(len(buff)))
+	w.WriteHeader(v.Stat)
+	if _, err := w.Write(buff); err != nil {
+		err = erro.Wrap(err)
+		log.Err(erro.Unwrap(err))
+		log.Debug(err)
+	}
+	return
 }
