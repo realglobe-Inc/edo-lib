@@ -1,10 +1,8 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/edo/util"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"reflect"
-	"runtime"
 )
 
 // スレッドセーフでないデータ読み書きドライバーをスレッドセーフにする。
@@ -40,10 +38,7 @@ func (reg *synchronizedDriver) serve(hndls map[reflect.Type]func(interface{}, ch
 	var errCh chan<- error
 	defer func() {
 		if rcv := recover(); rcv != nil {
-			buff := make([]byte, 8192)
-			stackLen := runtime.Stack(buff, false)
-			stack := string(buff[:stackLen])
-			err := erro.Wrap(util.NewPanicWrapper(rcv, stack))
+			err := erro.New(rcv)
 
 			if errCh != nil {
 				errCh <- err
