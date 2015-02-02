@@ -65,10 +65,13 @@ func (this *redisVolatileKeyValueStore) getStamp(val interface{}) *Stamp {
 }
 
 func (this *redisVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
-	conn := this.pool.Get()
-	defer conn.Close()
+	buff, err := redis.Bytes(func() (interface{}, error) {
+		// パニックでも解放するように defer で、使ったらすぐ解放するように無名関数で。
+		conn := this.pool.Get()
+		defer conn.Close()
+		return conn.Do("GET", this.tag+key)
+	}())
 
-	buff, err := redis.Bytes(conn.Do("GET", this.tag+key))
 	if err != nil {
 		if err == redis.ErrNil {
 			return nil, nil, nil
@@ -98,16 +101,16 @@ func (this *redisVolatileKeyValueStore) Put(key string, val interface{}, expiDat
 		return nil, erro.Wrap(err)
 	}
 
-	conn := this.pool.Get()
-	defer conn.Close()
-
 	newCaStmp = this.getStamp(val)
 
 	milExpiDur := int64(expiDate.Sub(time.Now()) / time.Millisecond)
 	if milExpiDur <= 0 {
-		return newCaStmp, nil
+		return nil, nil
 	}
-	if _, err := conn.Do("PSETEX", this.tag+key, milExpiDur, buff); err != nil {
+
+	conn := this.pool.Get()
+	defer conn.Close()
+	if _, err := conn.Do("SET", this.tag+key, buff, "PX", milExpiDur); err != nil {
 		return nil, erro.Wrap(err)
 	}
 	return newCaStmp, nil
