@@ -6,20 +6,20 @@ import (
 	"time"
 )
 
-type cachingTimeLimitedKeyValueStore struct {
-	base  TimeLimitedKeyValueStore
+type cachingVolatileKeyValueStore struct {
+	base  VolatileKeyValueStore
 	cache util.Cache
 }
 
 // スレッドセーフではない。
-func newCachingTimeLimitedKeyValueStore(base TimeLimitedKeyValueStore) *cachingTimeLimitedKeyValueStore {
-	return &cachingTimeLimitedKeyValueStore{
+func newCachingVolatileKeyValueStore(base VolatileKeyValueStore) *cachingVolatileKeyValueStore {
+	return &cachingVolatileKeyValueStore{
 		base:  base,
 		cache: util.NewCache(stampExpirationDateLess),
 	}
 }
 
-func (reg *cachingTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (reg *cachingVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	// 古いキャッシュの削除。
@@ -77,7 +77,7 @@ func (reg *cachingTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val 
 	}
 }
 
-func (reg *cachingTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (*Stamp, error) {
+func (reg *cachingVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (*Stamp, error) {
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
 	reg.cache.CleanLower(cleanThres)
@@ -91,7 +91,7 @@ func (reg *cachingTimeLimitedKeyValueStore) Put(key string, val interface{}, exp
 	}
 }
 
-func (reg *cachingTimeLimitedKeyValueStore) Remove(key string) error {
+func (reg *cachingVolatileKeyValueStore) Remove(key string) error {
 	reg.cache.Update(key, nil)
 
 	// 古いキャッシュの削除。

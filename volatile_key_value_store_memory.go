@@ -10,23 +10,23 @@ func stampExpirationDateLess(a1 interface{}, a2 interface{}) bool {
 	return a1.(*Stamp).ExpiDate.Before(a2.(*Stamp).ExpiDate)
 }
 
-type memoryTimeLimitedKeyValueStore struct {
+type memoryVolatileKeyValueStore struct {
 	base     util.Cache
 	staleDur time.Duration
 	expiDur  time.Duration
 }
 
 // スレッドセーフ。
-func NewMemoryTimeLimitedKeyValueStore(staleDur, expiDur time.Duration) TimeLimitedKeyValueStore {
-	return newSynchronizedTimeLimitedKeyValueStore(newMemoryTimeLimitedKeyValueStore(staleDur, expiDur))
+func NewMemoryVolatileKeyValueStore(staleDur, expiDur time.Duration) VolatileKeyValueStore {
+	return newSynchronizedVolatileKeyValueStore(newMemoryVolatileKeyValueStore(staleDur, expiDur))
 }
 
 // スレッドセーフではない。
-func newMemoryTimeLimitedKeyValueStore(staleDur, expiDur time.Duration) *memoryTimeLimitedKeyValueStore {
-	return &memoryTimeLimitedKeyValueStore{util.NewCache(stampExpirationDateLess), staleDur, expiDur}
+func newMemoryVolatileKeyValueStore(staleDur, expiDur time.Duration) *memoryVolatileKeyValueStore {
+	return &memoryVolatileKeyValueStore{util.NewCache(stampExpirationDateLess), staleDur, expiDur}
 }
 
-func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (reg *memoryVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
 	reg.base.CleanLower(&Stamp{ExpiDate: now})
 
@@ -60,7 +60,7 @@ func (reg *memoryTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val i
 	return val, newCaStmp, nil
 }
 
-func (reg *memoryTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (reg *memoryVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	stmp := &Stamp{Date: now, ExpiDate: expiDate, Digest: strconv.FormatInt(int64(now.Nanosecond()), 16)}
@@ -83,7 +83,7 @@ func (reg *memoryTimeLimitedKeyValueStore) Put(key string, val interface{}, expi
 	return newCaStmp, nil
 }
 
-func (reg *memoryTimeLimitedKeyValueStore) Remove(key string) error {
+func (reg *memoryVolatileKeyValueStore) Remove(key string) error {
 	reg.base.Update(key, nil)
 	reg.base.CleanLower(nil)
 	return nil

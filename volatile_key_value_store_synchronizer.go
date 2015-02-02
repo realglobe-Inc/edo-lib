@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type synchronizedTimeLimitedKeyValueStore synchronizedDriver
+type synchronizedVolatileKeyValueStore synchronizedDriver
 
 type tlPutRequest struct {
 	key      string
@@ -16,8 +16,8 @@ type tlPutRequest struct {
 }
 
 // もちろん、スレッドセーフ。
-func newSynchronizedTimeLimitedKeyValueStore(base TimeLimitedKeyValueStore) *synchronizedTimeLimitedKeyValueStore {
-	return (*synchronizedTimeLimitedKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+func newSynchronizedVolatileKeyValueStore(base VolatileKeyValueStore) *synchronizedVolatileKeyValueStore {
+	return (*synchronizedVolatileKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&kvsGetRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*kvsGetRequest)
 			val, stmp, err := base.Get(req.key, req.caStmp)
@@ -44,7 +44,7 @@ func newSynchronizedTimeLimitedKeyValueStore(base TimeLimitedKeyValueStore) *syn
 	}))
 }
 
-func (reg *synchronizedTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (reg *synchronizedVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	valCh := make(chan interface{}, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
@@ -57,7 +57,7 @@ func (reg *synchronizedTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) 
 	}
 }
 
-func (reg *synchronizedTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (reg *synchronizedVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&tlPutRequest{key, val, expiDate, newCaStmpCh}, errCh}
@@ -69,7 +69,7 @@ func (reg *synchronizedTimeLimitedKeyValueStore) Put(key string, val interface{}
 	}
 }
 
-func (reg *synchronizedTimeLimitedKeyValueStore) Remove(key string) error {
+func (reg *synchronizedVolatileKeyValueStore) Remove(key string) error {
 	errCh := make(chan error, 1)
 	reg.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func testTimeLimitedKeyValueStore(t *testing.T, reg TimeLimitedKeyValueStore) {
+func testVolatileKeyValueStore(t *testing.T, reg VolatileKeyValueStore) {
 	expiDur := 10 * time.Millisecond
 
 	// まだ無い。

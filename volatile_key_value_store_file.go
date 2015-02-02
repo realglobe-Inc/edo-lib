@@ -7,19 +7,19 @@ import (
 
 // TODO 今は手抜きで古いファイルを無視するだけ。どんどん溜まっていく。
 
-type fileTimeLimitedKeyValueStore struct {
+type fileVolatileKeyValueStore struct {
 	base    KeyValueStore
 	expires KeyValueStore
 }
 
 // スレッドセーフ。
-func NewFileTimeLimitedKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) TimeLimitedKeyValueStore {
-	return newSynchronizedTimeLimitedKeyValueStore(newCachingTimeLimitedKeyValueStore(newFileTimeLimitedKeyValueStore(path, expiPath, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
+func NewFileVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) VolatileKeyValueStore {
+	return newSynchronizedVolatileKeyValueStore(newCachingVolatileKeyValueStore(newFileVolatileKeyValueStore(path, expiPath, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
 }
 
 // スレッドセーフではない。
-func newFileTimeLimitedKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileTimeLimitedKeyValueStore {
-	return &fileTimeLimitedKeyValueStore{
+func newFileVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileVolatileKeyValueStore {
+	return &fileVolatileKeyValueStore{
 		NewFileListedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
 		NewFileListedKeyValueStore(expiPath, keyToPath, pathToKey,
 			func(val interface{}) ([]byte, error) {
@@ -36,7 +36,7 @@ func newFileTimeLimitedKeyValueStore(path, expiPath string, keyToPath, pathToKey
 	}
 }
 
-func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (reg *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	var expiDate time.Time
 	if val, newCaStmp, err := reg.expires.Get(key, nil); err != nil {
 		return nil, nil, erro.Wrap(err)
@@ -68,7 +68,7 @@ func (reg *fileTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val int
 	return val, newCaStmp, nil
 }
 
-func (reg *fileTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (reg *fileVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	if _, err := reg.expires.Put(key, expiDate); err != nil {
 		return nil, erro.Wrap(err)
 	}
@@ -87,7 +87,7 @@ func (reg *fileTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDa
 	return newCaStmp, nil
 }
 
-func (reg *fileTimeLimitedKeyValueStore) Remove(key string) error {
+func (reg *fileVolatileKeyValueStore) Remove(key string) error {
 	if err := reg.expires.Remove(key); err != nil {
 		return erro.Wrap(err)
 	}

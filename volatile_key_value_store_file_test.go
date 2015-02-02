@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestFileTimeLimitedKeyValueStore(t *testing.T) {
+func TestFileVolatileKeyValueStore(t *testing.T) {
 	path, err := ioutil.TempDir("", testLabel)
 	if err != nil {
 		t.Fatal(err)
@@ -19,5 +19,5 @@ func TestFileTimeLimitedKeyValueStore(t *testing.T) {
 	}
 	defer os.RemoveAll(expiPath)
 
-	testTimeLimitedKeyValueStore(t, newFileTimeLimitedKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, 0, 0))
+	testVolatileKeyValueStore(t, newFileVolatileKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, 0, 0))
 }

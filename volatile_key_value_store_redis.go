@@ -20,7 +20,7 @@ func NewRedisPool(addr string, connNum int, idlDur time.Duration) *redis.Pool {
 	}
 }
 
-type redisTimeLimitedKeyValueStore struct {
+type redisVolatileKeyValueStore struct {
 	pool *redis.Pool
 
 	tag string
@@ -32,11 +32,11 @@ type redisTimeLimitedKeyValueStore struct {
 	expiDur  time.Duration
 }
 
-func NewRedisTimeLimitedKeyValueStore(pool *redis.Pool, tag string, marshal Marshal, unmarshal Unmarshal, getStmp GetStamp, staleDur, expiDur time.Duration) TimeLimitedKeyValueStore {
-	return newRedisTimeLimitedKeyValueStore(pool, tag, marshal, unmarshal, getStmp, staleDur, expiDur)
+func NewRedisVolatileKeyValueStore(pool *redis.Pool, tag string, marshal Marshal, unmarshal Unmarshal, getStmp GetStamp, staleDur, expiDur time.Duration) VolatileKeyValueStore {
+	return newRedisVolatileKeyValueStore(pool, tag, marshal, unmarshal, getStmp, staleDur, expiDur)
 }
 
-func newRedisTimeLimitedKeyValueStore(pool *redis.Pool, tag string, marshal Marshal, unmarshal Unmarshal, getStmp GetStamp, staleDur, expiDur time.Duration) *redisTimeLimitedKeyValueStore {
+func newRedisVolatileKeyValueStore(pool *redis.Pool, tag string, marshal Marshal, unmarshal Unmarshal, getStmp GetStamp, staleDur, expiDur time.Duration) *redisVolatileKeyValueStore {
 	if getStmp == nil {
 		getStmp = func(val interface{}) *Stamp {
 			m, _ := val.(map[string]interface{})
@@ -45,7 +45,7 @@ func newRedisTimeLimitedKeyValueStore(pool *redis.Pool, tag string, marshal Mars
 			return &Stamp{Date: date, Digest: dig}
 		}
 	}
-	return &redisTimeLimitedKeyValueStore{
+	return &redisVolatileKeyValueStore{
 		pool:      pool,
 		tag:       tag,
 		Marshal:   marshal,
@@ -56,7 +56,7 @@ func newRedisTimeLimitedKeyValueStore(pool *redis.Pool, tag string, marshal Mars
 	}
 }
 
-func (this *redisTimeLimitedKeyValueStore) getStamp(val interface{}) *Stamp {
+func (this *redisVolatileKeyValueStore) getStamp(val interface{}) *Stamp {
 	now := time.Now()
 	stmp := this.GetStamp(val)
 	stmp.StaleDate = now.Add(this.staleDur)
@@ -64,7 +64,7 @@ func (this *redisTimeLimitedKeyValueStore) getStamp(val interface{}) *Stamp {
 	return stmp
 }
 
-func (this *redisTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (this *redisVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	conn := this.pool.Get()
 	defer conn.Close()
 
@@ -92,7 +92,7 @@ func (this *redisTimeLimitedKeyValueStore) Get(key string, caStmp *Stamp) (val i
 	return val, newCaStmp, nil
 }
 
-func (this *redisTimeLimitedKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (this *redisVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	buff, err := this.Marshal(val)
 	if err != nil {
 		return nil, erro.Wrap(err)
@@ -113,7 +113,7 @@ func (this *redisTimeLimitedKeyValueStore) Put(key string, val interface{}, expi
 	return newCaStmp, nil
 }
 
-func (this *redisTimeLimitedKeyValueStore) Remove(key string) error {
+func (this *redisVolatileKeyValueStore) Remove(key string) error {
 	conn := this.pool.Get()
 	defer conn.Close()
 
