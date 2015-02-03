@@ -5,13 +5,13 @@ import (
 )
 
 func TestWebVolatileKeyValueStore(t *testing.T) {
-	testVolatileKeyValueStore(t, newSynchronizedVolatileKeyValueStore(newMemoryVolatileKeyValueStore(testStaleDur, testCaExpiDur)))
+	testVolatileKeyValueStore(t, newSynchronizedVolatileKeyValueStore(newMemoryConcurrentVolatileKeyValueStore(testStaleDur, testCaExpiDur)))
 }
 
 func TestSynchronizedConcurrentVolatileKeyValueStore(t *testing.T) {
-	testConcurrentVolatileKeyValueStore(t, newSynchronizedVolatileKeyValueStore(newMemoryVolatileKeyValueStore(testStaleDur, testCaExpiDur)))
+	testConcurrentVolatileKeyValueStore(t, newSynchronizedVolatileKeyValueStore(newMemoryConcurrentVolatileKeyValueStore(testStaleDur, testCaExpiDur)))
 }
 
 func TestSynchronizedConcurrentVolatileKeyValueStoreConsistency(t *testing.T) {
-	testConcurrentVolatileKeyValueStoreConsistency(t, newSynchronizedVolatileKeyValueStore(newMemoryVolatileKeyValueStore(testStaleDur, testCaExpiDur)))
+	testConcurrentVolatileKeyValueStoreConsistency(t, newSynchronizedVolatileKeyValueStore(newMemoryConcurrentVolatileKeyValueStore(testStaleDur, testCaExpiDur)))
 }
