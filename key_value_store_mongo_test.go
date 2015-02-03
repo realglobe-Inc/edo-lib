@@ -12,14 +12,14 @@ func TestMongoKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg := NewMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
+	drv := NewMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
-	defer reg.Clear()
+	defer drv.Clear()
 
 	// まだ無い。
-	if v, _, err := reg.Get(testKey, nil); err != nil {
+	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
 		t.Error(v)
@@ -33,12 +33,12 @@ func TestMongoKeyValueStore(t *testing.T) {
 		"digest": "abcde",
 		"array":  []interface{}{"elem-1", "elem-2"},
 	}
-	if _, err := reg.Put(testKey, val); err != nil {
+	if _, err := drv.Put(testKey, val); err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	if v, _, err := reg.Get(testKey, nil); err != nil {
+	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, val) {
 		if !jsonEqual(v, val) {
@@ -47,12 +47,12 @@ func TestMongoKeyValueStore(t *testing.T) {
 	}
 
 	// 消す。
-	if err := reg.Remove(testKey); err != nil {
+	if err := drv.Remove(testKey); err != nil {
 		t.Fatal(err)
 	}
 
 	// もう無い。
-	if v, _, err := reg.Get(testKey, nil); err != nil {
+	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
 		t.Error(v)
@@ -68,14 +68,14 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg := NewMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
+	drv := NewMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
-	defer reg.Clear()
+	defer drv.Clear()
 
 	// まだ無い。
-	if v, s, err := reg.Get(testKey, nil); err != nil {
+	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s != nil {
 		t.Error(v, s)
@@ -89,13 +89,13 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 		"digest": "abcde",
 		"array":  []interface{}{"elem-1", "elem-2"},
 	}
-	stmp, err := reg.Put(testKey, val)
+	stmp, err := drv.Put(testKey, val)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	if v, s, err := reg.Get(testKey, nil); err != nil {
+	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
 		t.Error(s)
@@ -106,14 +106,14 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	}
 
 	// キャッシュと同じだから返らない。
-	if v, s, err := reg.Get(testKey, stmp); err != nil {
+	if v, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s == nil {
 		t.Error(v, s)
 	}
 
 	// キャッシュが古いから返る。
-	if v, s, err := reg.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
+	if v, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
 		t.Error(s)
@@ -124,7 +124,7 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	}
 
 	// ダイジェストが違うから返る。
-	if v, s, err := reg.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
+	if v, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
 		t.Error(s)
@@ -135,12 +135,12 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	}
 
 	// 消す。
-	if err := reg.Remove(testKey); err != nil {
+	if err := drv.Remove(testKey); err != nil {
 		t.Fatal(err)
 	}
 
 	// もう無い。
-	if v, s, err := reg.Get(testKey, stmp); err != nil {
+	if v, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s != nil {
 		t.Error(v, s)
@@ -152,17 +152,17 @@ func TestMongoNKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	reg := NewMongoNKeyValueStore(mongoAddr, testLabel, "key-value-store", []string{"key1", "key2"}, nil, func(val interface{}) (interface{}, error) {
+	drv := NewMongoNKeyValueStore(mongoAddr, testLabel, "key-value-store", []string{"key1", "key2"}, nil, func(val interface{}) (interface{}, error) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
-	defer reg.Clear()
+	defer drv.Clear()
 
 	testKey2 := testKey + "2"
 	tagKeys := bson.M{"key1": testKey, "key2": testKey2}
 
 	// まだ無い。
-	if v, _, err := reg.NGet(tagKeys, nil); err != nil {
+	if v, _, err := drv.NGet(tagKeys, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
 		t.Error(v)
@@ -177,12 +177,12 @@ func TestMongoNKeyValueStore(t *testing.T) {
 		"digest": "abcde",
 		"array":  []interface{}{"elem-1", "elem-2"},
 	}
-	if _, err := reg.NPut(tagKeys, val); err != nil {
+	if _, err := drv.NPut(tagKeys, val); err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	if v, _, err := reg.NGet(tagKeys, nil); err != nil {
+	if v, _, err := drv.NGet(tagKeys, nil); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, val) {
 		if !jsonEqual(v, val) {
@@ -190,19 +190,19 @@ func TestMongoNKeyValueStore(t *testing.T) {
 		}
 	}
 	// キーが 1 つ違うので無い。
-	if v, _, err := reg.NGet(bson.M{"key1": testKey, "key2": testKey}, nil); err != nil {
+	if v, _, err := drv.NGet(bson.M{"key1": testKey, "key2": testKey}, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
 		t.Error(v, val)
 	}
 
 	// 消す。
-	if err := reg.NRemove(tagKeys); err != nil {
+	if err := drv.NRemove(tagKeys); err != nil {
 		t.Fatal(err)
 	}
 
 	// もう無い。
-	if v, _, err := reg.NGet(tagKeys, nil); err != nil {
+	if v, _, err := drv.NGet(tagKeys, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
 		t.Error(v)

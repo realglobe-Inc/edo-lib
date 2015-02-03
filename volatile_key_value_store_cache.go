@@ -19,16 +19,16 @@ func newCachingVolatileKeyValueStore(base VolatileKeyValueStore) *cachingVolatil
 	}
 }
 
-func (reg *cachingVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *cachingVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: now}
-	reg.cache.CleanLower(cleanThres)
+	drv.cache.CleanLower(cleanThres)
 
 	var buffVal interface{}
 	var buffStmp *Stamp
-	val, prio := reg.cache.Get(key)
+	val, prio := drv.cache.Get(key)
 	if prio != nil {
 		// キャッシュしてた。
 		buffVal = val.(interface{})
@@ -50,20 +50,20 @@ func (reg *cachingVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val int
 	}
 
 	// キャッシュしてない。
-	val, newCaStmp, err = reg.base.Get(key, buffStmp)
+	val, newCaStmp, err = drv.base.Get(key, buffStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		// 無い。
-		reg.cache.Update(key, nil)
+		drv.cache.Update(key, nil)
 		return nil, nil, nil
 	} else if val == nil {
 		// キャッシュと同じ。
-		reg.cache.Update(key, newCaStmp)
+		drv.cache.Update(key, newCaStmp)
 		buffStmp = newCaStmp
 	} else {
 		// あった、または、新しくなってた。
-		reg.cache.Put(key, val, newCaStmp)
+		drv.cache.Put(key, val, newCaStmp)
 		buffVal = val
 		buffStmp = newCaStmp
 	}
@@ -77,26 +77,26 @@ func (reg *cachingVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val int
 	}
 }
 
-func (reg *cachingVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (*Stamp, error) {
+func (drv *cachingVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (*Stamp, error) {
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
-	reg.cache.CleanLower(cleanThres)
+	drv.cache.CleanLower(cleanThres)
 
-	if newCaStmp, err := reg.base.Put(key, val, expiDate); err != nil {
+	if newCaStmp, err := drv.base.Put(key, val, expiDate); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		// キャッシュの更新。
-		reg.cache.Put(key, val, newCaStmp)
+		drv.cache.Put(key, val, newCaStmp)
 		return newCaStmp, nil
 	}
 }
 
-func (reg *cachingVolatileKeyValueStore) Remove(key string) error {
-	reg.cache.Update(key, nil)
+func (drv *cachingVolatileKeyValueStore) Remove(key string) error {
+	drv.cache.Update(key, nil)
 
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
-	reg.cache.CleanLower(cleanThres)
+	drv.cache.CleanLower(cleanThres)
 
-	return reg.base.Remove(key)
+	return drv.base.Remove(key)
 }

@@ -36,9 +36,9 @@ func newFileVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey fu
 	}
 }
 
-func (reg *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	var expiDate time.Time
-	if val, newCaStmp, err := reg.expires.Get(key, nil); err != nil {
+	if val, newCaStmp, err := drv.expires.Get(key, nil); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		return nil, nil, nil
@@ -47,12 +47,12 @@ func (reg *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interf
 	}
 
 	if time.Now().After(expiDate) {
-		reg.expires.Remove(key)
-		reg.base.Remove(key)
+		drv.expires.Remove(key)
+		drv.base.Remove(key)
 		return nil, nil, nil
 	}
 
-	val, newCaStmp, err = reg.base.Get(key, caStmp)
+	val, newCaStmp, err = drv.base.Get(key, caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
@@ -68,12 +68,12 @@ func (reg *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interf
 	return val, newCaStmp, nil
 }
 
-func (reg *fileVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
-	if _, err := reg.expires.Put(key, expiDate); err != nil {
+func (drv *fileVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+	if _, err := drv.expires.Put(key, expiDate); err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	newCaStmp, err = reg.base.Put(key, val)
+	newCaStmp, err = drv.base.Put(key, val)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
@@ -87,9 +87,9 @@ func (reg *fileVolatileKeyValueStore) Put(key string, val interface{}, expiDate 
 	return newCaStmp, nil
 }
 
-func (reg *fileVolatileKeyValueStore) Remove(key string) error {
-	if err := reg.expires.Remove(key); err != nil {
+func (drv *fileVolatileKeyValueStore) Remove(key string) error {
+	if err := drv.expires.Remove(key); err != nil {
 		return erro.Wrap(err)
 	}
-	return reg.base.Remove(key)
+	return drv.base.Remove(key)
 }

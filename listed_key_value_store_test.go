@@ -6,21 +6,21 @@ import (
 	"time"
 )
 
-func testListedKeyValueStore(t *testing.T, reg ListedKeyValueStore) {
+func testListedKeyValueStore(t *testing.T, drv ListedKeyValueStore) {
 	// まだ無い。
-	if v, _, err := reg.Get(testKey, nil); err != nil {
+	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
 		t.Error(v)
 	}
 
 	// 入れる。
-	if _, err := reg.Put(testKey, testVal); err != nil {
+	if _, err := drv.Put(testKey, testVal); err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	if v, _, err := reg.Get(testKey, nil); err != nil {
+	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
@@ -28,7 +28,7 @@ func testListedKeyValueStore(t *testing.T, reg ListedKeyValueStore) {
 		}
 	}
 
-	keys, _, err := reg.Keys(nil)
+	keys, _, err := drv.Keys(nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if len(keys) != 1 || !keys[testKey] {
@@ -36,34 +36,34 @@ func testListedKeyValueStore(t *testing.T, reg ListedKeyValueStore) {
 	}
 
 	// 消す。
-	if err := reg.Remove(testKey); err != nil {
+	if err := drv.Remove(testKey); err != nil {
 		t.Fatal(err)
 	}
 
 	// もう無い。
-	if v, _, err := reg.Get(testKey, nil); err != nil {
+	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
 		t.Error(v)
 	}
 }
 
-func testListedKeyValueStoreStamp(t *testing.T, reg ListedKeyValueStore) {
+func testListedKeyValueStoreStamp(t *testing.T, drv ListedKeyValueStore) {
 	// まだ無い。
-	if v, s, err := reg.Get(testKey, nil); err != nil {
+	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s != nil {
 		t.Error(v, s)
 	}
 
 	// 入れる。
-	stmp, err := reg.Put(testKey, testVal)
+	stmp, err := drv.Put(testKey, testVal)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// ある。
-	if v, s, err := reg.Get(testKey, nil); err != nil {
+	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
 		t.Error(s)
@@ -74,14 +74,14 @@ func testListedKeyValueStoreStamp(t *testing.T, reg ListedKeyValueStore) {
 	}
 
 	// キャッシュと同じだから返らない。
-	if v, s, err := reg.Get(testKey, stmp); err != nil {
+	if v, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s == nil {
 		t.Error(v, s)
 	}
 
 	// キャッシュが古いから返る。
-	if v, s, err := reg.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
+	if v, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
 		t.Error(s)
@@ -92,7 +92,7 @@ func testListedKeyValueStoreStamp(t *testing.T, reg ListedKeyValueStore) {
 	}
 
 	// ダイジェストが違うから返る。
-	if v, s, err := reg.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
+	if v, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
 		t.Error(s)
@@ -103,12 +103,12 @@ func testListedKeyValueStoreStamp(t *testing.T, reg ListedKeyValueStore) {
 	}
 
 	// 消す。
-	if err := reg.Remove(testKey); err != nil {
+	if err := drv.Remove(testKey); err != nil {
 		t.Fatal(err)
 	}
 
 	// もう無い。
-	if v, s, err := reg.Get(testKey, stmp); err != nil {
+	if v, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s != nil {
 		t.Error(v, s)

@@ -27,34 +27,34 @@ func newFileListedKeyValueStore(path string, keyToPath, pathToKey func(string) s
 	}
 }
 
-func (this *fileListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
-	return this.base.Keys(caStmp)
+func (drv *fileListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	return drv.base.Keys(caStmp)
 }
 
-func (reg *fileListedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
-	buff, newCaStmp, err := reg.base.Get(key, caStmp)
+func (drv *fileListedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+	buff, newCaStmp, err := drv.base.Get(key, caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if buff == nil {
 		return nil, newCaStmp, nil
 	}
 
-	val, err = reg.Unmarshal(buff)
+	val, err = drv.Unmarshal(buff)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
 	return val, newCaStmp, nil
 }
 
-func (reg *fileListedKeyValueStore) Put(key string, val interface{}) (*Stamp, error) {
-	buff, err := reg.Marshal(val)
+func (drv *fileListedKeyValueStore) Put(key string, val interface{}) (*Stamp, error) {
+	buff, err := drv.Marshal(val)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	return reg.base.Put(key, buff)
+	return drv.base.Put(key, buff)
 }
 
-func (reg *fileListedKeyValueStore) Remove(key string) error {
-	return reg.base.Remove(key)
+func (drv *fileListedKeyValueStore) Remove(key string) error {
+	return drv.base.Remove(key)
 }

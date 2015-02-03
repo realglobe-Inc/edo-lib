@@ -44,11 +44,11 @@ func newSynchronizedVolatileKeyValueStore(base VolatileKeyValueStore) *synchroni
 	}))
 }
 
-func (reg *synchronizedVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *synchronizedVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	valCh := make(chan interface{}, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&kvsGetRequest{key, caStmp, valCh, newCaStmpCh}, errCh}
+	drv.reqCh <- &synchronizedRequest{&kvsGetRequest{key, caStmp, valCh, newCaStmpCh}, errCh}
 	select {
 	case val := <-valCh:
 		return val, <-newCaStmpCh, nil
@@ -57,10 +57,10 @@ func (reg *synchronizedVolatileKeyValueStore) Get(key string, caStmp *Stamp) (va
 	}
 }
 
-func (reg *synchronizedVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (drv *synchronizedVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&tlPutRequest{key, val, expiDate, newCaStmpCh}, errCh}
+	drv.reqCh <- &synchronizedRequest{&tlPutRequest{key, val, expiDate, newCaStmpCh}, errCh}
 	select {
 	case stmp := <-newCaStmpCh:
 		return stmp, nil
@@ -69,8 +69,8 @@ func (reg *synchronizedVolatileKeyValueStore) Put(key string, val interface{}, e
 	}
 }
 
-func (reg *synchronizedVolatileKeyValueStore) Remove(key string) error {
+func (drv *synchronizedVolatileKeyValueStore) Remove(key string) error {
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
+	drv.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh
 }

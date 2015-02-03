@@ -23,16 +23,16 @@ func newFileLister(path string, pathToKey func(string) string, staleDur, expiDur
 	return &fileLister{path, pathToKey, staleDur, expiDur}
 }
 
-func (reg *fileLister) getStamp(fi os.FileInfo) *Stamp {
+func (drv *fileLister) getStamp(fi os.FileInfo) *Stamp {
 	now := time.Now()
 	stmp := getFileStamp(fi)
-	stmp.StaleDate = now.Add(reg.staleDur)
-	stmp.ExpiDate = now.Add(reg.expiDur)
+	stmp.StaleDate = now.Add(drv.staleDur)
+	stmp.ExpiDate = now.Add(drv.expiDur)
 	return stmp
 }
 
-func (this *fileLister) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
-	fi, err := os.Stat(this.path)
+func (drv *fileLister) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	fi, err := os.Stat(drv.path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil, nil
@@ -41,7 +41,7 @@ func (this *fileLister) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *St
 		}
 	}
 
-	newCaStmp = this.getStamp(fi)
+	newCaStmp = drv.getStamp(fi)
 
 	// 対象のスタンプを取得。
 
@@ -53,14 +53,14 @@ func (this *fileLister) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *St
 	// 要求元のキャッシュより新しそう。
 
 	keys = map[string]bool{}
-	if err := filepath.Walk(this.path, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(drv.path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return erro.Wrap(err)
 		} else if info.IsDir() {
 			return nil
 		}
 
-		key := this.pathToKey(path[len(this.path)+1:]) // +1 は / の分。
+		key := drv.pathToKey(path[len(drv.path)+1:]) // +1 は / の分。
 		if key == "" {
 			return nil
 		}

@@ -26,11 +26,11 @@ func newMemoryVolatileKeyValueStore(staleDur, expiDur time.Duration) *memoryVola
 	return &memoryVolatileKeyValueStore{util.NewCache(stampExpirationDateLess), staleDur, expiDur}
 }
 
-func (reg *memoryVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *memoryVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
-	reg.base.CleanLower(&Stamp{ExpiDate: now})
+	drv.base.CleanLower(&Stamp{ExpiDate: now})
 
-	val, prio := reg.base.Get(key)
+	val, prio := drv.base.Get(key)
 	if prio == nil {
 		return nil, nil, nil
 	}
@@ -38,8 +38,8 @@ func (reg *memoryVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val inte
 
 	newCaStmp = &Stamp{
 		Date:      stmp.Date,
-		StaleDate: now.Add(reg.staleDur),
-		ExpiDate:  now.Add(reg.expiDur),
+		StaleDate: now.Add(drv.staleDur),
+		ExpiDate:  now.Add(drv.expiDur),
 		Digest:    stmp.Digest,
 	}
 
@@ -60,16 +60,16 @@ func (reg *memoryVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val inte
 	return val, newCaStmp, nil
 }
 
-func (reg *memoryVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (drv *memoryVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	stmp := &Stamp{Date: now, ExpiDate: expiDate, Digest: strconv.FormatInt(int64(now.Nanosecond()), 16)}
-	reg.base.Put(key, val, stmp)
+	drv.base.Put(key, val, stmp)
 
 	newCaStmp = &Stamp{
 		Date:      stmp.Date,
-		StaleDate: now.Add(reg.staleDur),
-		ExpiDate:  now.Add(reg.expiDur),
+		StaleDate: now.Add(drv.staleDur),
+		ExpiDate:  now.Add(drv.expiDur),
 		Digest:    stmp.Digest,
 	}
 	if newCaStmp.ExpiDate.After(expiDate) {
@@ -79,12 +79,12 @@ func (reg *memoryVolatileKeyValueStore) Put(key string, val interface{}, expiDat
 		}
 	}
 
-	reg.base.CleanLower(&Stamp{ExpiDate: now})
+	drv.base.CleanLower(&Stamp{ExpiDate: now})
 	return newCaStmp, nil
 }
 
-func (reg *memoryVolatileKeyValueStore) Remove(key string) error {
-	reg.base.Update(key, nil)
-	reg.base.CleanLower(nil)
+func (drv *memoryVolatileKeyValueStore) Remove(key string) error {
+	drv.base.Update(key, nil)
+	drv.base.CleanLower(nil)
 	return nil
 }

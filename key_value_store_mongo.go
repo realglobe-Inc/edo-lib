@@ -80,37 +80,37 @@ func newMongoKeyValueStore(url, dbName, collName, keyTag string, indices []mgo.I
 	}
 }
 
-func (this *mongoKeyValueStore) getStamp(val interface{}) *Stamp {
+func (drv *mongoKeyValueStore) getStamp(val interface{}) *Stamp {
 	now := time.Now()
-	stmp := this.getStmp(val)
-	stmp.StaleDate = now.Add(this.staleDur)
-	stmp.ExpiDate = now.Add(this.expiDur)
+	stmp := drv.getStmp(val)
+	stmp.StaleDate = now.Add(drv.staleDur)
+	stmp.ExpiDate = now.Add(drv.expiDur)
 	return stmp
 }
 
-func (reg *mongoKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
-	coll, err := reg.base.collection()
+func (drv *mongoKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+	coll, err := drv.base.collection()
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
 
-	query := coll.Find(bson.M{reg.keyTag: key})
-	val, err = reg.read(query)
+	query := coll.Find(bson.M{drv.keyTag: key})
+	val, err = drv.read(query)
 	if err != nil {
 		if erro.Unwrap(err) == mgo.ErrNotFound {
 			return nil, nil, nil
 		}
-		reg.base.closeIfError()
+		drv.base.closeIfError()
 		return nil, nil, erro.Wrap(err)
 	}
-	val, err = reg.afterRd(val)
+	val, err = drv.afterRd(val)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
 
 	// 対象のスタンプを取得。
 
-	newCaStmp = reg.getStmp(val)
+	newCaStmp = drv.getStmp(val)
 	if caStmp != nil && !caStmp.Older(newCaStmp) {
 		// 要求元のキャッシュより新しそうではなかった。
 		return nil, newCaStmp, nil
@@ -121,47 +121,47 @@ func (reg *mongoKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, 
 	return val, newCaStmp, nil
 }
 
-func (reg *mongoKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
-	coll, err := reg.base.collection()
+func (drv *mongoKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
+	coll, err := drv.base.collection()
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	newCaStmp = reg.getStmp(val)
+	newCaStmp = drv.getStmp(val)
 
-	buff, err := reg.beforeWr(val)
+	buff, err := drv.beforeWr(val)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	if _, err := coll.Upsert(bson.M{reg.keyTag: key}, buff); err != nil {
-		reg.base.closeIfError()
+	if _, err := coll.Upsert(bson.M{drv.keyTag: key}, buff); err != nil {
+		drv.base.closeIfError()
 		return nil, erro.Wrap(err)
 	}
 	return newCaStmp, nil
 }
 
-func (reg *mongoKeyValueStore) Remove(key string) error {
-	coll, err := reg.base.collection()
+func (drv *mongoKeyValueStore) Remove(key string) error {
+	coll, err := drv.base.collection()
 	if err != nil {
 		return erro.Wrap(err)
 	}
 
-	if err := coll.Remove(bson.M{reg.keyTag: key}); err != nil {
-		reg.base.closeIfError()
+	if err := coll.Remove(bson.M{drv.keyTag: key}); err != nil {
+		drv.base.closeIfError()
 		return erro.Wrap(err)
 	}
 	return nil
 }
 
-func (reg *mongoKeyValueStore) Clear() error {
-	coll, err := reg.base.collection()
+func (drv *mongoKeyValueStore) Clear() error {
+	coll, err := drv.base.collection()
 	if err != nil {
 		return erro.Wrap(err)
 	}
 
 	if err := coll.DropCollection(); err != nil {
-		reg.base.closeIfError()
+		drv.base.closeIfError()
 		return erro.Wrap(err)
 	}
 	return nil
@@ -189,29 +189,29 @@ func NewMongoNKeyValueStore(url, dbName, collName string, tags []string, beforeW
 	}, beforeWr, afterRd, read, getStmp, staleDur, expiDur)
 }
 
-func (reg *mongoKeyValueStore) NGet(tagKeys bson.M, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
-	coll, err := reg.base.collection()
+func (drv *mongoKeyValueStore) NGet(tagKeys bson.M, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+	coll, err := drv.base.collection()
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
 
 	query := coll.Find(tagKeys)
-	val, err = reg.read(query)
+	val, err = drv.read(query)
 	if err != nil {
 		if erro.Unwrap(err) == mgo.ErrNotFound {
 			return nil, nil, nil
 		}
-		reg.base.closeIfError()
+		drv.base.closeIfError()
 		return nil, nil, erro.Wrap(err)
 	}
-	val, err = reg.afterRd(val)
+	val, err = drv.afterRd(val)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
 
 	// 対象のスタンプを取得。
 
-	newCaStmp = reg.getStmp(val)
+	newCaStmp = drv.getStmp(val)
 	if caStmp != nil && !caStmp.Older(newCaStmp) {
 		// 要求元のキャッシュより新しそうではなかった。
 		return nil, newCaStmp, nil
@@ -222,34 +222,34 @@ func (reg *mongoKeyValueStore) NGet(tagKeys bson.M, caStmp *Stamp) (val interfac
 	return val, newCaStmp, nil
 }
 
-func (reg *mongoKeyValueStore) NPut(tagKeys bson.M, val interface{}) (newCaStmp *Stamp, err error) {
-	coll, err := reg.base.collection()
+func (drv *mongoKeyValueStore) NPut(tagKeys bson.M, val interface{}) (newCaStmp *Stamp, err error) {
+	coll, err := drv.base.collection()
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	newCaStmp = reg.getStmp(val)
+	newCaStmp = drv.getStmp(val)
 
-	buff, err := reg.beforeWr(val)
+	buff, err := drv.beforeWr(val)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
 	if _, err := coll.Upsert(tagKeys, buff); err != nil {
-		reg.base.closeIfError()
+		drv.base.closeIfError()
 		return nil, erro.Wrap(err)
 	}
 	return newCaStmp, nil
 }
 
-func (reg *mongoKeyValueStore) NRemove(tagKeys bson.M) error {
-	coll, err := reg.base.collection()
+func (drv *mongoKeyValueStore) NRemove(tagKeys bson.M) error {
+	coll, err := drv.base.collection()
 	if err != nil {
 		return erro.Wrap(err)
 	}
 
 	if err := coll.Remove(tagKeys); err != nil {
-		reg.base.closeIfError()
+		drv.base.closeIfError()
 		return erro.Wrap(err)
 	}
 	return nil

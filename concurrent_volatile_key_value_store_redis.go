@@ -59,20 +59,20 @@ func newRedisConcurrentVolatileKeyValueStore(pool *redis.Pool, tag string, marsh
 	}
 }
 
-func (this *redisVolatileKeyValueStore) getStamp(val interface{}) *Stamp {
+func (drv *redisVolatileKeyValueStore) getStamp(val interface{}) *Stamp {
 	now := time.Now()
-	stmp := this.GetStamp(val)
-	stmp.StaleDate = now.Add(this.staleDur)
-	stmp.ExpiDate = now.Add(this.expiDur)
+	stmp := drv.GetStamp(val)
+	stmp.StaleDate = now.Add(drv.staleDur)
+	stmp.ExpiDate = now.Add(drv.expiDur)
 	return stmp
 }
 
-func (this *redisVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *redisVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	buff, err := redis.Bytes(func() (interface{}, error) {
 		// パニックでも解放するように defer で、使ったらすぐ解放するように無名関数で。
-		conn := this.pool.Get()
+		conn := drv.pool.Get()
 		defer conn.Close()
-		return conn.Do("GET", this.tag+key)
+		return conn.Do("GET", drv.tag+key)
 	}())
 	if err != nil {
 		if err == redis.ErrNil {
@@ -82,12 +82,12 @@ func (this *redisVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val inte
 		}
 	}
 
-	val, err = this.Unmarshal(buff)
+	val, err = drv.Unmarshal(buff)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
 
-	newCaStmp = this.getStamp(val)
+	newCaStmp = drv.getStamp(val)
 	if caStmp != nil && !caStmp.Older(newCaStmp) {
 		// 要求元のキャッシュより新しそうではなかった。
 		return nil, newCaStmp, nil

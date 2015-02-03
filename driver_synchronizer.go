@@ -21,20 +21,20 @@ type synchronizedRequest struct {
 const defChCap = 100
 
 func newSynchronizedDriver(hndls map[reflect.Type]func(interface{}, chan<- error)) *synchronizedDriver {
-	reg := &synchronizedDriver{
+	drv := &synchronizedDriver{
 		make(chan *synchronizedRequest, defChCap),
 	}
 
 	go func() {
 		for {
-			reg.serve(hndls)
+			drv.serve(hndls)
 		}
 	}()
 
-	return reg
+	return drv
 }
 
-func (reg *synchronizedDriver) serve(hndls map[reflect.Type]func(interface{}, chan<- error)) {
+func (drv *synchronizedDriver) serve(hndls map[reflect.Type]func(interface{}, chan<- error)) {
 	var errCh chan<- error
 	defer func() {
 		if rcv := recover(); rcv != nil {
@@ -49,7 +49,7 @@ func (reg *synchronizedDriver) serve(hndls map[reflect.Type]func(interface{}, ch
 		}
 	}()
 
-	req := <-reg.reqCh
+	req := <-drv.reqCh
 	errCh = req.errCh
 	hndl := hndls[reflect.TypeOf(req.req)]
 	if hndl != nil {

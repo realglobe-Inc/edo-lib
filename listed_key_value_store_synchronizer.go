@@ -60,11 +60,11 @@ func newSynchronizedListedKeyValueStore(base ListedKeyValueStore) *synchronizedL
 	}))
 }
 
-func (reg *synchronizedListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+func (drv *synchronizedListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
 	keysCh := make(chan map[string]bool, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&keysRequest{caStmp, keysCh, newCaStmpCh}, errCh}
+	drv.reqCh <- &synchronizedRequest{&keysRequest{caStmp, keysCh, newCaStmpCh}, errCh}
 	select {
 	case newCaStmp := <-newCaStmpCh:
 		return <-keysCh, newCaStmp, nil
@@ -73,11 +73,11 @@ func (reg *synchronizedListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string
 	}
 }
 
-func (reg *synchronizedListedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *synchronizedListedKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	valCh := make(chan interface{}, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&kvsGetRequest{key, caStmp, valCh, newCaStmpCh}, errCh}
+	drv.reqCh <- &synchronizedRequest{&kvsGetRequest{key, caStmp, valCh, newCaStmpCh}, errCh}
 	select {
 	case val := <-valCh:
 		return val, <-newCaStmpCh, nil
@@ -86,10 +86,10 @@ func (reg *synchronizedListedKeyValueStore) Get(key string, caStmp *Stamp) (val 
 	}
 }
 
-func (reg *synchronizedListedKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
+func (drv *synchronizedListedKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&kvsPutRequest{key, val, newCaStmpCh}, errCh}
+	drv.reqCh <- &synchronizedRequest{&kvsPutRequest{key, val, newCaStmpCh}, errCh}
 	select {
 	case stmp := <-newCaStmpCh:
 		return stmp, nil
@@ -98,8 +98,8 @@ func (reg *synchronizedListedKeyValueStore) Put(key string, val interface{}) (ne
 	}
 }
 
-func (reg *synchronizedListedKeyValueStore) Remove(key string) error {
+func (drv *synchronizedListedKeyValueStore) Remove(key string) error {
 	errCh := make(chan error, 1)
-	reg.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
+	drv.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh
 }

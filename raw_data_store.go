@@ -13,6 +13,6 @@ type listedRawDataStoreDummy struct {
 	RawDataStore
 }
 
-func (this *listedRawDataStoreDummy) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+func (drv *listedRawDataStoreDummy) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
 	panic("not implemented")
 }

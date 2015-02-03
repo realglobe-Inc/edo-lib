@@ -17,13 +17,13 @@ func TestCachingListedRawDataStoreStamp(t *testing.T) {
 func TestCachingListedRawDataStoreExpiration(t *testing.T) {
 	staleDur := 10 * time.Millisecond
 	expiDur := 50 * time.Millisecond
-	reg := newCachingListedRawDataStore(newMemoryListedRawDataStore(staleDur, expiDur))
+	drv := newCachingListedRawDataStore(newMemoryListedRawDataStore(staleDur, expiDur))
 
 	// 入れる。
-	if _, err := reg.Put(testKey, testData); err != nil {
+	if _, err := drv.Put(testKey, testData); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := reg.Put(testKey+"a", testData); err != nil {
+	if _, err := drv.Put(testKey+"a", testData); err != nil {
 		t.Fatal(err)
 	}
 
@@ -33,7 +33,7 @@ func TestCachingListedRawDataStoreExpiration(t *testing.T) {
 	var caKeys map[string]bool
 	var caKeysStmp *Stamp
 	for time.Now().Before(end) {
-		data, newCaStmp, err := reg.Get(testKey, caDataStmp)
+		data, newCaStmp, err := drv.Get(testKey, caDataStmp)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -45,7 +45,7 @@ func TestCachingListedRawDataStoreExpiration(t *testing.T) {
 			t.Error(caData)
 		}
 
-		keys, newCaStmp, err := reg.Keys(caKeysStmp)
+		keys, newCaStmp, err := drv.Keys(caKeysStmp)
 		if err != nil {
 			t.Fatal(err)
 		}

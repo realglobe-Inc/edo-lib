@@ -28,33 +28,33 @@ func newMongoDriver(url, db, coll string, indices []mgo.Index) *mongoDriver {
 	}
 }
 
-func (reg *mongoDriver) collection() (*mgo.Collection, error) {
-	sess, err := reg.session()
+func (drv *mongoDriver) collection() (*mgo.Collection, error) {
+	sess, err := drv.session()
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return sess.DB(reg.db).C(reg.coll), nil
+	return sess.DB(drv.db).C(drv.coll), nil
 }
 
-func (reg *mongoDriver) session() (*mgo.Session, error) {
-	reg.sessLock.Lock()
-	defer reg.sessLock.Unlock()
+func (drv *mongoDriver) session() (*mgo.Session, error) {
+	drv.sessLock.Lock()
+	defer drv.sessLock.Unlock()
 
-	if reg.sess != nil {
-		return reg.sess, nil
+	if drv.sess != nil {
+		return drv.sess, nil
 	}
 
-	sess, err := mgo.Dial(reg.url)
+	sess, err := mgo.Dial(drv.url)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	curIndices, err := sess.DB(reg.db).C(reg.coll).Indexes()
+	curIndices, err := sess.DB(drv.db).C(drv.coll).Indexes()
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	for _, idx := range reg.indices {
+	for _, idx := range drv.indices {
 		ok := true
 		for _, curIdx := range curIndices {
 			if reflect.DeepEqual(idx, curIdx) {
@@ -67,32 +67,32 @@ func (reg *mongoDriver) session() (*mgo.Session, error) {
 			continue
 		}
 
-		if err := sess.DB(reg.db).C(reg.coll).EnsureIndex(idx); err != nil {
+		if err := sess.DB(drv.db).C(drv.coll).EnsureIndex(idx); err != nil {
 			return nil, erro.Wrap(err)
 		}
 	}
 
-	reg.sess = sess
-	return reg.sess, nil
+	drv.sess = sess
+	return drv.sess, nil
 }
 
-// reg.sess が oldSess なら reg.sess を newSess に変えて true を返す。
+// drv.sess が oldSess なら drv.sess を newSess に変えて true を返す。
 // そうでなければ false を返す。
-func (reg *mongoDriver) replaceSession(newSess, oldSess *mgo.Session) bool {
-	reg.sessLock.Lock()
-	defer reg.sessLock.Unlock()
-	if reg.sess == oldSess {
-		reg.sess = newSess
+func (drv *mongoDriver) replaceSession(newSess, oldSess *mgo.Session) bool {
+	drv.sessLock.Lock()
+	defer drv.sessLock.Unlock()
+	if drv.sess == oldSess {
+		drv.sess = newSess
 		return true
 	} else {
 		return false
 	}
 }
 
-func (reg *mongoDriver) closeIfError() error {
-	reg.sessLock.Lock()
-	sess := reg.sess
-	reg.sessLock.Unlock()
+func (drv *mongoDriver) closeIfError() error {
+	drv.sessLock.Lock()
+	sess := drv.sess
+	drv.sessLock.Unlock()
 
 	if sess == nil {
 		return nil
@@ -103,7 +103,7 @@ func (reg *mongoDriver) closeIfError() error {
 		return nil
 	}
 
-	if reg.replaceSession(nil, sess) {
+	if drv.replaceSession(nil, sess) {
 		sess.Close()
 	}
 	return nil

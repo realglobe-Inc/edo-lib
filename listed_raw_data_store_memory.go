@@ -16,22 +16,22 @@ func newMemoryListedRawDataStore(staleDur, expiDur time.Duration) *memoryListedR
 	return (*memoryListedRawDataStore)(newMemoryListedKeyValueStore(staleDur, expiDur))
 }
 
-func (reg *memoryListedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
-	return ((*memoryListedKeyValueStore)(reg)).Keys(caStmp)
+func (drv *memoryListedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
+	return ((*memoryListedKeyValueStore)(drv)).Keys(caStmp)
 }
 
-func (reg *memoryListedRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {
-	val, newCaStmp, err := ((*memoryListedKeyValueStore)(reg)).Get(key, caStmp)
+func (drv *memoryListedRawDataStore) Get(key string, caStmp *Stamp) (data []byte, newCaStmp *Stamp, err error) {
+	val, newCaStmp, err := ((*memoryListedKeyValueStore)(drv)).Get(key, caStmp)
 	if val == nil {
 		return nil, newCaStmp, err
 	}
 	return val.([]byte), newCaStmp, nil
 }
 
-func (reg *memoryListedRawDataStore) Put(key string, data []byte) (*Stamp, error) {
-	return ((*memoryListedKeyValueStore)(reg)).Put(key, data)
+func (drv *memoryListedRawDataStore) Put(key string, data []byte) (*Stamp, error) {
+	return ((*memoryListedKeyValueStore)(drv)).Put(key, data)
 }
 
-func (reg *memoryListedRawDataStore) Remove(key string) error {
-	return ((*memoryListedKeyValueStore)(reg)).Remove(key)
+func (drv *memoryListedRawDataStore) Remove(key string) error {
+	return ((*memoryListedKeyValueStore)(drv)).Remove(key)
 }
