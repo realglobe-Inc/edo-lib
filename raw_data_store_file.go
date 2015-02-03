@@ -105,7 +105,6 @@ func (drv *fileRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 			return nil, erro.Wrap(err)
 		}
 	}
-
 	return drv.getStamp(fi), nil
 }
 
