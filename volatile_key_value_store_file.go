@@ -8,8 +8,8 @@ import (
 // TODO 今は手抜きで古いファイルを無視するだけ。どんどん溜まっていく。
 
 type fileVolatileKeyValueStore struct {
-	base    KeyValueStore
-	expires KeyValueStore
+	base KeyValueStore
+	exps KeyValueStore
 }
 
 // スレッドセーフ。
@@ -38,7 +38,7 @@ func newFileVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey fu
 
 func (drv *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	var expiDate time.Time
-	if val, newCaStmp, err := drv.expires.Get(key, nil); err != nil {
+	if val, newCaStmp, err := drv.exps.Get(key, nil); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		return nil, nil, nil
@@ -47,7 +47,7 @@ func (drv *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interf
 	}
 
 	if time.Now().After(expiDate) {
-		drv.expires.Remove(key)
+		drv.exps.Remove(key)
 		drv.base.Remove(key)
 		return nil, nil, nil
 	}
@@ -69,7 +69,7 @@ func (drv *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interf
 }
 
 func (drv *fileVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
-	if _, err := drv.expires.Put(key, expiDate); err != nil {
+	if _, err := drv.exps.Put(key, expiDate); err != nil {
 		return nil, erro.Wrap(err)
 	}
 
@@ -88,7 +88,7 @@ func (drv *fileVolatileKeyValueStore) Put(key string, val interface{}, expiDate 
 }
 
 func (drv *fileVolatileKeyValueStore) Remove(key string) error {
-	if err := drv.expires.Remove(key); err != nil {
+	if err := drv.exps.Remove(key); err != nil {
 		return erro.Wrap(err)
 	}
 	return drv.base.Remove(key)
