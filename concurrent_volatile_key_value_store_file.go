@@ -42,7 +42,7 @@ type fileConcurrentVolatileKeyValueStore struct {
 
 // スレッドセーフ。
 func NewFileConcurrentVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) ConcurrentVolatileKeyValueStore {
-	return newSynchronizedVolatileKeyValueStore(newCachingConcurrentVolatileKeyValueStore(newFileConcurrentVolatileKeyValueStore(path, expiPath, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
+	return newSynchronizedConcurrentVolatileKeyValueStore(newCachingConcurrentVolatileKeyValueStore(newFileConcurrentVolatileKeyValueStore(path, expiPath, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
 }
 
 // スレッドセーフではない。

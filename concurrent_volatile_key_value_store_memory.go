@@ -25,7 +25,7 @@ type memoryConcurrentVolatileKeyValueStore struct {
 
 // スレッドセーフ。
 func NewMemoryConcurrentVolatileKeyValueStore(staleDur, expiDur time.Duration) ConcurrentVolatileKeyValueStore {
-	return newSynchronizedVolatileKeyValueStore(newMemoryConcurrentVolatileKeyValueStore(staleDur, expiDur))
+	return newSynchronizedConcurrentVolatileKeyValueStore(newMemoryConcurrentVolatileKeyValueStore(staleDur, expiDur))
 }
 
 // スレッドセーフではない。

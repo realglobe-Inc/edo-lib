@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type synchronizedVolatileKeyValueStore synchronizedDriver
+type synchronizedConcurrentVolatileKeyValueStore synchronizedDriver
 
 type volatilePutRequest struct {
 	key      string
@@ -50,8 +50,8 @@ type putIfEnteredRequest struct {
 }
 
 // もちろん、スレッドセーフ。
-func newSynchronizedVolatileKeyValueStore(base ConcurrentVolatileKeyValueStore) *synchronizedVolatileKeyValueStore {
-	return (*synchronizedVolatileKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+func newSynchronizedConcurrentVolatileKeyValueStore(base ConcurrentVolatileKeyValueStore) *synchronizedConcurrentVolatileKeyValueStore {
+	return (*synchronizedConcurrentVolatileKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&kvsGetRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*kvsGetRequest)
 			val, newCaStmp, err := base.Get(req.key, req.caStmp)
@@ -111,7 +111,7 @@ func newSynchronizedVolatileKeyValueStore(base ConcurrentVolatileKeyValueStore) 
 	}))
 }
 
-func (drv *synchronizedVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *synchronizedConcurrentVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	valCh := make(chan interface{}, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
@@ -124,7 +124,7 @@ func (drv *synchronizedVolatileKeyValueStore) Get(key string, caStmp *Stamp) (va
 	}
 }
 
-func (drv *synchronizedVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (drv *synchronizedConcurrentVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&volatilePutRequest{key, val, expiDate, newCaStmpCh}, errCh}
@@ -136,13 +136,13 @@ func (drv *synchronizedVolatileKeyValueStore) Put(key string, val interface{}, e
 	}
 }
 
-func (drv *synchronizedVolatileKeyValueStore) Remove(key string) error {
+func (drv *synchronizedConcurrentVolatileKeyValueStore) Remove(key string) error {
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh
 }
 
-func (drv *synchronizedVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
+func (drv *synchronizedConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
 	eValCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&entryRequest{eKey, eValCh}, errCh}
@@ -154,13 +154,13 @@ func (drv *synchronizedVolatileKeyValueStore) Entry(eKey string) (eVal string, e
 	}
 }
 
-func (drv *synchronizedVolatileKeyValueStore) SetEntry(eKey, eVal string, eExpiDate time.Time) error {
+func (drv *synchronizedConcurrentVolatileKeyValueStore) SetEntry(eKey, eVal string, eExpiDate time.Time) error {
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&setEntryRequest{eKey, eVal, eExpiDate}, errCh}
 	return <-errCh
 }
 
-func (drv *synchronizedVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *synchronizedConcurrentVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
 	valCh := make(chan interface{}, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
@@ -173,7 +173,7 @@ func (drv *synchronizedVolatileKeyValueStore) GetAndSetEntry(key string, caStmp 
 	}
 }
 
-func (drv *synchronizedVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
+func (drv *synchronizedConcurrentVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
 	enteredCh := make(chan bool, 1)
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)

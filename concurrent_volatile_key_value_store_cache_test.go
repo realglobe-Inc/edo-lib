@@ -13,5 +13,5 @@ func TestCachingConcurrentVolatileKeyValueStore(t *testing.T) {
 }
 
 func TestCachingConcurrentVolatileKeyValueStoreConsistency(t *testing.T) {
-	testConcurrentVolatileKeyValueStoreConsistency(t, newSynchronizedVolatileKeyValueStore(newCachingConcurrentVolatileKeyValueStore(newMemoryConcurrentVolatileKeyValueStore(testStaleDur, testCaExpiDur))))
+	testConcurrentVolatileKeyValueStoreConsistency(t, newSynchronizedConcurrentVolatileKeyValueStore(newCachingConcurrentVolatileKeyValueStore(newMemoryConcurrentVolatileKeyValueStore(testStaleDur, testCaExpiDur))))
 }
