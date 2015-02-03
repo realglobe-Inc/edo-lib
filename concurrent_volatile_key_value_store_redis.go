@@ -20,7 +20,7 @@ func NewRedisPool(addr string, connNum int, idlDur time.Duration) *redis.Pool {
 	}
 }
 
-type redisVolatileKeyValueStore struct {
+type redisConcurrentVolatileKeyValueStore struct {
 	pool *redis.Pool
 
 	tag string
@@ -39,7 +39,7 @@ func NewRedisConcurrentVolatileKeyValueStore(pool *redis.Pool, tag string, marsh
 }
 
 func newRedisConcurrentVolatileKeyValueStore(pool *redis.Pool, tag string, marshal Marshal, unmarshal Unmarshal,
-	getStmp GetStamp, staleDur, expiDur time.Duration) *redisVolatileKeyValueStore {
+	getStmp GetStamp, staleDur, expiDur time.Duration) *redisConcurrentVolatileKeyValueStore {
 	if getStmp == nil {
 		getStmp = func(val interface{}) *Stamp {
 			m, _ := val.(map[string]interface{})
@@ -48,7 +48,7 @@ func newRedisConcurrentVolatileKeyValueStore(pool *redis.Pool, tag string, marsh
 			return &Stamp{Date: date, Digest: dig}
 		}
 	}
-	return &redisVolatileKeyValueStore{
+	return &redisConcurrentVolatileKeyValueStore{
 		pool:      pool,
 		tag:       tag,
 		Marshal:   marshal,
@@ -59,7 +59,7 @@ func newRedisConcurrentVolatileKeyValueStore(pool *redis.Pool, tag string, marsh
 	}
 }
 
-func (drv *redisVolatileKeyValueStore) getStamp(val interface{}) *Stamp {
+func (drv *redisConcurrentVolatileKeyValueStore) getStamp(val interface{}) *Stamp {
 	now := time.Now()
 	stmp := drv.GetStamp(val)
 	stmp.StaleDate = now.Add(drv.staleDur)
@@ -67,7 +67,7 @@ func (drv *redisVolatileKeyValueStore) getStamp(val interface{}) *Stamp {
 	return stmp
 }
 
-func (drv *redisVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *redisConcurrentVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	buff, err := redis.Bytes(func() (interface{}, error) {
 		// パニックでも解放するように defer で、使ったらすぐ解放するように無名関数で。
 		conn := drv.pool.Get()
@@ -97,38 +97,38 @@ func (drv *redisVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val inter
 	return val, newCaStmp, nil
 }
 
-func (this *redisVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
-	buff, err := this.Marshal(val)
+func (drv *redisConcurrentVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+	buff, err := drv.Marshal(val)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	newCaStmp = this.getStamp(val)
+	newCaStmp = drv.getStamp(val)
 
 	milExpiDur := int64(expiDate.Sub(time.Now()) / time.Millisecond)
 	if milExpiDur <= 0 {
 		return nil, nil
 	}
 
-	conn := this.pool.Get()
+	conn := drv.pool.Get()
 	defer conn.Close()
-	if _, err := conn.Do("SET", this.tag+key, buff, "PX", milExpiDur); err != nil {
+	if _, err := conn.Do("SET", drv.tag+key, buff, "PX", milExpiDur); err != nil {
 		return nil, erro.Wrap(err)
 	}
 	return newCaStmp, nil
 }
 
-func (this *redisVolatileKeyValueStore) Remove(key string) error {
-	conn := this.pool.Get()
+func (drv *redisConcurrentVolatileKeyValueStore) Remove(key string) error {
+	conn := drv.pool.Get()
 	defer conn.Close()
 
-	if _, err := conn.Do("DEL", this.tag+key); err != nil {
+	if _, err := conn.Do("DEL", drv.tag+key); err != nil {
 		return erro.Wrap(err)
 	}
 	return nil
 }
 
-func (drv *redisVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
+func (drv *redisConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
 	eVal, err = redis.String(func() (interface{}, error) {
 		// パニックでも解放するように defer で、使ったらすぐ解放するように無名関数で。
 		conn := drv.pool.Get()
@@ -145,7 +145,7 @@ func (drv *redisVolatileKeyValueStore) Entry(eKey string) (eVal string, err erro
 	return eVal, nil
 }
 
-func (drv *redisVolatileKeyValueStore) SetEntry(eKey, eVal string, expiDate time.Time) error {
+func (drv *redisConcurrentVolatileKeyValueStore) SetEntry(eKey, eVal string, expiDate time.Time) error {
 	milExpiDur := int64(expiDate.Sub(time.Now()) / time.Millisecond)
 	if milExpiDur <= 0 {
 		return nil
@@ -159,7 +159,7 @@ func (drv *redisVolatileKeyValueStore) SetEntry(eKey, eVal string, expiDate time
 	return nil
 }
 
-func (drv *redisVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *redisConcurrentVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
 	const script = `redis.call("set",KEYS[1],ARGV[1],"PX",ARGV[2])
 return redis.call("get",KEYS[2])`
 
@@ -194,7 +194,7 @@ return redis.call("get",KEYS[2])`
 	return val, newCaStmp, nil
 }
 
-func (drv *redisVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
+func (drv *redisConcurrentVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
 	const script = `if redis.call("get",KEYS[1]) ~= ARGV[1] then
 return 0
 end
