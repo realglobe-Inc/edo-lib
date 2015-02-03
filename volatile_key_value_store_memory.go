@@ -24,7 +24,7 @@ type memoryVolatileKeyValueStore struct {
 }
 
 // スレッドセーフ。
-func NewMemoryVolatileKeyValueStore(staleDur, expiDur time.Duration) VolatileKeyValueStore {
+func NewMemoryVolatileKeyValueStore(staleDur, expiDur time.Duration) ConcurrentVolatileKeyValueStore {
 	return newSynchronizedVolatileKeyValueStore(newMemoryVolatileKeyValueStore(staleDur, expiDur))
 }
 
