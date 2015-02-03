@@ -54,21 +54,21 @@ func newSynchronizedVolatileKeyValueStore(base ConcurrentVolatileKeyValueStore) 
 	return (*synchronizedVolatileKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&kvsGetRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*kvsGetRequest)
-			val, stmp, err := base.Get(req.key, req.caStmp)
+			val, newCaStmp, err := base.Get(req.key, req.caStmp)
 			if err != nil {
 				errCh <- err
 			} else {
 				req.valCh <- val
-				req.newCaStmpCh <- stmp
+				req.newCaStmpCh <- newCaStmp
 			}
 		},
 		reflect.TypeOf(&volatilePutRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*volatilePutRequest)
-			stmp, err := base.Put(req.key, req.val, req.expiDate)
+			newCaStmp, err := base.Put(req.key, req.val, req.expiDate)
 			if err != nil {
 				errCh <- err
 			} else {
-				req.newCaStmpCh <- stmp
+				req.newCaStmpCh <- newCaStmp
 			}
 		},
 		reflect.TypeOf(&removeRequest{}): func(r interface{}, errCh chan<- error) {
@@ -117,8 +117,8 @@ func (drv *synchronizedVolatileKeyValueStore) Get(key string, caStmp *Stamp) (va
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&kvsGetRequest{key, caStmp, valCh, newCaStmpCh}, errCh}
 	select {
-	case val := <-valCh:
-		return val, <-newCaStmpCh, nil
+	case newCaStmp := <-newCaStmpCh:
+		return <-valCh, newCaStmp, nil
 	case err := <-errCh:
 		return nil, nil, err
 	}
@@ -129,8 +129,8 @@ func (drv *synchronizedVolatileKeyValueStore) Put(key string, val interface{}, e
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&volatilePutRequest{key, val, expiDate, newCaStmpCh}, errCh}
 	select {
-	case stmp := <-newCaStmpCh:
-		return stmp, nil
+	case newCaStmp := <-newCaStmpCh:
+		return newCaStmp, nil
 	case err := <-errCh:
 		return nil, err
 	}
