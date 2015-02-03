@@ -7,7 +7,7 @@ import (
 
 type synchronizedVolatileKeyValueStore synchronizedDriver
 
-type tlPutRequest struct {
+type volatilePutRequest struct {
 	key      string
 	val      interface{}
 	expiDate time.Time
@@ -28,8 +28,8 @@ func newSynchronizedVolatileKeyValueStore(base VolatileKeyValueStore) *synchroni
 				req.newCaStmpCh <- stmp
 			}
 		},
-		reflect.TypeOf(&tlPutRequest{}): func(r interface{}, errCh chan<- error) {
-			req := r.(*tlPutRequest)
+		reflect.TypeOf(&volatilePutRequest{}): func(r interface{}, errCh chan<- error) {
+			req := r.(*volatilePutRequest)
 			stmp, err := base.Put(req.key, req.val, req.expiDate)
 			if err != nil {
 				errCh <- err
@@ -60,7 +60,7 @@ func (drv *synchronizedVolatileKeyValueStore) Get(key string, caStmp *Stamp) (va
 func (drv *synchronizedVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	newCaStmpCh := make(chan *Stamp, 1)
 	errCh := make(chan error, 1)
-	drv.reqCh <- &synchronizedRequest{&tlPutRequest{key, val, expiDate, newCaStmpCh}, errCh}
+	drv.reqCh <- &synchronizedRequest{&volatilePutRequest{key, val, expiDate, newCaStmpCh}, errCh}
 	select {
 	case stmp := <-newCaStmpCh:
 		return stmp, nil
