@@ -137,7 +137,7 @@ func (drv *memoryVolatileKeyValueStore) PutIfEntered(key string, val interface{}
 
 	newCaStmp, err = drv.Put(key, val, expiDate)
 	if err != nil {
-		return false, nil, nil
+		return false, nil, erro.Wrap(err)
 	}
 	return true, newCaStmp, nil
 }

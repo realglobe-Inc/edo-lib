@@ -1,15 +1,43 @@
 package driver
 
 import (
+	"encoding/json"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"time"
 )
+
+func dateMarshal(val interface{}) ([]byte, error) {
+	return []byte(val.(time.Time).Format(time.RFC3339Nano)), nil
+}
+
+func dateUnmarshal(data []byte) (interface{}, error) {
+	date, err := time.Parse(time.RFC3339Nano, string(data))
+	if err != nil {
+		return time.Time{}, erro.Wrap(err)
+	}
+	return date, nil
+}
+
+type fileEntry struct {
+	Val string    `json:"value"`
+	Exp time.Time `json:"expires"`
+}
+
+func fileEntryUnmarshal(data []byte) (interface{}, error) {
+	var ent fileEntry
+	if err := json.Unmarshal(data, &ent); err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return &ent, nil
+}
 
 // TODO 今は手抜きで古いファイルを無視するだけ。どんどん溜まっていく。
 
 type fileVolatileKeyValueStore struct {
 	base KeyValueStore
 	exps KeyValueStore
+
+	ents KeyValueStore
 }
 
 // スレッドセーフ。
@@ -20,30 +48,20 @@ func NewFileVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey fu
 // スレッドセーフではない。
 func newFileVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileVolatileKeyValueStore {
 	return &fileVolatileKeyValueStore{
-		NewFileListedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
-		NewFileListedKeyValueStore(expiPath, keyToPath, pathToKey,
-			func(val interface{}) ([]byte, error) {
-				return []byte(val.(time.Time).Format(time.RFC3339Nano)), nil
-			},
-			func(data []byte) (interface{}, error) {
-				date, err := time.Parse(time.RFC3339Nano, string(data))
-				if err != nil {
-					return time.Time{}, erro.Wrap(err)
-				}
-				return date, nil
-			},
-			staleDur, expiDur),
+		newFileListedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
+		newFileListedKeyValueStore(expiPath, keyToPath, pathToKey, dateMarshal, dateUnmarshal, staleDur, expiDur),
+		newFileListedKeyValueStore(expiPath, keyToPath, pathToKey, json.Marshal, fileEntryUnmarshal, staleDur, expiDur),
 	}
 }
 
 func (drv *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	var expiDate time.Time
-	if val, newCaStmp, err := drv.exps.Get(key, nil); err != nil {
+	if exp, newCaStmp, err := drv.exps.Get(key, nil); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		return nil, nil, nil
 	} else {
-		expiDate = val.(time.Time)
+		expiDate = exp.(time.Time)
 	}
 
 	if time.Now().After(expiDate) {
@@ -92,4 +110,55 @@ func (drv *fileVolatileKeyValueStore) Remove(key string) error {
 		return erro.Wrap(err)
 	}
 	return drv.base.Remove(key)
+}
+
+func (drv *fileVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
+	v, _, err := drv.ents.Get(eKey, nil)
+	if err != nil {
+		return "", erro.Wrap(err)
+	}
+	ent, _ := v.(*fileEntry)
+
+	if ent == nil {
+		return "", nil
+	} else if time.Now().After(ent.Exp) {
+		drv.ents.Remove(eKey)
+		return "", nil
+	}
+	return ent.Val, nil
+}
+
+func (drv *fileVolatileKeyValueStore) SetEntry(eKey, eVal string, eExpiDate time.Time) error {
+	if _, err := drv.ents.Put(eKey, &fileEntry{eVal, eExpiDate}); err != nil {
+		return erro.Wrap(err)
+	}
+	return nil
+}
+
+func (drv *fileVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
+	val, newCaStmp, err = drv.Get(key, caStmp)
+	if err != nil {
+		return nil, nil, erro.Wrap(err)
+	}
+
+	if err := drv.SetEntry(eKey, eVal, eExpiDate); err != nil {
+		return nil, nil, erro.Wrap(err)
+	}
+
+	return val, newCaStmp, nil
+}
+
+func (drv *fileVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
+	eV, err := drv.Entry(eKey)
+	if err != nil {
+		return false, nil, erro.Wrap(err)
+	} else if eVal != eV {
+		return false, nil, nil
+	}
+
+	newCaStmp, err = drv.Put(key, val, expiDate)
+	if err != nil {
+		return false, nil, erro.Wrap(err)
+	}
+	return true, newCaStmp, nil
 }
