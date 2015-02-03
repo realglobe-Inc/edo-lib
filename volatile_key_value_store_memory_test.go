@@ -5,5 +5,13 @@ import (
 )
 
 func TestMemoryVolatileKeyValueStore(t *testing.T) {
-	testVolatileKeyValueStore(t, newMemoryVolatileKeyValueStore(0, 0))
+	testVolatileKeyValueStore(t, newMemoryVolatileKeyValueStore(testStaleDur, testCaExpiDur))
+}
+
+func TestMemoryConcurrentVolatileKeyValueStore(t *testing.T) {
+	testConcurrentVolatileKeyValueStore(t, newMemoryVolatileKeyValueStore(testStaleDur, testCaExpiDur))
+}
+
+func TestMemoryConcurrentVolatileKeyValueStoreConsistency(t *testing.T) {
+	testConcurrentVolatileKeyValueStoreConsistency(t, NewMemoryVolatileKeyValueStore(testStaleDur, testCaExpiDur))
 }
