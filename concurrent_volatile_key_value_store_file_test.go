@@ -29,7 +29,7 @@ func TestFileVolatileKeyValueStore(t *testing.T) {
 	}
 	defer os.RemoveAll(expiPath)
 
-	testVolatileKeyValueStore(t, newFileVolatileKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, testStaleDur, testCaExpiDur))
+	testVolatileKeyValueStore(t, newFileConcurrentVolatileKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, testStaleDur, testCaExpiDur))
 }
 
 func TestFileConcurrentVolatileKeyValueStore(t *testing.T) {
@@ -44,7 +44,7 @@ func TestFileConcurrentVolatileKeyValueStore(t *testing.T) {
 	}
 	defer os.RemoveAll(expiPath)
 
-	testConcurrentVolatileKeyValueStore(t, newFileVolatileKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, testStaleDur, testCaExpiDur))
+	testConcurrentVolatileKeyValueStore(t, newFileConcurrentVolatileKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, testStaleDur, testCaExpiDur))
 }
 
 func TestFileConcurrentVolatileKeyValueStoreConsistency(t *testing.T) {
@@ -63,5 +63,5 @@ func TestFileConcurrentVolatileKeyValueStoreConsistency(t *testing.T) {
 	}
 	defer os.RemoveAll(expiPath)
 
-	testConcurrentVolatileKeyValueStoreConsistency(t, NewFileVolatileKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, testStaleDur, testCaExpiDur))
+	testConcurrentVolatileKeyValueStoreConsistency(t, NewFileConcurrentVolatileKeyValueStore(path, expiPath, nil, nil, json.Marshal, jsonUnmarshal, testStaleDur, testCaExpiDur))
 }

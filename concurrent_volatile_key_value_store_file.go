@@ -33,7 +33,7 @@ func fileEntryUnmarshal(data []byte) (interface{}, error) {
 
 // TODO 今は手抜きで古いファイルを無視するだけ。どんどん溜まっていく。
 
-type fileVolatileKeyValueStore struct {
+type fileConcurrentVolatileKeyValueStore struct {
 	base KeyValueStore
 	exps KeyValueStore
 
@@ -41,20 +41,20 @@ type fileVolatileKeyValueStore struct {
 }
 
 // スレッドセーフ。
-func NewFileVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) ConcurrentVolatileKeyValueStore {
-	return newSynchronizedVolatileKeyValueStore(newCachingVolatileKeyValueStore(newFileVolatileKeyValueStore(path, expiPath, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
+func NewFileConcurrentVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) ConcurrentVolatileKeyValueStore {
+	return newSynchronizedVolatileKeyValueStore(newCachingVolatileKeyValueStore(newFileConcurrentVolatileKeyValueStore(path, expiPath, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur)))
 }
 
 // スレッドセーフではない。
-func newFileVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileVolatileKeyValueStore {
-	return &fileVolatileKeyValueStore{
+func newFileConcurrentVolatileKeyValueStore(path, expiPath string, keyToPath, pathToKey func(string) string, marshal Marshal, unmarshal Unmarshal, staleDur, expiDur time.Duration) *fileConcurrentVolatileKeyValueStore {
+	return &fileConcurrentVolatileKeyValueStore{
 		newFileListedKeyValueStore(path, keyToPath, pathToKey, marshal, unmarshal, staleDur, expiDur),
 		newFileListedKeyValueStore(expiPath, keyToPath, pathToKey, dateMarshal, dateUnmarshal, staleDur, expiDur),
 		newFileListedKeyValueStore(expiPath, keyToPath, pathToKey, json.Marshal, fileEntryUnmarshal, staleDur, expiDur),
 	}
 }
 
-func (drv *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *fileConcurrentVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	var expiDate time.Time
 	if exp, newCaStmp, err := drv.exps.Get(key, nil); err != nil {
 		return nil, nil, erro.Wrap(err)
@@ -86,7 +86,7 @@ func (drv *fileVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interf
 	return val, newCaStmp, nil
 }
 
-func (drv *fileVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
+func (drv *fileConcurrentVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (newCaStmp *Stamp, err error) {
 	if _, err := drv.exps.Put(key, expiDate); err != nil {
 		return nil, erro.Wrap(err)
 	}
@@ -105,14 +105,14 @@ func (drv *fileVolatileKeyValueStore) Put(key string, val interface{}, expiDate 
 	return newCaStmp, nil
 }
 
-func (drv *fileVolatileKeyValueStore) Remove(key string) error {
+func (drv *fileConcurrentVolatileKeyValueStore) Remove(key string) error {
 	if err := drv.exps.Remove(key); err != nil {
 		return erro.Wrap(err)
 	}
 	return drv.base.Remove(key)
 }
 
-func (drv *fileVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
+func (drv *fileConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
 	v, _, err := drv.ents.Get(eKey, nil)
 	if err != nil {
 		return "", erro.Wrap(err)
@@ -128,14 +128,14 @@ func (drv *fileVolatileKeyValueStore) Entry(eKey string) (eVal string, err error
 	return ent.Val, nil
 }
 
-func (drv *fileVolatileKeyValueStore) SetEntry(eKey, eVal string, eExpiDate time.Time) error {
+func (drv *fileConcurrentVolatileKeyValueStore) SetEntry(eKey, eVal string, eExpiDate time.Time) error {
 	if _, err := drv.ents.Put(eKey, &fileEntry{eVal, eExpiDate}); err != nil {
 		return erro.Wrap(err)
 	}
 	return nil
 }
 
-func (drv *fileVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *fileConcurrentVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
 	val, newCaStmp, err = drv.Get(key, caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
@@ -148,7 +148,7 @@ func (drv *fileVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, 
 	return val, newCaStmp, nil
 }
 
-func (drv *fileVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
+func (drv *fileConcurrentVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
 	eV, err := drv.Entry(eKey)
 	if err != nil {
 		return false, nil, erro.Wrap(err)
