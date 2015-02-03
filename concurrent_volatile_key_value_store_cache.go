@@ -6,20 +6,20 @@ import (
 	"time"
 )
 
-type cachingVolatileKeyValueStore struct {
+type cachingConcurrentVolatileKeyValueStore struct {
 	base  ConcurrentVolatileKeyValueStore
 	cache util.Cache
 }
 
 // スレッドセーフではない。
-func newCachingVolatileKeyValueStore(base ConcurrentVolatileKeyValueStore) *cachingVolatileKeyValueStore {
-	return &cachingVolatileKeyValueStore{
+func newCachingConcurrentVolatileKeyValueStore(base ConcurrentVolatileKeyValueStore) *cachingConcurrentVolatileKeyValueStore {
+	return &cachingConcurrentVolatileKeyValueStore{
 		base:  base,
 		cache: util.NewCache(stampExpirationDateLess),
 	}
 }
 
-func (drv *cachingVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *cachingConcurrentVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
 	now := time.Now()
 
 	// 古いキャッシュの削除。
@@ -77,7 +77,7 @@ func (drv *cachingVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val int
 	}
 }
 
-func (drv *cachingVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (*Stamp, error) {
+func (drv *cachingConcurrentVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (*Stamp, error) {
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
 	drv.cache.CleanLower(cleanThres)
@@ -91,7 +91,7 @@ func (drv *cachingVolatileKeyValueStore) Put(key string, val interface{}, expiDa
 	}
 }
 
-func (drv *cachingVolatileKeyValueStore) Remove(key string) error {
+func (drv *cachingConcurrentVolatileKeyValueStore) Remove(key string) error {
 	drv.cache.Update(key, nil)
 
 	// 古いキャッシュの削除。
@@ -101,15 +101,15 @@ func (drv *cachingVolatileKeyValueStore) Remove(key string) error {
 	return drv.base.Remove(key)
 }
 
-func (drv *cachingVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
+func (drv *cachingConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
 	return drv.base.Entry(eKey)
 }
 
-func (drv *cachingVolatileKeyValueStore) SetEntry(eKey, eVal string, eExpiDate time.Time) error {
+func (drv *cachingConcurrentVolatileKeyValueStore) SetEntry(eKey, eVal string, eExpiDate time.Time) error {
 	return drv.SetEntry(eKey, eVal, eExpiDate)
 }
 
-func (drv *cachingVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
+func (drv *cachingConcurrentVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stamp, eKey, eVal string, eExpiDate time.Time) (val interface{}, newCaStmp *Stamp, err error) {
 	val, newCaStmp, err = drv.Get(key, caStmp)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
@@ -122,7 +122,7 @@ func (drv *cachingVolatileKeyValueStore) GetAndSetEntry(key string, caStmp *Stam
 	return val, newCaStmp, nil
 }
 
-func (drv *cachingVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
+func (drv *cachingConcurrentVolatileKeyValueStore) PutIfEntered(key string, val interface{}, expiDate time.Time, eKey, eVal string) (entered bool, newCaStmp *Stamp, err error) {
 	eV, err := drv.base.Entry(eKey)
 	if err != nil {
 		return false, nil, erro.Wrap(err)
