@@ -8,6 +8,11 @@ import (
 )
 
 const (
+	testStaleDur  = 0
+	testCaExpiDur = 0
+)
+
+const (
 	testLabel = "edo-test"
 	testKey   = "test-key"
 )
