@@ -19,6 +19,14 @@ func NewStringSet(m map[string]bool) StringSet {
 	return StringSet(s)
 }
 
+func StringSetFromSlice(l []string) StringSet {
+	s := map[string]bool{}
+	for _, elem := range l {
+		s[elem] = true
+	}
+	return StringSet(s)
+}
+
 func (this StringSet) MarshalJSON() ([]byte, error) {
 	a := []string{}
 	for elem, ok := range this {
