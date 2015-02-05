@@ -29,3 +29,26 @@ func TestStringSet(t *testing.T) {
 		t.Error(b)
 	}
 }
+
+func TestMakeStringSet(t *testing.T) {
+	m := map[string]bool{
+		"a": true,
+		"b": true,
+		"c": true,
+	}
+
+	s1 := NewStringSet(m)
+	if !reflect.DeepEqual(map[string]bool(s1), m) {
+		t.Error(s1, m)
+	}
+
+	l := []string{}
+	for elem := range m {
+		l = append(l, elem)
+	}
+	s2 := StringSetFromSlice(l)
+
+	if !reflect.DeepEqual(map[string]bool(s2), m) {
+		t.Error(s2, m)
+	}
+}
