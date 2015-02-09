@@ -1,25 +1,25 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/edo/util"
+	"github.com/realglobe-Inc/edo/util/cache"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"time"
 )
 
 // キャッシュする。
 type cachingListedRawDataStore struct {
-	base  ListedRawDataStore
-	cache util.Cache
+	base ListedRawDataStore
+	cac  cache.Cache
 
-	keyCache util.Cache
+	keyCac cache.Cache
 }
 
 // スレッドセーフではない。
 func newCachingListedRawDataStore(base ListedRawDataStore) *cachingListedRawDataStore {
 	return &cachingListedRawDataStore{
-		base:     base,
-		cache:    util.NewCache(stampExpirationDateLess),
-		keyCache: util.NewCache(stampExpirationDateLess),
+		base:   base,
+		cac:    cache.New(stampExpirationDateLess),
+		keyCac: cache.New(stampExpirationDateLess),
 	}
 }
 
@@ -28,12 +28,12 @@ func (drv *cachingListedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool,
 
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: now}
-	drv.cache.CleanLower(cleanThres)
-	drv.keyCache.CleanLower(cleanThres)
+	drv.cac.CleanLower(cleanThres)
+	drv.keyCac.CleanLower(cleanThres)
 
 	var buffKeys map[string]bool
 	var buffStmp *Stamp
-	val, prio := drv.keyCache.Get("")
+	val, prio := drv.keyCac.Get("")
 	if prio != nil {
 		// キャッシュしてた。
 		buffKeys = val.(map[string]bool)
@@ -62,15 +62,15 @@ func (drv *cachingListedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool,
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		// 1 つも無い。
-		drv.keyCache.Update("", nil)
+		drv.keyCac.Update("", nil)
 		return nil, nil, nil
 	} else if keys == nil {
 		// キャッシュと同じ。
-		drv.keyCache.Update("", newCaStmp)
+		drv.keyCac.Update("", newCaStmp)
 		buffStmp = newCaStmp
 	} else {
 		// あった、または、新しくなってた。
-		drv.keyCache.Put("", keys, newCaStmp)
+		drv.keyCac.Put("", keys, newCaStmp)
 		buffKeys = keys
 		buffStmp = newCaStmp
 	}
@@ -93,12 +93,12 @@ func (drv *cachingListedRawDataStore) Get(key string, caStmp *Stamp) (data []byt
 
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: now}
-	drv.cache.CleanLower(cleanThres)
-	drv.keyCache.CleanLower(cleanThres)
+	drv.cac.CleanLower(cleanThres)
+	drv.keyCac.CleanLower(cleanThres)
 
 	var buffData []byte
 	var buffStmp *Stamp
-	val, prio := drv.cache.Get(key)
+	val, prio := drv.cac.Get(key)
 	if prio != nil {
 		// キャッシュしてた。
 		buffData = val.([]byte)
@@ -125,21 +125,21 @@ func (drv *cachingListedRawDataStore) Get(key string, caStmp *Stamp) (data []byt
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		// 無い。
-		drv.cache.Update(key, nil)
+		drv.cac.Update(key, nil)
 		// キー集合キャッシュの更新。
-		if v, _ := drv.keyCache.Get(""); v != nil {
+		if v, _ := drv.keyCac.Get(""); v != nil {
 			delete(v.(map[string]bool), key)
 		}
 		return nil, nil, nil
 	} else if data == nil {
 		// キャッシュと同じ。
-		drv.cache.Update(key, newCaStmp)
+		drv.cac.Update(key, newCaStmp)
 		buffStmp = newCaStmp
 	} else {
 		// あった、または、新しくなってた。
-		drv.cache.Put(key, data, newCaStmp)
+		drv.cac.Put(key, data, newCaStmp)
 		// キー集合キャッシュの更新。
-		if v, _ := drv.keyCache.Get(""); v != nil {
+		if v, _ := drv.keyCac.Get(""); v != nil {
 			v.(map[string]bool)[key] = true
 		}
 		buffData = data
@@ -158,15 +158,15 @@ func (drv *cachingListedRawDataStore) Get(key string, caStmp *Stamp) (data []byt
 func (drv *cachingListedRawDataStore) Put(key string, data []byte) (*Stamp, error) {
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
-	drv.cache.CleanLower(cleanThres)
-	drv.keyCache.CleanLower(cleanThres)
+	drv.cac.CleanLower(cleanThres)
+	drv.keyCac.CleanLower(cleanThres)
 
 	if newCaStmp, err := drv.base.Put(key, data); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		// キャッシュの更新。
-		drv.cache.Put(key, data, newCaStmp)
-		if v, _ := drv.keyCache.Get(""); v != nil {
+		drv.cac.Put(key, data, newCaStmp)
+		if v, _ := drv.keyCac.Get(""); v != nil {
 			v.(map[string]bool)[key] = true
 		}
 		return newCaStmp, nil
@@ -174,15 +174,15 @@ func (drv *cachingListedRawDataStore) Put(key string, data []byte) (*Stamp, erro
 }
 
 func (drv *cachingListedRawDataStore) Remove(key string) error {
-	drv.cache.Update(key, nil)
+	drv.cac.Update(key, nil)
 
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
-	drv.cache.CleanLower(cleanThres)
-	drv.keyCache.CleanLower(cleanThres)
+	drv.cac.CleanLower(cleanThres)
+	drv.keyCac.CleanLower(cleanThres)
 
 	// キャッシュの更新。
-	if v, _ := drv.keyCache.Get(""); v != nil {
+	if v, _ := drv.keyCac.Get(""); v != nil {
 		delete(v.(map[string]bool), key)
 	}
 	return drv.base.Remove(key)

@@ -1,21 +1,21 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/edo/util"
+	"github.com/realglobe-Inc/edo/util/cache"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"time"
 )
 
 type cachingConcurrentVolatileKeyValueStore struct {
-	base  ConcurrentVolatileKeyValueStore
-	cache util.Cache
+	base ConcurrentVolatileKeyValueStore
+	cac  cache.Cache
 }
 
 // スレッドセーフではない。
 func newCachingConcurrentVolatileKeyValueStore(base ConcurrentVolatileKeyValueStore) *cachingConcurrentVolatileKeyValueStore {
 	return &cachingConcurrentVolatileKeyValueStore{
-		base:  base,
-		cache: util.NewCache(stampExpirationDateLess),
+		base: base,
+		cac:  cache.New(stampExpirationDateLess),
 	}
 }
 
@@ -24,11 +24,11 @@ func (drv *cachingConcurrentVolatileKeyValueStore) Get(key string, caStmp *Stamp
 
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: now}
-	drv.cache.CleanLower(cleanThres)
+	drv.cac.CleanLower(cleanThres)
 
 	var buffVal interface{}
 	var buffStmp *Stamp
-	val, prio := drv.cache.Get(key)
+	val, prio := drv.cac.Get(key)
 	if prio != nil {
 		// キャッシュしてた。
 		buffVal = val.(interface{})
@@ -55,15 +55,15 @@ func (drv *cachingConcurrentVolatileKeyValueStore) Get(key string, caStmp *Stamp
 		return nil, nil, erro.Wrap(err)
 	} else if newCaStmp == nil {
 		// 無い。
-		drv.cache.Update(key, nil)
+		drv.cac.Update(key, nil)
 		return nil, nil, nil
 	} else if val == nil {
 		// キャッシュと同じ。
-		drv.cache.Update(key, newCaStmp)
+		drv.cac.Update(key, newCaStmp)
 		buffStmp = newCaStmp
 	} else {
 		// あった、または、新しくなってた。
-		drv.cache.Put(key, val, newCaStmp)
+		drv.cac.Put(key, val, newCaStmp)
 		buffVal = val
 		buffStmp = newCaStmp
 	}
@@ -80,23 +80,23 @@ func (drv *cachingConcurrentVolatileKeyValueStore) Get(key string, caStmp *Stamp
 func (drv *cachingConcurrentVolatileKeyValueStore) Put(key string, val interface{}, expiDate time.Time) (*Stamp, error) {
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
-	drv.cache.CleanLower(cleanThres)
+	drv.cac.CleanLower(cleanThres)
 
 	if newCaStmp, err := drv.base.Put(key, val, expiDate); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		// キャッシュの更新。
-		drv.cache.Put(key, val, newCaStmp)
+		drv.cac.Put(key, val, newCaStmp)
 		return newCaStmp, nil
 	}
 }
 
 func (drv *cachingConcurrentVolatileKeyValueStore) Remove(key string) error {
-	drv.cache.Update(key, nil)
+	drv.cac.Update(key, nil)
 
 	// 古いキャッシュの削除。
 	cleanThres := &Stamp{ExpiDate: time.Now()}
-	drv.cache.CleanLower(cleanThres)
+	drv.cac.CleanLower(cleanThres)
 
 	return drv.base.Remove(key)
 }

@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/edo/util"
+	"github.com/realglobe-Inc/edo/util/cache"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"strconv"
 	"time"
@@ -16,11 +16,11 @@ func dateLess(a1 interface{}, a2 interface{}) bool {
 }
 
 type memoryConcurrentVolatileKeyValueStore struct {
-	base     util.Cache
+	base     cache.Cache
 	staleDur time.Duration
 	expiDur  time.Duration
 
-	ents util.Cache
+	ents cache.Cache
 }
 
 // スレッドセーフ。
@@ -31,10 +31,10 @@ func NewMemoryConcurrentVolatileKeyValueStore(staleDur, expiDur time.Duration) C
 // スレッドセーフではない。
 func newMemoryConcurrentVolatileKeyValueStore(staleDur, expiDur time.Duration) *memoryConcurrentVolatileKeyValueStore {
 	return &memoryConcurrentVolatileKeyValueStore{
-		util.NewCache(stampExpirationDateLess),
+		cache.New(stampExpirationDateLess),
 		staleDur,
 		expiDur,
-		util.NewCache(dateLess),
+		cache.New(dateLess),
 	}
 }
 
