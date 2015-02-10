@@ -8,8 +8,8 @@ import (
 
 func TestCachingListedKeyValueStoreStamp(t *testing.T) {
 	// ////////////////////////////////
-	// util.SetupConsoleLog("github.com/realglobe-Inc", level.ALL)
-	// defer util.SetupConsoleLog("github.com/realglobe-Inc", level.OFF)
+	// logutil.SetupConsole("github.com/realglobe-Inc", level.ALL)
+	// defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
 	// ////////////////////////////////
 
 	testListedKeyValueStoreStamp(t, newCachingListedKeyValueStore(newMemoryListedKeyValueStore(0, 0)))
