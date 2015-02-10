@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	jsonutil "github.com/realglobe-Inc/edo/util/json"
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"math/rand"
@@ -221,8 +222,8 @@ func responseError(w http.ResponseWriter, err error) {
 		log.Err(erro.Unwrap(err))
 		log.Debug(err)
 		// 最後の手段。たぶん正しい変換。
-		buff = []byte(`{status="` + JsonStringEscape(strconv.Itoa(v.Stat)) +
-			`",message="` + JsonStringEscape(v.Msg) + `"}`)
+		buff = []byte(`{status="` + jsonutil.StringEscape(strconv.Itoa(v.Stat)) +
+			`",message="` + jsonutil.StringEscape(v.Msg) + `"}`)
 	}
 
 	w.Header().Set("Content-Type", ContentTypeJson)
