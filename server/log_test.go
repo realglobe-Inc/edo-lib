@@ -2,7 +2,7 @@ package server
 
 import (
 	"bufio"
-	"github.com/realglobe-Inc/edo/util"
+	logutil "github.com/realglobe-Inc/edo/util/log"
 	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"net/http"
 	"strings"
@@ -10,8 +10,8 @@ import (
 )
 
 func TestLogRequest(t *testing.T) {
-	util.SetupConsoleLog("github.com/realglobe-Inc", level.ALL)
-	defer util.SetupConsoleLog("github.com/realglobe-Inc", level.OFF)
+	logutil.SetupConsole("github.com/realglobe-Inc", level.ALL)
+	defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
 
 	req, err := http.NewRequest("GET", "http://example.org/", nil)
 	if err != nil {
@@ -22,8 +22,8 @@ func TestLogRequest(t *testing.T) {
 }
 
 func TestLogResponse(t *testing.T) {
-	util.SetupConsoleLog("github.com/realglobe-Inc", level.ALL)
-	defer util.SetupConsoleLog("github.com/realglobe-Inc", level.OFF)
+	logutil.SetupConsole("github.com/realglobe-Inc", level.ALL)
+	defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
 
 	resp, err := http.ReadResponse(bufio.NewReader(strings.NewReader(`HTTP/1.1 200 OK
 Server: nginx/1.7.9

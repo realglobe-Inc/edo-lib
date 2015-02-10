@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/realglobe-Inc/edo/util"
+	logutil "github.com/realglobe-Inc/edo/util/log"
 	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"net/http"
 	"strconv"
@@ -10,14 +11,14 @@ import (
 )
 
 func init() {
-	util.SetupConsoleLog("github.com/realglobe-Inc", level.OFF)
+	logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
 }
 
 // サーバーを停止させられるかどうかの検査。
 func TestServerShutdown(t *testing.T) {
 	// ////////////////////////////////
-	// util.SetupConsoleLog("github.com/realglobe-Inc", level.ALL)
-	// defer util.SetupConsoleLog("github.com/realglobe-Inc", level.OFF)
+	// logutil.SetupConsole("github.com/realglobe-Inc", level.ALL)
+	// defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
 	// ////////////////////////////////
 
 	port, err := util.FreePort()
@@ -58,8 +59,8 @@ func TestServerShutdown(t *testing.T) {
 // サーバーが諦めないことの検査。
 func TestServerRestart(t *testing.T) {
 	// ////////////////////////////////
-	// util.SetupConsoleLog("github.com/realglobe-Inc", level.ALL)
-	// defer util.SetupConsoleLog("github.com/realglobe-Inc", level.OFF)
+	// logutil.SetupConsole("github.com/realglobe-Inc", level.ALL)
+	// defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
 	// ////////////////////////////////
 
 	port, err := util.FreePort()
