@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/realglobe-Inc/edo/util"
 	logutil "github.com/realglobe-Inc/edo/util/log"
+	"github.com/realglobe-Inc/edo/util/test"
 	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
 	"net/http"
 	"strconv"
@@ -21,7 +21,7 @@ func TestServerShutdown(t *testing.T) {
 	// defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
 	// ////////////////////////////////
 
-	port, err := util.FreePort()
+	port, err := test.FreePort()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,11 +63,10 @@ func TestServerRestart(t *testing.T) {
 	// defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
 	// ////////////////////////////////
 
-	port, err := util.FreePort()
+	port, err := test.FreePort()
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	shutCh1 := make(chan struct{}, 10)
 	go TerminableServe("tcp", "", port, "http", map[string]HandlerFunc{"/": func(http.ResponseWriter, *http.Request) error { return nil }}, shutCh1, PanicErrorWrapper)
 	defer func() { shutCh1 <- struct{}{} }()
