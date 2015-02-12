@@ -7,6 +7,8 @@ import (
 )
 
 func testVolatileKeyValueStore(t *testing.T, drv VolatileKeyValueStore) {
+	defer drv.Close()
+
 	expiDur := 10 * time.Millisecond
 
 	// まだ無い。

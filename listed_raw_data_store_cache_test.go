@@ -18,6 +18,7 @@ func TestCachingListedRawDataStoreExpiration(t *testing.T) {
 	staleDur := 10 * time.Millisecond
 	expiDur := 50 * time.Millisecond
 	drv := newCachingListedRawDataStore(newMemoryListedRawDataStore(staleDur, expiDur))
+	defer drv.Close()
 
 	// 入れる。
 	if _, err := drv.Put(testKey, testData); err != nil {

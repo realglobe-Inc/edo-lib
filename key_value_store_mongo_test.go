@@ -16,6 +16,7 @@ func TestMongoKeyValueStore(t *testing.T) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
+	defer drv.Close()
 	defer drv.Clear()
 
 	// まだ無い。
@@ -72,6 +73,7 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
+	defer drv.Close()
 	defer drv.Clear()
 
 	// まだ無い。
@@ -156,6 +158,7 @@ func TestMongoNKeyValueStore(t *testing.T) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
+	defer drv.Close()
 	defer drv.Clear()
 
 	testKey2 := testKey + "2"

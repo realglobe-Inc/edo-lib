@@ -94,3 +94,12 @@ func (drv *memoryListedKeyValueStore) Remove(key string) error {
 	drv.digest++
 	return nil
 }
+
+func (drv *memoryListedKeyValueStore) Close() error {
+	if drv.keyToVal == nil {
+		return nil
+	}
+	drv.keyToVal = nil
+	drv.keyToStmp = nil
+	return nil
+}

@@ -108,3 +108,15 @@ func (drv *mongoDriver) closeIfError() error {
 	}
 	return nil
 }
+
+func (drv *mongoDriver) close() error {
+	drv.sessLock.Lock()
+	defer drv.sessLock.Unlock()
+
+	if drv.sess == nil {
+		return nil
+	}
+	drv.sess.Close()
+	drv.sess = nil
+	return nil
+}

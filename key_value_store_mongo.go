@@ -4,6 +4,7 @@ import (
 	"github.com/realglobe-Inc/go-lib-rg/erro"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io"
 	"time"
 )
 
@@ -15,6 +16,8 @@ type GetStamp func(interface{}) *Stamp
 
 type MongoKeyValueStore interface {
 	KeyValueStore
+
+	// コレクションを消す。主にテスト用。
 	Clear() error
 }
 
@@ -154,6 +157,10 @@ func (drv *mongoKeyValueStore) Remove(key string) error {
 	return nil
 }
 
+func (drv *mongoKeyValueStore) Close() error {
+	return drv.base.close()
+}
+
 func (drv *mongoKeyValueStore) Clear() error {
 	coll, err := drv.base.collection()
 	if err != nil {
@@ -171,6 +178,7 @@ type NKeyValueStore interface {
 	NGet(tagKeys bson.M, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error)
 	NPut(tagKeys bson.M, val interface{}) (*Stamp, error)
 	NRemove(tagKeys bson.M) error
+	io.Closer
 }
 
 type MongoNKeyValueStore interface {

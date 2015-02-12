@@ -128,6 +128,11 @@ func (drv *redisConcurrentVolatileKeyValueStore) Remove(key string) error {
 	return nil
 }
 
+func (drv *redisConcurrentVolatileKeyValueStore) Close() error {
+	drv.pool = nil
+	return nil
+}
+
 func (drv *redisConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
 	eVal, err = redis.String(func() (interface{}, error) {
 		// パニックでも解放するように defer で、使ったらすぐ解放するように無名関数で。

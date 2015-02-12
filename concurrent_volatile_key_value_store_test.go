@@ -8,6 +8,8 @@ import (
 )
 
 func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKeyValueStore) {
+	defer drv.Close()
+
 	expiDur := 10 * time.Millisecond
 
 	// まだ無い。
@@ -77,6 +79,8 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 }
 
 func testConcurrentVolatileKeyValueStoreConsistency(t *testing.T, drv ConcurrentVolatileKeyValueStore) {
+	defer drv.Close()
+
 	const n = 5
 	const loop = 1000
 	const expiDur = time.Second

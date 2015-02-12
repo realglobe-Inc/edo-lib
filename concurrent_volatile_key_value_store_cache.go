@@ -101,6 +101,17 @@ func (drv *cachingConcurrentVolatileKeyValueStore) Remove(key string) error {
 	return drv.base.Remove(key)
 }
 
+func (drv *cachingConcurrentVolatileKeyValueStore) Close() error {
+	if drv.base == nil {
+		return nil
+	} else if err := drv.base.Close(); err != nil {
+		return erro.Wrap(err)
+	}
+	drv.base = nil
+	drv.cac = nil
+	return nil
+}
+
 func (drv *cachingConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
 	return drv.base.Entry(eKey)
 }

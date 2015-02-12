@@ -5,6 +5,8 @@ import (
 )
 
 func testLister(t *testing.T, drv Lister) {
+	defer drv.Close()
+
 	keys, _, err := drv.Keys(nil)
 	if err != nil {
 		t.Fatal(err)

@@ -19,6 +19,7 @@ func TestCachingListedKeyValueStoreExpiration(t *testing.T) {
 	staleDur := 10 * time.Millisecond
 	expiDur := 50 * time.Millisecond
 	drv := newCachingListedKeyValueStore(newMemoryListedKeyValueStore(staleDur, expiDur))
+	defer drv.Close()
 
 	// 入れる。
 	if _, err := drv.Put(testKey, testData); err != nil {

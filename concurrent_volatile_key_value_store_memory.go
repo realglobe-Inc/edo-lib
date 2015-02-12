@@ -101,6 +101,12 @@ func (drv *memoryConcurrentVolatileKeyValueStore) Remove(key string) error {
 	return nil
 }
 
+func (drv *memoryConcurrentVolatileKeyValueStore) Close() error {
+	drv.base = nil
+	drv.ents = nil
+	return nil
+}
+
 func (drv *memoryConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
 	drv.ents.CleanLower(time.Now())
 	eV, _ := drv.ents.Get(eKey)

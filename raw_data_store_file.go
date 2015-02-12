@@ -116,3 +116,7 @@ func (drv *fileRawDataStore) Remove(key string) error {
 	}
 	return nil
 }
+
+func (drv *fileRawDataStore) Close() error {
+	return nil
+}

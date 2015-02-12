@@ -5,7 +5,7 @@ import (
 )
 
 type fileListedRawDataStore struct {
-	Lister
+	lister
 	RawDataStore
 }
 

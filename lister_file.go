@@ -73,3 +73,7 @@ func (drv *fileLister) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Sta
 
 	return keys, newCaStmp, nil
 }
+
+func (drv *fileLister) Close() error {
+	return nil
+}

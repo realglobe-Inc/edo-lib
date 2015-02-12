@@ -7,6 +7,8 @@ import (
 )
 
 func testListedKeyValueStore(t *testing.T, drv ListedKeyValueStore) {
+	defer drv.Close()
+
 	// まだ無い。
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
@@ -49,6 +51,8 @@ func testListedKeyValueStore(t *testing.T, drv ListedKeyValueStore) {
 }
 
 func testListedKeyValueStoreStamp(t *testing.T, drv ListedKeyValueStore) {
+	defer drv.Close()
+
 	// まだ無い。
 	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)

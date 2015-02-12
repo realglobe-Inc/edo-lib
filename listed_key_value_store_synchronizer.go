@@ -4,7 +4,10 @@ import (
 	"reflect"
 )
 
-type synchronizedListedKeyValueStore synchronizedDriver
+type synchronizedListedKeyValueStore struct {
+	*synchronizedDriver
+	base ListedKeyValueStore
+}
 
 type kvsGetRequest struct {
 	key    string
@@ -23,7 +26,7 @@ type kvsPutRequest struct {
 
 // もちろん、スレッドセーフ。
 func newSynchronizedListedKeyValueStore(base ListedKeyValueStore) *synchronizedListedKeyValueStore {
-	return (*synchronizedListedKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+	return &synchronizedListedKeyValueStore{newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&keysRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*keysRequest)
 			keys, stmp, err := base.Keys(req.caStmp)
@@ -57,7 +60,7 @@ func newSynchronizedListedKeyValueStore(base ListedKeyValueStore) *synchronizedL
 			req := r.(*removeRequest)
 			errCh <- base.Remove(req.key)
 		},
-	}))
+	}), base}
 }
 
 func (drv *synchronizedListedKeyValueStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
@@ -102,4 +105,9 @@ func (drv *synchronizedListedKeyValueStore) Remove(key string) error {
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh
+}
+
+func (drv *synchronizedListedKeyValueStore) Close() error {
+	drv.synchronizedDriver.close()
+	return drv.base.Close()
 }

@@ -7,6 +7,8 @@ import (
 )
 
 func testRawDataStore(t *testing.T, drv RawDataStore) {
+	defer drv.Close()
+
 	// まだ無い。
 	if d, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
@@ -40,6 +42,8 @@ func testRawDataStore(t *testing.T, drv RawDataStore) {
 }
 
 func testRawDataStoreStamp(t *testing.T, drv RawDataStore) {
+	defer drv.Close()
+
 	// まだ無い。
 	if d, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)

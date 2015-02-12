@@ -5,7 +5,10 @@ import (
 	"time"
 )
 
-type synchronizedConcurrentVolatileKeyValueStore synchronizedDriver
+type synchronizedConcurrentVolatileKeyValueStore struct {
+	*synchronizedDriver
+	base ConcurrentVolatileKeyValueStore
+}
 
 type volatilePutRequest struct {
 	key      string
@@ -51,7 +54,7 @@ type putIfEnteredRequest struct {
 
 // もちろん、スレッドセーフ。
 func newSynchronizedConcurrentVolatileKeyValueStore(base ConcurrentVolatileKeyValueStore) *synchronizedConcurrentVolatileKeyValueStore {
-	return (*synchronizedConcurrentVolatileKeyValueStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+	return &synchronizedConcurrentVolatileKeyValueStore{newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&kvsGetRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*kvsGetRequest)
 			val, newCaStmp, err := base.Get(req.key, req.caStmp)
@@ -108,7 +111,7 @@ func newSynchronizedConcurrentVolatileKeyValueStore(base ConcurrentVolatileKeyVa
 				req.newCaStmpCh <- newCaStmp
 			}
 		},
-	}))
+	}), base}
 }
 
 func (drv *synchronizedConcurrentVolatileKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
@@ -140,6 +143,11 @@ func (drv *synchronizedConcurrentVolatileKeyValueStore) Remove(key string) error
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh
+}
+
+func (drv *synchronizedConcurrentVolatileKeyValueStore) Close() error {
+	drv.synchronizedDriver.close()
+	return drv.base.Close()
 }
 
 func (drv *synchronizedConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {

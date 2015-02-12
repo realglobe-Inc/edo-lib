@@ -4,7 +4,10 @@ import (
 	"reflect"
 )
 
-type synchronizedListedRawDataStore synchronizedDriver
+type synchronizedListedRawDataStore struct {
+	*synchronizedDriver
+	base ListedRawDataStore
+}
 
 type keysRequest struct {
 	caStmp *Stamp
@@ -34,7 +37,7 @@ type removeRequest struct {
 
 // もちろん、スレッドセーフ。
 func newSynchronizedListedRawDataStore(base ListedRawDataStore) *synchronizedListedRawDataStore {
-	return (*synchronizedListedRawDataStore)(newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
+	return &synchronizedListedRawDataStore{newSynchronizedDriver(map[reflect.Type]func(interface{}, chan<- error){
 		reflect.TypeOf(&keysRequest{}): func(r interface{}, errCh chan<- error) {
 			req := r.(*keysRequest)
 			keys, newCaStmp, err := base.Keys(req.caStmp)
@@ -68,7 +71,7 @@ func newSynchronizedListedRawDataStore(base ListedRawDataStore) *synchronizedLis
 			req := r.(*removeRequest)
 			errCh <- base.Remove(req.key)
 		},
-	}))
+	}), base}
 }
 
 func (drv *synchronizedListedRawDataStore) Keys(caStmp *Stamp) (keys map[string]bool, newCaStmp *Stamp, err error) {
@@ -113,4 +116,9 @@ func (drv *synchronizedListedRawDataStore) Remove(key string) error {
 	errCh := make(chan error, 1)
 	drv.reqCh <- &synchronizedRequest{&removeRequest{key}, errCh}
 	return <-errCh
+}
+
+func (drv *synchronizedListedRawDataStore) Close() error {
+	drv.synchronizedDriver.close()
+	return drv.base.Close()
 }

@@ -112,6 +112,22 @@ func (drv *fileConcurrentVolatileKeyValueStore) Remove(key string) error {
 	return drv.base.Remove(key)
 }
 
+func (drv *fileConcurrentVolatileKeyValueStore) Close() error {
+	if drv.base == nil {
+		return nil
+	} else if err := drv.base.Close(); err != nil {
+		return erro.Wrap(err)
+	} else if err := drv.exps.Close(); err != nil {
+		return erro.Wrap(err)
+	} else if err := drv.ents.Close(); err != nil {
+		return erro.Wrap(err)
+	}
+	drv.base = nil
+	drv.exps = nil
+	drv.ents = nil
+	return nil
+}
+
 func (drv *fileConcurrentVolatileKeyValueStore) Entry(eKey string) (eVal string, err error) {
 	v, _, err := drv.ents.Get(eKey, nil)
 	if err != nil {

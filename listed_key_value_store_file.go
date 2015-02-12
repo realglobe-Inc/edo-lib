@@ -58,3 +58,7 @@ func (drv *fileListedKeyValueStore) Put(key string, val interface{}) (*Stamp, er
 func (drv *fileListedKeyValueStore) Remove(key string) error {
 	return drv.base.Remove(key)
 }
+
+func (drv *fileListedKeyValueStore) Close() error {
+	return drv.base.Close()
+}

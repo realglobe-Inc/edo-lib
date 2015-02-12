@@ -35,3 +35,7 @@ func (drv *memoryListedRawDataStore) Put(key string, data []byte) (*Stamp, error
 func (drv *memoryListedRawDataStore) Remove(key string) error {
 	return ((*memoryListedKeyValueStore)(drv)).Remove(key)
 }
+
+func (drv *memoryListedRawDataStore) Close() error {
+	return ((*memoryListedKeyValueStore)(drv)).Close()
+}

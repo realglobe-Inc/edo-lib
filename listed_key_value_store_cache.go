@@ -191,3 +191,16 @@ func (drv *cachingListedKeyValueStore) Remove(key string) error {
 	}
 	return drv.base.Remove(key)
 }
+
+func (drv *cachingListedKeyValueStore) Close() error {
+	if drv.base == nil {
+		return nil
+	} else if err := drv.base.Close(); err != nil {
+		return erro.Wrap(err)
+		return erro.Wrap(err)
+	}
+	drv.base = nil
+	drv.cac = nil
+	drv.keyCac = nil
+	return nil
+}
