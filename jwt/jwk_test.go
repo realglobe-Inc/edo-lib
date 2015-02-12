@@ -12,6 +12,9 @@ import (
 
 var testRsaKey *rsa.PrivateKey
 var testEcdsaKey *ecdsa.PrivateKey
+var testEcdsa256Key *ecdsa.PrivateKey
+var testEcdsa384Key *ecdsa.PrivateKey
+var testEcdsa521Key *ecdsa.PrivateKey
 
 func init() {
 	var err error
@@ -19,10 +22,19 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	testEcdsaKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	testEcdsa256Key, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		panic(err)
 	}
+	testEcdsa384Key, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+	testEcdsa521Key, err = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+	testEcdsaKey = testEcdsa256Key
 }
 
 func TestRsaPublickKey(t *testing.T) {

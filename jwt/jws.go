@@ -123,11 +123,30 @@ func (this *jws) Verify(keys map[string]crypto.PublicKey) (err error) {
 	case "RS512":
 		return this.verifyRsaPkcs(key, crypto.SHA512)
 	case "ES256":
-		return this.verifyEcdsa(key, crypto.SHA256)
+		// JWA の仕様で ESxxx は鍵のサイズが決められている。
+		pubKey, ok := key.(*ecdsa.PublicKey)
+		if !ok {
+			return erro.New("not ECDSA public key")
+		} else if pubKey.Params().BitSize != 256 {
+			return erro.New("not P-256 EC key")
+		}
+		return this.verifyEcdsa(pubKey, crypto.SHA256)
 	case "ES384":
-		return this.verifyEcdsa(key, crypto.SHA384)
+		pubKey, ok := key.(*ecdsa.PublicKey)
+		if !ok {
+			return erro.New("not ECDSA public key")
+		} else if pubKey.Params().BitSize != 384 {
+			return erro.New("not P-384 EC key")
+		}
+		return this.verifyEcdsa(pubKey, crypto.SHA384)
 	case "ES512":
-		return this.verifyEcdsa(key, crypto.SHA512)
+		pubKey, ok := key.(*ecdsa.PublicKey)
+		if !ok {
+			return erro.New("not ECDSA public key")
+		} else if pubKey.Params().BitSize != 521 {
+			return erro.New("not P-521 EC key")
+		}
+		return this.verifyEcdsa(pubKey, crypto.SHA512)
 	case "PS256":
 		return this.verifyRsaPss(key, crypto.SHA256)
 	case "PS384":
@@ -173,16 +192,14 @@ func (this *jws) verifyRsaPss(key crypto.PublicKey, hash crypto.Hash) error {
 	return nil
 }
 
-func (this *jws) verifyEcdsa(key crypto.PublicKey, hash crypto.Hash) error {
-	const sigLen = 64
-	if len(this.sig) != sigLen {
+func (this *jws) verifyEcdsa(pubKey *ecdsa.PublicKey, hash crypto.Hash) error {
+	byteSize := (pubKey.Params().BitSize + 7) / 8
+
+	if len(this.sig) != 2*byteSize {
 		return erro.New("invalid sign length ", len(this.sig))
 	}
-	pubKey, ok := key.(*ecdsa.PublicKey)
-	if !ok {
-		return erro.New("not ECDSA public key")
-	}
-	r, s := (&big.Int{}).SetBytes(this.sig[:sigLen/2]), (&big.Int{}).SetBytes(this.sig[sigLen/2:])
+
+	r, s := (&big.Int{}).SetBytes(this.sig[:byteSize]), (&big.Int{}).SetBytes(this.sig[byteSize:])
 	buff, err := this.jwt.Encode()
 	if err != nil {
 		return erro.Wrap(err)
@@ -234,11 +251,30 @@ func (this *jws) Sign(keys map[string]crypto.PrivateKey) error {
 	case "RS512":
 		return this.signRsaPkcs(key, crypto.SHA512)
 	case "ES256":
-		return this.signEcdsa(key, crypto.SHA256)
+		// JWA の仕様で ESxxx は鍵のサイズが決められている。
+		priKey, ok := key.(*ecdsa.PrivateKey)
+		if !ok {
+			return erro.New("not ECDSA private key")
+		} else if priKey.Params().BitSize != 256 {
+			return erro.New("not P-256 EC key")
+		}
+		return this.signEcdsa(priKey, crypto.SHA256)
 	case "ES384":
-		return this.signEcdsa(key, crypto.SHA384)
+		priKey, ok := key.(*ecdsa.PrivateKey)
+		if !ok {
+			return erro.New("not ECDSA private key")
+		} else if priKey.Params().BitSize != 384 {
+			return erro.New("not P-384 EC key")
+		}
+		return this.signEcdsa(priKey, crypto.SHA384)
 	case "ES512":
-		return this.signEcdsa(key, crypto.SHA512)
+		priKey, ok := key.(*ecdsa.PrivateKey)
+		if !ok {
+			return erro.New("not ECDSA private key")
+		} else if priKey.Params().BitSize != 521 {
+			return erro.New("not P-521 EC key")
+		}
+		return this.signEcdsa(priKey, crypto.SHA512)
 	case "PS256":
 		return this.signRsaPss(key, crypto.SHA256)
 	case "PS384":
@@ -286,11 +322,9 @@ func (this *jws) signRsaPss(key crypto.PrivateKey, hash crypto.Hash) error {
 	return nil
 }
 
-func (this *jws) signEcdsa(key crypto.PrivateKey, hash crypto.Hash) error {
-	priKey, ok := key.(*ecdsa.PrivateKey)
-	if !ok {
-		return erro.New("not ECDSA private key")
-	}
+func (this *jws) signEcdsa(priKey *ecdsa.PrivateKey, hash crypto.Hash) error {
+	byteSize := (priKey.Params().BitSize + 7) / 8
+
 	buff, err := this.jwt.Encode()
 	if err != nil {
 		return erro.Wrap(err)
@@ -301,11 +335,12 @@ func (this *jws) signEcdsa(key crypto.PrivateKey, hash crypto.Hash) error {
 	if err != nil {
 		return erro.Wrap(err)
 	}
-	sig := make([]byte, 64)
+
+	sig := make([]byte, 2*byteSize)
 	rBuff := r.Bytes()
 	sBuff := s.Bytes()
-	copy(sig[(32-len(rBuff)):32], rBuff)
-	copy(sig[32+(32-len(sBuff)):], sBuff)
+	copy(sig[(byteSize-len(rBuff)):byteSize], rBuff)
+	copy(sig[byteSize+(byteSize-len(sBuff)):], sBuff)
 	this.sig = sig
 	return nil
 }
