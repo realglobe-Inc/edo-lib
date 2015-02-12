@@ -302,8 +302,10 @@ func (this *jws) signEcdsa(key crypto.PrivateKey, hash crypto.Hash) error {
 		return erro.Wrap(err)
 	}
 	sig := make([]byte, 64)
-	copy(sig[:32], r.Bytes())
-	copy(sig[32:], s.Bytes())
+	rBuff := r.Bytes()
+	sBuff := s.Bytes()
+	copy(sig[(32-len(rBuff)):32], rBuff)
+	copy(sig[32+(32-len(sBuff)):], sBuff)
 	this.sig = sig
 	return nil
 }
