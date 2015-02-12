@@ -2,10 +2,6 @@ package jwt
 
 import (
 	"crypto"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/rsa"
 	"testing"
 )
 
@@ -37,38 +33,30 @@ func TestJws(t *testing.T) {
 }
 
 func TestJwsSignAndVerify(t *testing.T) {
-	rsaKey, err := rsa.GenerateKey(rand.Reader, 1152)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	priKeySet := map[string]crypto.PrivateKey{
 		"none":  nil,
-		"RS256": rsaKey,
-		"RS384": rsaKey,
-		"RS512": rsaKey,
-		"ES256": ecdsaKey,
-		"ES384": ecdsaKey,
-		"ES512": ecdsaKey,
-		"PS256": rsaKey,
-		"PS384": rsaKey,
-		"PS512": rsaKey,
+		"RS256": testRsaKey,
+		"RS384": testRsaKey,
+		"RS512": testRsaKey,
+		"ES256": testEcdsaKey,
+		"ES384": testEcdsaKey,
+		"ES512": testEcdsaKey,
+		"PS256": testRsaKey,
+		"PS384": testRsaKey,
+		"PS512": testRsaKey,
 	}
 	pubKeySet := map[string]crypto.PublicKey{
 		"none":  nil,
-		"RS256": &rsaKey.PublicKey,
-		"RS384": &rsaKey.PublicKey,
-		"RS512": &rsaKey.PublicKey,
-		"ES256": &ecdsaKey.PublicKey,
-		"ES384": &ecdsaKey.PublicKey,
-		"ES512": &ecdsaKey.PublicKey,
-		"PS256": &rsaKey.PublicKey,
-		"PS384": &rsaKey.PublicKey,
-		"PS512": &rsaKey.PublicKey,
+		"RS256": &testRsaKey.PublicKey,
+		"RS384": &testRsaKey.PublicKey,
+		"RS512": &testRsaKey.PublicKey,
+		"ES256": &testEcdsaKey.PublicKey,
+		"ES384": &testEcdsaKey.PublicKey,
+		"ES512": &testEcdsaKey.PublicKey,
+		"PS256": &testRsaKey.PublicKey,
+		"PS384": &testRsaKey.PublicKey,
+		"PS512": &testRsaKey.PublicKey,
 	}
 
 	for _, alg := range []string{"none", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"} {
@@ -84,6 +72,10 @@ func TestJwsSignAndVerify(t *testing.T) {
 			h, c, _ := jw.ToJson()
 			t.Fatal(err, alg, string(b), string(h), string(c))
 		} else if err := jw.Verify(pubKeySet); err != nil {
+			for kid, key := range pubKeySet {
+				m := PublicKeyToJwkMap(kid, key)
+				t.Error(m)
+			}
 			b, _ := jw.Encode()
 			h, c, _ := jw.ToJson()
 			t.Fatal(err, alg, string(b), string(h), string(c))

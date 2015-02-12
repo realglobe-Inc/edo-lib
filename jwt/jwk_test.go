@@ -1,11 +1,31 @@
 package jwt
 
 import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/rsa"
 	"reflect"
 	"testing"
 )
 
-func TestJwkRsa(t *testing.T) {
+var testRsaKey *rsa.PrivateKey
+var testEcdsaKey *ecdsa.PrivateKey
+
+func init() {
+	var err error
+	testRsaKey, err = rsa.GenerateKey(rand.Reader, 1152)
+	if err != nil {
+		panic(err)
+	}
+	testEcdsaKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestRsaPublickKey(t *testing.T) {
 	m := map[string]interface{}{
 		"kty": "RSA",
 		"n":   "ofgWCuLjybRlzo0tZWJjNiuSfb4p4fAkd_wWJcyQoTbji9k0l8W26mPddxHmfHQp-Vaw-4qPCJrcS2mJPMEzP1Pt0Bm4d4QlL-yRT-SFd2lZS-pCgNMsD1W_YpRPEwOWvG6b32690r2jZ47soMZo9wGzjb_7OMg0LOL-bSf63kpaSHSXndS5z5rexMdbBYUsLA9e-KXBdQOS-UTo7WTBEMa2R2CapHg665xsmtdVMTBQY4uDZlxvb3qCo5ZwKh9kG4LT6_I5IhlJH7aGhyxXFvUK-DWNmoudF8NAco9_h9iaGNj8q2ethFkMLs91kzk2PAcDTW9gb54h4FRWyuXpoQ",
@@ -23,7 +43,7 @@ func TestJwkRsa(t *testing.T) {
 	}
 }
 
-func TestJwkEcdsa(t *testing.T) {
+func TestEcdsaPublicKey(t *testing.T) {
 	m := map[string]interface{}{
 		"kty": "EC",
 		"crv": "P-256",
@@ -39,5 +59,19 @@ func TestJwkEcdsa(t *testing.T) {
 	if buff := PublicKeyToJwkMap("", key); !reflect.DeepEqual(m, buff) {
 		t.Error(m)
 		t.Error(buff)
+	}
+}
+
+func TestPublicKey(t *testing.T) {
+	for _, key := range []crypto.PublicKey{&testRsaKey.PublicKey, &testEcdsaKey.PublicKey} {
+		_, key2, err := PublicKeyFromJwkMap(PublicKeyToJwkMap("", key))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !reflect.DeepEqual(key2, key) {
+			t.Error(key2)
+			t.Error(key)
+		}
 	}
 }
