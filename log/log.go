@@ -15,17 +15,25 @@ const (
 	TypeFluentd = "fluentd"
 )
 
-func setup(root string, lv level.Level, key string, hndl handler.Handler) handler.Handler {
+func setup(root string, lv level.Level, key string, hndl handler.Handler) {
 	rootLog := rglog.Logger(root)
 	if curLv := rootLog.Level(); curLv.Higher(lv) {
 		rootLog.SetLevel(lv)
 	}
 	rootLog.SetUseParent(false)
+
+	if hndl == nil {
+		if old := rootLog.RemoveHandler(key); old != nil {
+			old.Close()
+		}
+		return
+	}
+
 	hndl.SetLevel(lv)
 	if old := rootLog.AddHandler(key, hndl); old != nil {
 		old.Close()
 	}
-	return hndl
+	return
 }
 
 func InitConsole(root string) {
@@ -33,27 +41,33 @@ func InitConsole(root string) {
 }
 
 func SetupConsole(root string, lv level.Level) {
+	var hndl handler.Handler
 	if level.OFF.Higher(lv) {
-		setup(root, lv, TypeConsole, handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter))
-		log.Debug("Logging into console")
+		hndl = handler.NewConsoleHandlerUsing(handler.LevelOnlyFormatter)
 	}
+	setup(root, lv, TypeConsole, hndl)
+	log.Debug(lv, " logging into console")
 	return
 }
 
 func SetupFile(root string, lv level.Level, path string, limit int64, num int) {
+	var hndl handler.Handler
 	if level.OFF.Higher(lv) {
-		setup(root, lv, TypeFile, handler.NewRotateHandler(path, limit, num))
-		log.Debug("Logging into file " + path)
+		hndl = handler.NewRotateHandler(path, limit, num)
 	}
+	setup(root, lv, TypeFile, hndl)
+	log.Debug(lv, " logging into file "+path)
 	return
 }
 
 func SetupFluentd(root string, lv level.Level, addr, tag string) {
+	var hndl handler.Handler
 	if level.OFF.Higher(lv) {
-		setup(root, lv, TypeFluentd, handler.NewFluentdHandler(addr, tag))
-		log.Debug("Logging into fluentd " + addr)
-		return
+		hndl = handler.NewFluentdHandler(addr, tag)
 	}
+	setup(root, lv, TypeFluentd, hndl)
+	log.Debug(lv, " logging into fluentd "+addr)
+	return
 }
 
 type FileOption interface {
