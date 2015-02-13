@@ -2,8 +2,22 @@ package jwt
 
 import (
 	"crypto"
+	"strings"
 	"testing"
 )
+
+var testAlgList = []string{
+	"none",
+	"RS256",
+	"RS384",
+	"RS512",
+	"ES256",
+	"ES384",
+	"ES512",
+	"PS256",
+	"PS384",
+	"PS512",
+}
 
 func TestJws(t *testing.T) {
 	// JSON Web Token (JWT) より。
@@ -59,7 +73,7 @@ func TestJwsSignAndVerify(t *testing.T) {
 		"PS512": &testRsaKey.PublicKey,
 	}
 
-	for _, alg := range []string{"none", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"} {
+	for _, alg := range testAlgList {
 		jw := NewJws()
 		jw.SetHeader("alg", alg)
 		jw.SetHeader("kid", alg)
@@ -68,6 +82,10 @@ func TestJwsSignAndVerify(t *testing.T) {
 		jw.SetClaim("http://example.com/is_root", true)
 
 		if err := jw.Sign(priKeySet); err != nil {
+			if strings.HasPrefix(alg, "HS") {
+				// HSxxx は未サポート。
+				continue
+			}
 			b, _ := jw.Encode()
 			h, c, _ := jw.ToJson()
 			t.Fatal(err, alg, string(b), string(h), string(c))
