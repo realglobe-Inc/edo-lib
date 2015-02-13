@@ -62,23 +62,23 @@ func (this *jwt) parse(raw string) error {
 	return nil
 }
 
-func base64UrlDecodeString(str string) ([]byte, error) {
-	if n := len(str) % 4; n == 2 {
-		str += "=="
+func base64UrlDecodeString(s string) ([]byte, error) {
+	if n := len(s) % 4; n == 2 {
+		s += "=="
 	} else if n == 3 {
-		str += "="
+		s += "="
 	}
-	return base64.URLEncoding.DecodeString(str)
+	return base64.URLEncoding.DecodeString(s)
 }
 
-func base64UrlEncode(input []byte) []byte {
-	buff := make([]byte, base64.URLEncoding.EncodedLen(len(input)))
-	base64.URLEncoding.Encode(buff, input)
+func base64UrlEncode(src []byte) []byte {
+	buff := make([]byte, base64.URLEncoding.EncodedLen(len(src)))
+	base64.URLEncoding.Encode(buff, src)
 	return bytes.TrimRight(buff, "=")
 }
 
-func base64UrlEncodeToString(input []byte) string {
-	return string(base64UrlEncode(input))
+func base64UrlEncodeToString(src []byte) string {
+	return string(base64UrlEncode(src))
 }
 
 func (this *jwt) parseParts(headPart, clmsPart string) error {
@@ -170,3 +170,7 @@ func (this *jwt) ToJson() (headJs, clmsJs []byte, err error) {
 	}
 	return this.headJs, this.clmsJs, nil
 }
+
+func Base64UrlDecodeString(s string) ([]byte, error) { return base64UrlDecodeString(s) }
+func Base64UrlEncode(src []byte) []byte              { return base64UrlEncode(src) }
+func Base64UrlEncodeToString(src []byte) string      { return base64UrlEncodeToString(src) }
