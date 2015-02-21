@@ -2,101 +2,86 @@ package jwt
 
 import (
 	"crypto"
-	"strings"
+	"crypto/ecdsa"
 	"testing"
 )
 
-var testAlgList = []string{
-	"none",
-	"RS256",
-	"RS384",
-	"RS512",
-	"ES256",
-	"ES384",
-	"ES512",
-	"PS256",
-	"PS384",
-	"PS512",
-}
-
-func TestJws(t *testing.T) {
-	// JSON Web Token (JWT) より。
-	m := map[string]interface{}{
-		"kty": "RSA",
-		"n":   "ofgWCuLjybRlzo0tZWJjNiuSfb4p4fAkd_wWJcyQoTbji9k0l8W26mPddxHmfHQp-Vaw-4qPCJrcS2mJPMEzP1Pt0Bm4d4QlL-yRT-SFd2lZS-pCgNMsD1W_YpRPEwOWvG6b32690r2jZ47soMZo9wGzjb_7OMg0LOL-bSf63kpaSHSXndS5z5rexMdbBYUsLA9e-KXBdQOS-UTo7WTBEMa2R2CapHg665xsmtdVMTBQY4uDZlxvb3qCo5ZwKh9kG4LT6_I5IhlJH7aGhyxXFvUK-DWNmoudF8NAco9_h9iaGNj8q2ethFkMLs91kzk2PAcDTW9gb54h4FRWyuXpoQ",
-		"e":   "AQAB",
+func TestHs(t *testing.T) {
+	buff := []byte{}
+	for ; len(buff) < 50; buff = append(buff, byte(len(buff))) {
 	}
-	_, key, err := PublicKeyFromJwkMap(m)
-	if err != nil {
-		t.Fatal(err)
+	type param struct {
+		key interface{}
+		crypto.Hash
 	}
-	keySet := map[string]crypto.PublicKey{"": key}
-
-	raw := "eyJhbGciOiJSUzI1NiJ9" +
-		"." + "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ" +
-		"." + "cC4hiUPoj9Eetdgtv3hF80EGrhuB__dzERat0XF9g2VtQgr9PJbu3XOiZj5RZmh7AAuHIm4Bh-0Qc_lF5YKt_O8W2Fp5jujGbds9uJdbF9CUAr7t1dnZcAcQjbKBYNX4BAynRFdiuB--f_nZLgrnbyTyWzO75vRK5h6xBArLIARNPvkSjtQBMHlb1L07Qe7K0GarZRmB_eSN9383LcOLn6_dO--xi12jzDwusC-eOkHWEsqtFZESc6BfI7noOPqvhJ1phCnvWh6IeYI2w9QOYEUipUTI8np6LbgGY9Fs98rqVt5AXLIhWkWywlVmtVrBp0igcN_IoypGlUPQGe77Rw"
-
-	s, err := ParseJws(raw)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := s.Verify(keySet); err != nil {
-		t.Fatal(err)
+	for _, p := range []param{{test256Key, crypto.SHA256}, {test384Key, crypto.SHA384}, {test512Key, crypto.SHA512}} {
+		for i := 0; i < 50; i += 10 {
+			plain := make([]byte, i)
+			copy(plain, buff)
+			if sig, err := hsSign(p.key, p.Hash, plain); err != nil {
+				t.Fatal(err)
+			} else if err := hsVerify(p.key, p.Hash, sig, plain); err != nil {
+				t.Error(sig)
+				t.Fatal(err)
+			}
+		}
 	}
 }
 
-func TestJwsSignAndVerify(t *testing.T) {
-
-	priKeySet := map[string]crypto.PrivateKey{
-		"none":  nil,
-		"RS256": testRsaKey,
-		"RS384": testRsaKey,
-		"RS512": testRsaKey,
-		"ES256": testEcdsa256Key,
-		"ES384": testEcdsa384Key,
-		"ES512": testEcdsa521Key,
-		"PS256": testRsaKey,
-		"PS384": testRsaKey,
-		"PS512": testRsaKey,
+func TestRs(t *testing.T) {
+	buff := []byte{}
+	for ; len(buff) < 50; buff = append(buff, byte(len(buff))) {
 	}
-	pubKeySet := map[string]crypto.PublicKey{
-		"none":  nil,
-		"RS256": &testRsaKey.PublicKey,
-		"RS384": &testRsaKey.PublicKey,
-		"RS512": &testRsaKey.PublicKey,
-		"ES256": &testEcdsa256Key.PublicKey,
-		"ES384": &testEcdsa384Key.PublicKey,
-		"ES512": &testEcdsa521Key.PublicKey,
-		"PS256": &testRsaKey.PublicKey,
-		"PS384": &testRsaKey.PublicKey,
-		"PS512": &testRsaKey.PublicKey,
+	for _, hGen := range []crypto.Hash{crypto.SHA256, crypto.SHA384, crypto.SHA512} {
+		for i := 0; i < 50; i += 10 {
+			plain := make([]byte, i)
+			copy(plain, buff)
+			if sig, err := rsSign(testRsaKey, hGen, plain); err != nil {
+				t.Fatal(err)
+			} else if err := rsVerify(&testRsaKey.PublicKey, hGen, sig, plain); err != nil {
+				t.Error(sig)
+				t.Fatal(err)
+			}
+		}
 	}
+}
 
-	for _, alg := range testAlgList {
-		jw := NewJws()
-		jw.SetHeader("alg", alg)
-		jw.SetHeader("kid", alg)
-		jw.SetClaim("iss", "joe")
-		jw.SetClaim("exp", float64(1300819380))
-		jw.SetClaim("http://example.com/is_root", true)
+func TestEs(t *testing.T) {
+	buff := []byte{}
+	for ; len(buff) < 50; buff = append(buff, byte(len(buff))) {
+	}
+	type param struct {
+		key *ecdsa.PrivateKey
+		crypto.Hash
+	}
+	for _, p := range []param{{testEcdsa256Key, crypto.SHA256}, {testEcdsa384Key, crypto.SHA384}, {testEcdsa521Key, crypto.SHA512}} {
+		for i := 0; i < 50; i += 10 {
+			plain := make([]byte, i)
+			copy(plain, buff)
+			if sig, err := esSign(p.key, p.Hash, plain); err != nil {
+				t.Fatal(err)
+			} else if err := esVerify(&p.key.PublicKey, p.Hash, sig, plain); err != nil {
+				t.Error(sig)
+				t.Fatal(err)
+			}
+		}
+	}
+}
 
-		if err := jw.Sign(priKeySet); err != nil {
-			if strings.HasPrefix(alg, "HS") {
-				// HSxxx は未サポート。
-				continue
+func TestPs(t *testing.T) {
+	buff := []byte{}
+	for ; len(buff) < 50; buff = append(buff, byte(len(buff))) {
+	}
+	for _, hGen := range []crypto.Hash{crypto.SHA256, crypto.SHA384, crypto.SHA512} {
+		for i := 0; i < 50; i += 10 {
+			plain := make([]byte, i)
+			copy(plain, buff)
+			if sig, err := psSign(testRsaKey, hGen, plain); err != nil {
+				t.Fatal(err)
+			} else if err := psVerify(&testRsaKey.PublicKey, hGen, sig, plain); err != nil {
+				t.Error(sig)
+				t.Fatal(err)
 			}
-			b, _ := jw.Encode()
-			h, c, _ := jw.ToJson()
-			t.Fatal(err, alg, string(b), string(h), string(c))
-		} else if err := jw.Verify(pubKeySet); err != nil {
-			for kid, key := range pubKeySet {
-				m := PublicKeyToJwkMap(kid, key)
-				t.Error(m)
-			}
-			b, _ := jw.Encode()
-			h, c, _ := jw.ToJson()
-			t.Fatal(err, alg, string(b), string(h), string(c))
 		}
 	}
 }
