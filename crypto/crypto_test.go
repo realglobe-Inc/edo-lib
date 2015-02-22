@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-func TestParsePublicKeyRsa(t *testing.T) {
-	key, err := ParsePublicKey([]byte(`-----BEGIN PUBLIC KEY-----
+func TestParsePemRsaPublic(t *testing.T) {
+	key, err := ParsePem([]byte(`-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr8+0/TRdzgwkHyB8DOWd
 IiRSpwfs6JdlPrjDwAOpXQquwN36UDFHKtyQBeV8dw0t1imKwvtUFAmQbgQtcJ+3
 GF3PDoDg/v5UQgxuUI/vNKiYG1BDjuwcXDnUT9fWCIqXy34M9z/HJFs3+BlmspZw
@@ -25,20 +25,8 @@ VwIDAQAB
 	}
 }
 
-func TestParsePublicKeyEcdsa(t *testing.T) {
-	key, err := ParsePublicKey([]byte(`-----BEGIN PUBLIC KEY-----
-MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWv
-SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
------END PUBLIC KEY-----`))
-	if err != nil {
-		t.Fatal(err)
-	} else if _, ok := key.(*ecdsa.PublicKey); !ok {
-		t.Error(key)
-	}
-}
-
-func TestParsePrivateKeyRsa(t *testing.T) {
-	key, err := ParsePrivateKey([]byte(`-----BEGIN RSA PRIVATE KEY-----
+func TestParsePemRsaPrivate(t *testing.T) {
+	key, err := ParsePem([]byte(`-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAr8+0/TRdzgwkHyB8DOWdIiRSpwfs6JdlPrjDwAOpXQquwN36
 UDFHKtyQBeV8dw0t1imKwvtUFAmQbgQtcJ+3GF3PDoDg/v5UQgxuUI/vNKiYG1BD
 juwcXDnUT9fWCIqXy34M9z/HJFs3+BlmspZwfOTULuH6wuqh64d+Pctn4srm4ZnJ
@@ -72,8 +60,20 @@ PC1uutoixe1WZTzrWYPIOFBXeQVFlUbnmZdj0LnqAJsIz1Vec9K8
 	}
 }
 
-func TestParsePrivateKeyEcdsa(t *testing.T) {
-	key, err := ParsePrivateKey([]byte(`-----BEGIN EC PRIVATE KEY-----
+func TestParsePemEcdsaPublic(t *testing.T) {
+	key, err := ParsePem([]byte(`-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWv
+SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
+-----END PUBLIC KEY-----`))
+	if err != nil {
+		t.Fatal(err)
+	} else if _, ok := key.(*ecdsa.PublicKey); !ok {
+		t.Error(key)
+	}
+}
+
+func TestParsePemEcdsaPrivate(t *testing.T) {
+	key, err := ParsePem([]byte(`-----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIEqu+CBiCePKkS6V1YLsjMsiEk86fV18cEHMgt0qLSwFoAoGCCqGSM49
 AwEHoUQDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWvSFeYEjDv3p7hDnDS+vrPmEQ3
 twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
@@ -87,7 +87,7 @@ twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 
 const testLabel = "edo-test"
 
-func TestReadPublicKey(t *testing.T) {
+func TestReadPem(t *testing.T) {
 	f, err := ioutil.TempFile("", testLabel)
 	if err != nil {
 		t.Fatal(err)
@@ -100,32 +100,10 @@ SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 		t.Fatal(err)
 	}
 
-	key, err := ReadPublicKey(f.Name())
+	key, err := ReadPem(f.Name())
 	if err != nil {
 		t.Fatal(err)
 	} else if _, ok := key.(*ecdsa.PublicKey); !ok {
-		t.Error(key)
-	}
-}
-
-func TestReadPrivateKey(t *testing.T) {
-	f, err := ioutil.TempFile("", testLabel)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(f.Name())
-	if _, err := f.Write([]byte(`-----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIEqu+CBiCePKkS6V1YLsjMsiEk86fV18cEHMgt0qLSwFoAoGCCqGSM49
-AwEHoUQDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWvSFeYEjDv3p7hDnDS+vrPmEQ3
-twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
------END EC PRIVATE KEY-----`)); err != nil {
-		t.Fatal(err)
-	}
-
-	key, err := ReadPrivateKey(f.Name())
-	if err != nil {
-		t.Fatal(err)
-	} else if _, ok := key.(*ecdsa.PrivateKey); !ok {
 		t.Error(key)
 	}
 }
