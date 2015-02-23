@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func FreePort() (port int, err error) {
@@ -80,7 +81,28 @@ func NewHttpServer(port int) (*HttpServer, error) {
 		http.Serve(lis, mux)
 	}()
 
-	return &HttpServer{lis, respCh}, nil
+	// 起動待ち。
+	respCh <- &httpResponse{http.StatusOK, nil, nil, make(chan *http.Request, 1)}
+	for i := time.Nanosecond; i < time.Second; i *= 2 {
+		req, err := http.NewRequest("GET", "http://"+lis.Addr().String()+"/", nil)
+		if err != nil {
+			lis.Close()
+			return nil, erro.Wrap(err)
+		}
+		req.Header.Set("Connection", "close")
+		resp, err := (&http.Client{}).Do(req)
+		if err != nil {
+			// ちょっと待って再挑戦。
+			time.Sleep(i)
+			continue
+		}
+		// ちゃんとつながったので終わり。
+		resp.Body.Close()
+		return &HttpServer{lis, respCh}, nil
+	}
+	// 時間切れ。
+	lis.Close()
+	return nil, erro.New("time out")
 }
 
 func (this *HttpServer) Address() string {
