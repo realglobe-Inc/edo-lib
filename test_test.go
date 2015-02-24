@@ -2,7 +2,7 @@ package driver
 
 import (
 	"encoding/json"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"reflect"
 	"time"
 )

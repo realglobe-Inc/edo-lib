@@ -2,7 +2,7 @@ package driver
 
 import (
 	"github.com/garyburd/redigo/redis"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"time"
 )
 

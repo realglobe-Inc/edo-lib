@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"io"

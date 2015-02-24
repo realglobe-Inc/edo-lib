@@ -2,7 +2,7 @@ package driver
 
 import (
 	"github.com/realglobe-Inc/edo/util/cache"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"strconv"
 	"time"
 )
