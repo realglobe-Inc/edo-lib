@@ -1,8 +1,8 @@
 package server
 
 import (
-	logutil "github.com/realglobe-Inc/edo/util/log"
-	"github.com/realglobe-Inc/edo/util/test"
+	logutil "github.com/realglobe-Inc/edo-toolkit/util/log"
+	"github.com/realglobe-Inc/edo-toolkit/util/test"
 	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"net/http"
 	"strconv"
