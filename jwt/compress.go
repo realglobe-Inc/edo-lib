@@ -3,7 +3,7 @@ package jwt
 import (
 	"bytes"
 	"compress/flate"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"io/ioutil"
 )
 

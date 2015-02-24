@@ -3,7 +3,7 @@ package jwt
 import (
 	"bytes"
 	"crypto/aes"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 var aesKwInitVec = []byte{0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6}

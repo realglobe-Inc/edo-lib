@@ -3,7 +3,7 @@ package crypto
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"io/ioutil"
 )
 

@@ -2,7 +2,7 @@ package secrand
 
 import (
 	"encoding/base64"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 func String(length int) (string, error) {

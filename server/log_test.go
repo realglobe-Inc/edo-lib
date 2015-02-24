@@ -3,7 +3,7 @@ package server
 import (
 	"bufio"
 	logutil "github.com/realglobe-Inc/edo/util/log"
-	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
+	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"net/http"
 	"strings"
 	"testing"

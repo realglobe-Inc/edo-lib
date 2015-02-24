@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/realglobe-Inc/go-lib-rg/rglog"
-	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
+	"github.com/realglobe-Inc/go-lib/rglog"
+	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"net/http"
 	"net/http/httputil"
 )

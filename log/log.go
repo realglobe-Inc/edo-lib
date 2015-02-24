@@ -1,10 +1,10 @@
 package log
 
 import (
-	"github.com/realglobe-Inc/go-lib-rg/erro"
-	"github.com/realglobe-Inc/go-lib-rg/rglog"
-	"github.com/realglobe-Inc/go-lib-rg/rglog/handler"
-	"github.com/realglobe-Inc/go-lib-rg/rglog/level"
+	"github.com/realglobe-Inc/go-lib/erro"
+	"github.com/realglobe-Inc/go-lib/rglog"
+	"github.com/realglobe-Inc/go-lib/rglog/handler"
+	"github.com/realglobe-Inc/go-lib/rglog/level"
 )
 
 var log = rglog.Logger("github.com/realglobe-Inc/edo/util/log")

@@ -2,7 +2,7 @@ package secrand
 
 import (
 	"crypto/rand"
-	"github.com/realglobe-Inc/go-lib-rg/erro"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"io"
 )
 
