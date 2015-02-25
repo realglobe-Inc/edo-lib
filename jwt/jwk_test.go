@@ -3,7 +3,6 @@ package jwt
 import (
 	"bytes"
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"reflect"
@@ -26,23 +25,58 @@ func init() {
 	test256Key = test512Key[:32]
 	test384Key = test512Key[:48]
 
-	var err error
-	testRsaKey, err = rsa.GenerateKey(rand.Reader, 1040)
+	key, err := KeyFromJwkMap(map[string]interface{}{
+		"d":   "gOV1-Oo5UenUbuT6xXWmsHOlCOriHaH-iis22HdliQAjMxaO0_Yog8pSG4bRit7xIn-_olkmRZm2X21gd2AUC_mkE7Nytw5t_pioMzupEVVGApIFuc2_ryf5VPSznx3zk5FY6XCgUf6BnJ188WRUv3CnnNuAmEJtP6MhWmoKlPMpgQ",
+		"dp":  "sa3EMdvoT87Z-ecMyWpw-_EA-AICiynWHcaW8iYbc9r2inlfmJ-61mzRzOXITFA8x2nKOqOkT4eFYKIauHzaQ_U",
+		"dq":  "EhoQ2ioI0VbueHV34SHmKSZIbkXTjuJD4hTzAEz-i6Wuma4lYpNxz3pI-mYXrVWdmjy07ErOou-vcuZ3gFMg_iE",
+		"e":   "AQAB",
+		"kty": "RSA",
+		"n":   "5cadP6Vvv6ABglXpSeXYxPB321gtSwmjccsHr2-YKmBm22KWF2A1b68LJ3mA8eG5NPSRL6macCMttxsoAKwaCxOxn-6dNOKXNLQ1S0WsE4yY2QLoi9Cj_sY8yfdk_wb0ZM5kyE99GjFFLDvnh-RjHIf2cbXPyPfbeLigeeon7jsxOw",
+		"p":   "9556qFgzilKEEhQ41fVzvLm5vKpiCc0IABG1CDQ_VTr4KGoOcqSHx6__yqYFQlzgizkG-zVxBQSs-6GZ3eA-t4s",
+		"q":   "7Y2H2tRgIm9UjN0OlszOBcOXqPicE5KlseuNCIJZo1SyW30h-N2ssjCeiSDPrqm5QGZ637EAmhvNsPNOxzwLIxE",
+		"qi":  "DbisQAteFbdCaNy6TyNy5UgZjdPba1bhKI3iIXalno_5HRrK4tUzu9VHdYVj5-iscIw5za9cPMLFr3zQvWa-gzA",
+	})
 	if err != nil {
 		panic(err)
 	}
-	testEcdsa256Key, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	testRsaKey = key.(*rsa.PrivateKey)
+
+	key, err = KeyFromJwkMap(map[string]interface{}{
+		"crv": "P-256",
+		"d":   "3BhkCluOkm8d8gvaPD5FDG2zeEw2JKf3D5LwN-mYmsw",
+		"kty": "EC",
+		"x":   "lpHYO1qpjU95B2sThPR2-1jv44axgaEDkQtcKNE-oZs",
+		"y":   "soy5O11SFFFeYdhQVodXlYPIpeo0pCS69IxiVPPf0Tk",
+	})
 	if err != nil {
 		panic(err)
 	}
-	testEcdsa384Key, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	testEcdsa256Key = key.(*ecdsa.PrivateKey)
+
+	key, err = KeyFromJwkMap(map[string]interface{}{
+		"crv": "P-384",
+		"d":   "Gp-7eC0G7PjGzKoiAmTQ1iLsLU3AEy3h-bKFWSZOanXqSWI6wqJVPEUsatNYBJoG",
+		"kty": "EC",
+		"x":   "HlrMhzZww_AkmHV-2gDR5n7t75673UClnC7V2GewWva_sg-4GSUguFalVgwnK0tQ",
+		"y":   "fxS48Fy50SZFZ-RAQRWUZXZgRSWwiKVkqPTd6gypfpQNkXSwE69BXYIAQcfaLcf2",
+	})
 	if err != nil {
 		panic(err)
 	}
-	testEcdsa521Key, err = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	testEcdsa384Key = key.(*ecdsa.PrivateKey)
+
+	key, err = KeyFromJwkMap(map[string]interface{}{
+		"crv": "P-521",
+		"d":   "AK9ejP0HuUt7ojjI9p20986DGqG-5jc9UWMtnMqxNvIvBScTJflS2lE-6CRsJZKk6ChWI6U4ahXDH0cCCFWTAvI_",
+		"kty": "EC",
+		"x":   "AXA9Y2pY1g_Cs4W6Nto7ebjDKOsaRHxo6EYRWjk1XHZaA7HnkeHg13x24OWHelqdZiuo7J1VbRKJ4ohZPjKX-AL7",
+		"y":   "AeC5zdcUHLDdhQAvdsnnwD8rgNWjMdlWsqXZxv7Ar7ly5xmZGxEDtcJuhfhn8R9PXeScPH2soF3dFYPCuDkF4Gns",
+	})
 	if err != nil {
 		panic(err)
 	}
+	testEcdsa521Key = key.(*ecdsa.PrivateKey)
+
 	testEcdsaKey = testEcdsa256Key
 
 	testSigKeys = map[string]interface{}{
