@@ -45,26 +45,49 @@ func testVolatileKeyValueStore(t *testing.T, drv VolatileKeyValueStore) {
 	}
 
 	// また入れる。
-	if _, err := drv.Put(testKey, testVal, time.Now().Add(expiDur)); err != nil {
+	exp := time.Now().Add(expiDur)
+	bef := time.Now()
+	if _, err := drv.Put(testKey, testVal, exp); err != nil {
 		t.Fatal(err)
 	}
+	diff := int64(time.Since(bef) / time.Nanosecond)
 
-	// ある。
-	if v, _, err := drv.Get(testKey, nil); err != nil {
-		t.Fatal(err)
-	} else if !reflect.DeepEqual(v, testVal) {
-		if !jsonEqual(v, testVal) {
-			t.Error(v)
+	// 消えるかどうか。
+	for deadline := exp.Add(time.Second); ; {
+		bef := time.Now()
+		v, _, err := drv.Get(testKey, nil)
+		if err != nil {
+			t.Fatal(err)
 		}
-	}
+		aft := time.Now()
 
-	// 消えるまで待つ。
-	time.Sleep(2 * expiDur)
+		// GC 等で時間が掛かることもあるため、aft > exp でも nil が返るとは限らない。
+		// だが、aft <= exp であれば非 nil が返らなければならない。
+		// 同様に、bef > exp であれば nil が返らなければならない。
 
-	// もう無い。
-	if v, _, err := drv.Get(testKey, nil); err != nil {
-		t.Fatal(err)
-	} else if v != nil {
-		t.Error(v)
+		if aft.UnixNano() <= cutOff(exp.UnixNano(), 1e6)-diff { // redis の粒度がミリ秒のため。
+			if v == nil {
+				t.Error(aft)
+				t.Error(exp)
+				return
+			}
+		} else if bef.UnixNano() > cutOff(exp.UnixNano(), 1e6)+1e6+diff { // redis の粒度がミリ秒のため。
+			if v != nil {
+				t.Error(bef)
+				t.Error(exp)
+				return
+			}
+			// 消えた。
+			return
+		} else if v == nil { // bef <= exp < aft
+			// 消えた。
+			return
+		}
+
+		if aft.After(deadline) {
+			t.Error("too late")
+			return
+		}
+		time.Sleep(time.Millisecond)
 	}
 }

@@ -51,30 +51,64 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 	}
 
 	// エントリが異なれば入れられない。
-	if v, _, err := drv.GetAndSetEntry(testKey, nil, testKey+":entry", "0", time.Now().Add(expiDur)); err != nil {
+	exp := time.Now().Add(expiDur)
+	if v, _, err := drv.GetAndSetEntry(testKey, nil, testKey+":entry", "0", exp); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
 			t.Error(v)
 		}
-	} else if ok, _, err := drv.PutIfEntered(testKey, testVal, time.Now().Add(expiDur), testKey+":entry", "1"); err != nil {
+	} else if ok, _, err := drv.PutIfEntered(testKey, testVal, exp, testKey+":entry", "1"); err != nil {
 		t.Fatal(err)
 	} else if ok {
 		t.Fatal("")
-	} else if ok, _, err := drv.PutIfEntered(testKey, testVal, time.Now().Add(expiDur), testKey+":entry", "0"); err != nil {
+	}
+
+	bef := time.Now()
+	if ok, _, err := drv.PutIfEntered(testKey, testVal, exp, testKey+":entry", "0"); err != nil {
 		t.Fatal(err)
 	} else if !ok {
 		t.Fatal("")
 	}
+	diff := int64(time.Since(bef) / time.Nanosecond)
 
-	// 消えるまで待つ。
-	time.Sleep(2 * expiDur)
+	// 消えるかどうか。
+	for deadline := exp.Add(time.Second); ; {
+		bef := time.Now()
+		v, _, err := drv.Get(testKey, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		aft := time.Now()
 
-	// もう無い。
-	if v, _, err := drv.Get(testKey, nil); err != nil {
-		t.Fatal(err)
-	} else if v != nil {
-		t.Error(v)
+		// GC 等で時間が掛かることもあるため、aft > exp でも nil が返るとは限らない。
+		// だが、aft <= exp であれば非 nil が返らなければならない。
+		// 同様に、bef > exp であれば nil が返らなければならない。
+
+		if aft.UnixNano() <= cutOff(exp.UnixNano(), 1e6)-diff { // redis の粒度がミリ秒のため。
+			if v == nil {
+				t.Error(aft)
+				t.Error(exp)
+				return
+			}
+		} else if bef.UnixNano() > cutOff(exp.UnixNano(), 1e6)+1e6+diff { // redis の粒度がミリ秒のため。
+			if v != nil {
+				t.Error(bef)
+				t.Error(exp)
+				return
+			}
+			// 消えた。
+			return
+		} else if v == nil { // bef <= exp < aft
+			// 消えた。
+			return
+		}
+
+		if aft.After(deadline) {
+			t.Error("too late")
+			return
+		}
+		time.Sleep(time.Millisecond)
 	}
 }
 

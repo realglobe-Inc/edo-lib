@@ -59,3 +59,8 @@ func jsonUnmarshal(data []byte) (interface{}, error) {
 	}
 	return res, nil
 }
+
+// 剰余切り捨て。
+func cutOff(val, thres int64) int64 {
+	return val - val%thres
+}
