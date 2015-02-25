@@ -117,13 +117,16 @@ func testConcurrentVolatileKeyValueStoreConsistency(t *testing.T, drv Concurrent
 
 	const n = 5
 	const loop = 1000
-	const expiDur = time.Second
+	const expiDur = time.Minute
 
 	if _, err := drv.Put(testKey, float64(0), time.Now().Add(expiDur)); err != nil {
 		t.Fatal(err)
 	}
+	defer drv.Remove(testKey)
 
 	const eKey = testKey + ":entry"
+	defer drv.Remove(eKey)
+
 	resCh := make(chan int, n)
 	errCh := make(chan error, n)
 	for i := 0; i < n; i++ {
