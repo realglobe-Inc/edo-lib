@@ -51,14 +51,16 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 	}
 
 	// エントリが異なれば入れられない。
-	exp := time.Now().Add(expiDur)
-	if v, _, err := drv.GetAndSetEntry(testKey, nil, testKey+":entry", "0", exp); err != nil {
+	if v, _, err := drv.GetAndSetEntry(testKey, nil, testKey+":entry", "0", time.Now().Add(time.Second)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
 			t.Error(v)
 		}
-	} else if ok, _, err := drv.PutIfEntered(testKey, testVal, exp, testKey+":entry", "1"); err != nil {
+	}
+
+	exp := time.Now().Add(expiDur)
+	if ok, _, err := drv.PutIfEntered(testKey, testVal, exp, testKey+":entry", "1"); err != nil {
 		t.Fatal(err)
 	} else if ok {
 		t.Fatal("")
