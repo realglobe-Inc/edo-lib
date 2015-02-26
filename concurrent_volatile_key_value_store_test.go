@@ -73,7 +73,7 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 	diff := int64(time.Since(bef) / time.Nanosecond)
 
 	// 消えるかどうか。
-	for deadline := exp.Add(time.Second); ; {
+	for {
 		bef := time.Now()
 		v, _, err := drv.Get(testKey, nil)
 		if err != nil {
@@ -104,10 +104,6 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 			return
 		}
 
-		if aft.After(deadline) {
-			t.Error("too late")
-			return
-		}
 		time.Sleep(time.Millisecond)
 	}
 }
