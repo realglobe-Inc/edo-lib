@@ -20,7 +20,7 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 	}
 
 	// 入れる。
-	if _, err := drv.Put(testKey, testVal, time.Now().Add(expiDur)); err != nil {
+	if _, err := drv.Put(testKey, testVal, time.Now().Add(time.Second)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -46,7 +46,7 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 	}
 
 	// また入れる。
-	if _, err := drv.Put(testKey, testVal, time.Now().Add(2*expiDur)); err != nil {
+	if _, err := drv.Put(testKey, testVal, time.Now().Add(time.Second)); err != nil {
 		t.Fatal(err)
 	}
 

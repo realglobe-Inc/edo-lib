@@ -19,7 +19,7 @@ func testVolatileKeyValueStore(t *testing.T, drv VolatileKeyValueStore) {
 	}
 
 	// 入れる。
-	if _, err := drv.Put(testKey, testVal, time.Now().Add(expiDur)); err != nil {
+	if _, err := drv.Put(testKey, testVal, time.Now().Add(time.Second)); err != nil {
 		t.Fatal(err)
 	}
 
