@@ -7,7 +7,6 @@ import (
 	_ "crypto/sha256"
 	_ "crypto/sha512"
 	"encoding/json"
-	"fmt"
 	"github.com/realglobe-Inc/edo-toolkit/util/secrand"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"strings"
@@ -609,7 +608,6 @@ func parseJweParts(headPart, encryptedKeyPart, initVecPart, encryptedPart, authT
 	case "":
 		var clms map[string]interface{}
 		if err := json.Unmarshal(plain, &clms); err != nil {
-			fmt.Println("Aho ", string(plain))
 			return nil, erro.Wrap(err)
 		}
 		return &Jwt{head, clms, nil, nil}, nil
