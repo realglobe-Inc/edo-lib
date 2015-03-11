@@ -17,7 +17,9 @@ limitations under the License.
 
 # edo-lib
 
+edo-toolkit 用のライブラリ。
 
-## ライセンス
+
+## 1. ライセンス
 
 Apache License, Version 2.0
