@@ -4,4 +4,4 @@ import (
 	"github.com/realglobe-Inc/go-lib/rglog"
 )
 
-var log = rglog.Logger("github.com/realglobe-Inc/edo-toolkit/driver")
+var log = rglog.Logger("github.com/realglobe-Inc/edo-lib/driver")

@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/edo-toolkit/util/cache"
+	"github.com/realglobe-Inc/edo-lib/cache"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"time"
 )

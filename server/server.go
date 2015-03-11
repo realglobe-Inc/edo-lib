@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	jsonutil "github.com/realglobe-Inc/edo-toolkit/util/json"
+	jsonutil "github.com/realglobe-Inc/edo-lib/json"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"math/rand"

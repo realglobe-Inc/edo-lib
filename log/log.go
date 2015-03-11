@@ -7,7 +7,7 @@ import (
 	"github.com/realglobe-Inc/go-lib/rglog/level"
 )
 
-var log = rglog.Logger("github.com/realglobe-Inc/edo-toolkit/util/log")
+var log = rglog.Logger("github.com/realglobe-Inc/edo-lib/log")
 
 const (
 	TypeConsole = "console"
