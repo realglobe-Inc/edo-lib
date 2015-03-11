@@ -2,7 +2,7 @@ package driver
 
 import (
 	"encoding/json"
-	logutil "github.com/realglobe-Inc/edo-toolkit/util/log"
+	logutil "github.com/realglobe-Inc/edo-lib/log"
 	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"io/ioutil"
 	"os"
