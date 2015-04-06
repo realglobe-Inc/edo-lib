@@ -65,7 +65,8 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 	}
 
 	// エントリが異なれば入れられない。
-	if v, _, err := drv.GetAndSetEntry(testKey, nil, testKey+":entry", "0", time.Now().Add(time.Second)); err != nil {
+	delay := 5 * time.Second // 低性能だと 3, 4 秒は平気で放ったらかしにされることがある。
+	if v, _, err := drv.GetAndSetEntry(testKey, nil, testKey+":entry", "0", time.Now().Add(time.Second+delay)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
