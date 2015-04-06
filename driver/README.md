@@ -15,49 +15,61 @@ limitations under the License.
 -->
 
 
-データ読み書き補助
-===
+# driver
+
+データ読み書きドライバ。
 
 
-RawDataStore
----
-
-文字列キーで、バイト列の値を管理。
+## 1. インターフェース
 
 
-KeyValueStore
----
+### 1.1. RawDataStore
 
-文字列キーで、指定されたデータ型の値を管理。
-RawDataStore を包んで実装しているものが多い。
+文字列キー、バイト列の値。
 
 
-TimeLimitedKeyValueStore
----
+### 1.2. KeyValueStore
 
-文字列キーで、指定されたデータ型の値を管理。
-有効期限が来たら勝手に消える。
+文字列キー、指定されたデータ型の値。
 
 
-Memory*
----
+### 1.3. ListedKeyValueStore
+
+文字列キー、指定されたデータ型の値。
+キー一覧メソッド持ち。
+
+
+### 1.4. VolatileKeyValueStore
+
+文字列キー、指定されたデータ型の値。
+期限が来たら勝手に消える。
+
+
+### 1.5. ConcurrentVolatileKeyValueStore
+
+文字列キー、指定されたデータ型の値。
+期限が来たら勝手に消える。
+並列アクセス向けメソッド持ち。
+
+
+## 2. 実装
+
+
+### 2.1. Memory
 
 メモリ上に保存する。主にデバッグ用。
 
 
-File*
----
+### 2.2 File
 
 ファイルシステムに保存する。
 
 
-Mongo*
----
+### 2.3 Mongo
 
 Mongodb に保存する。
 
 
-Web*
----
+### 2.4 Redis
 
-HTTP(S) でリモートに保存する。
+redis に保存する。
