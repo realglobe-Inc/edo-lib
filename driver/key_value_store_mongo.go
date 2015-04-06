@@ -49,19 +49,13 @@ type mongoKeyValueStore struct {
 }
 
 // スレッドセーフ。
-func NewMongoKeyValueStore(url, dbName, collName, keyTag string, beforeWr, afterRd Convert, read ReadDocument, getStmp GetStamp, staleDur, expiDur time.Duration) MongoKeyValueStore {
-	return newMongoKeyValueStore(url, dbName, collName, keyTag, []mgo.Index{
-		mgo.Index{
-			Key:      []string{keyTag},
-			Unique:   true,
-			DropDups: true,
-		},
-	}, beforeWr, afterRd, read, getStmp, staleDur, expiDur)
+func NewMongoKeyValueStore(sess *mgo.Session, dbName, collName, keyTag string, beforeWr, afterRd Convert, read ReadDocument, getStmp GetStamp, staleDur, expiDur time.Duration) MongoKeyValueStore {
+	return newMongoKeyValueStore(sess, dbName, collName, keyTag, beforeWr, afterRd, read, getStmp, staleDur, expiDur)
 }
 
 // スレッドセーフ。
-func newMongoKeyValueStore(url, dbName, collName, keyTag string, indices []mgo.Index, beforeWr, afterRd Convert, read ReadDocument, getStmp GetStamp, staleDur, expiDur time.Duration) *mongoKeyValueStore {
-	base := newMongoDriver(url, dbName, collName, indices)
+func newMongoKeyValueStore(sess *mgo.Session, dbName, collName, keyTag string, beforeWr, afterRd Convert, read ReadDocument, getStmp GetStamp, staleDur, expiDur time.Duration) *mongoKeyValueStore {
+	base := newMongoDriver(sess, dbName, collName)
 	if beforeWr == nil {
 		beforeWr = func(val interface{}) (interface{}, error) { return val, nil }
 	}
@@ -106,23 +100,23 @@ func (drv *mongoKeyValueStore) getStamp(val interface{}) *Stamp {
 }
 
 func (drv *mongoKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
-	coll, err := drv.base.collection()
-	if err != nil {
-		return nil, nil, erro.Wrap(err)
-	}
+	val, err = func() (interface{}, error) {
+		sess, coll := drv.base.collection()
+		defer sess.Close() // パニックでも解放するように defer、使ったらすぐ解放するように無名関数。
 
-	query := coll.Find(bson.M{drv.keyTag: key})
-	val, err = drv.read(query)
-	if err != nil {
-		if erro.Unwrap(err) == mgo.ErrNotFound {
-			return nil, nil, nil
+		raw, err := drv.read(coll.Find(bson.M{drv.keyTag: key}))
+		if err != nil {
+			if erro.Unwrap(err) == mgo.ErrNotFound {
+				return nil, nil
+			}
+			return nil, erro.Wrap(err)
 		}
-		drv.base.closeIfError()
-		return nil, nil, erro.Wrap(err)
-	}
-	val, err = drv.afterRd(val)
+		return drv.afterRd(raw)
+	}()
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
+	} else if val == nil {
+		return nil, nil, nil
 	}
 
 	// 対象のスタンプを取得。
@@ -139,11 +133,6 @@ func (drv *mongoKeyValueStore) Get(key string, caStmp *Stamp) (val interface{}, 
 }
 
 func (drv *mongoKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stamp, err error) {
-	coll, err := drv.base.collection()
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
 	newCaStmp = drv.getStmp(val)
 
 	buff, err := drv.beforeWr(val)
@@ -151,38 +140,35 @@ func (drv *mongoKeyValueStore) Put(key string, val interface{}) (newCaStmp *Stam
 		return nil, erro.Wrap(err)
 	}
 
+	sess, coll := drv.base.collection()
+	defer sess.Close()
+
 	if _, err := coll.Upsert(bson.M{drv.keyTag: key}, buff); err != nil {
-		drv.base.closeIfError()
 		return nil, erro.Wrap(err)
 	}
 	return newCaStmp, nil
 }
 
 func (drv *mongoKeyValueStore) Remove(key string) error {
-	coll, err := drv.base.collection()
-	if err != nil {
-		return erro.Wrap(err)
-	}
+	sess, coll := drv.base.collection()
+	defer sess.Close()
 
 	if err := coll.Remove(bson.M{drv.keyTag: key}); err != nil {
-		drv.base.closeIfError()
 		return erro.Wrap(err)
 	}
 	return nil
 }
 
 func (drv *mongoKeyValueStore) Close() error {
-	return drv.base.close()
+	drv.base = nil
+	return nil
 }
 
 func (drv *mongoKeyValueStore) Clear() error {
-	coll, err := drv.base.collection()
-	if err != nil {
-		return erro.Wrap(err)
-	}
+	sess, coll := drv.base.collection()
+	defer sess.Close()
 
 	if err := coll.DropCollection(); err != nil {
-		drv.base.closeIfError()
 		return erro.Wrap(err)
 	}
 	return nil
@@ -201,34 +187,29 @@ type MongoNKeyValueStore interface {
 }
 
 // スレッドセーフ。
-func NewMongoNKeyValueStore(url, dbName, collName string, tags []string, beforeWr, afterRd Convert, read ReadDocument, getStmp GetStamp, staleDur, expiDur time.Duration) MongoNKeyValueStore {
-	return newMongoKeyValueStore(url, dbName, collName, "", []mgo.Index{
-		mgo.Index{
-			Key:      tags,
-			Unique:   true,
-			DropDups: true,
-		},
-	}, beforeWr, afterRd, read, getStmp, staleDur, expiDur)
+func NewMongoNKeyValueStore(sess *mgo.Session, dbName, collName string, tags []string, beforeWr, afterRd Convert, read ReadDocument, getStmp GetStamp, staleDur, expiDur time.Duration) MongoNKeyValueStore {
+	return newMongoKeyValueStore(sess, dbName, collName, "", beforeWr, afterRd, read, getStmp, staleDur, expiDur)
 }
 
 func (drv *mongoKeyValueStore) NGet(tagKeys bson.M, caStmp *Stamp) (val interface{}, newCaStmp *Stamp, err error) {
-	coll, err := drv.base.collection()
-	if err != nil {
-		return nil, nil, erro.Wrap(err)
-	}
+	val, err = func() (interface{}, error) {
+		sess, coll := drv.base.collection()
+		defer sess.Close() // パニックでも解放するように defer、使ったらすぐ解放するように無名関数。
 
-	query := coll.Find(tagKeys)
-	val, err = drv.read(query)
-	if err != nil {
-		if erro.Unwrap(err) == mgo.ErrNotFound {
-			return nil, nil, nil
+		raw, err := drv.read(coll.Find(tagKeys))
+		if err != nil {
+			if erro.Unwrap(err) == mgo.ErrNotFound {
+				return nil, nil
+			}
+			return nil, erro.Wrap(err)
 		}
-		drv.base.closeIfError()
-		return nil, nil, erro.Wrap(err)
-	}
-	val, err = drv.afterRd(val)
+
+		return drv.afterRd(raw)
+	}()
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
+	} else if val == nil {
+		return nil, nil, nil
 	}
 
 	// 対象のスタンプを取得。
@@ -245,11 +226,6 @@ func (drv *mongoKeyValueStore) NGet(tagKeys bson.M, caStmp *Stamp) (val interfac
 }
 
 func (drv *mongoKeyValueStore) NPut(tagKeys bson.M, val interface{}) (newCaStmp *Stamp, err error) {
-	coll, err := drv.base.collection()
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
 	newCaStmp = drv.getStmp(val)
 
 	buff, err := drv.beforeWr(val)
@@ -257,21 +233,20 @@ func (drv *mongoKeyValueStore) NPut(tagKeys bson.M, val interface{}) (newCaStmp 
 		return nil, erro.Wrap(err)
 	}
 
+	sess, coll := drv.base.collection()
+	defer sess.Close()
+
 	if _, err := coll.Upsert(tagKeys, buff); err != nil {
-		drv.base.closeIfError()
 		return nil, erro.Wrap(err)
 	}
 	return newCaStmp, nil
 }
 
 func (drv *mongoKeyValueStore) NRemove(tagKeys bson.M) error {
-	coll, err := drv.base.collection()
-	if err != nil {
-		return erro.Wrap(err)
-	}
+	sess, coll := drv.base.collection()
+	defer sess.Close()
 
 	if err := coll.Remove(tagKeys); err != nil {
-		drv.base.closeIfError()
 		return erro.Wrap(err)
 	}
 	return nil

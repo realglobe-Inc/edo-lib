@@ -15,6 +15,7 @@
 package driver
 
 import (
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"reflect"
 	"testing"
@@ -26,7 +27,13 @@ func TestMongoKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	drv := NewMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
+	sess, err := mgo.Dial(mongoAddr)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	drv := NewMongoKeyValueStore(sess, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
@@ -83,7 +90,13 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 		t.SkipNow()
 	}
 
-	drv := NewMongoKeyValueStore(mongoAddr, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
+	sess, err := mgo.Dial(mongoAddr)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	drv := NewMongoKeyValueStore(sess, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
@@ -92,7 +105,7 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 
 	// まだ無い。
 	if v, s, err := drv.Get(testKey, nil); err != nil {
-		t.Fatal(err)
+		t.Fatal(err, testKey)
 	} else if v != nil || s != nil {
 		t.Error(v, s)
 	}
@@ -168,7 +181,13 @@ func TestMongoNKeyValueStore(t *testing.T) {
 		t.SkipNow()
 	}
 
-	drv := NewMongoNKeyValueStore(mongoAddr, testLabel, "key-value-store", []string{"key1", "key2"}, nil, func(val interface{}) (interface{}, error) {
+	sess, err := mgo.Dial(mongoAddr)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	drv := NewMongoNKeyValueStore(sess, testLabel, "key-value-store", []string{"key1", "key2"}, nil, func(val interface{}) (interface{}, error) {
 		delete(val.(map[string]interface{}), "_id")
 		return val, nil
 	}, nil, nil, 0, 0)
