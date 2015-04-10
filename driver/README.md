@@ -60,16 +60,16 @@ limitations under the License.
 メモリ上に保存する。主にデバッグ用。
 
 
-### 2.2 File
+### 2.2. File
 
 ファイルシステムに保存する。
 
 
-### 2.3 Mongo
+### 2.3. Mongo
 
 Mongodb に保存する。
 
 
-### 2.4 Redis
+### 2.4. Redis
 
 redis に保存する。
