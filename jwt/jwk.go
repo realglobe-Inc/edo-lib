@@ -18,6 +18,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
+	"github.com/realglobe-Inc/edo-lib/base64url"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"math/big"
 )
@@ -39,7 +40,7 @@ func commonKeyFromJwkMap(m map[string]interface{}) ([]byte, error) {
 	if kStr, _ := m["k"].(string); kStr == "" {
 		return nil, erro.New("no k")
 	} else {
-		return base64UrlDecodeString(kStr)
+		return base64url.DecodeString(kStr)
 	}
 }
 
@@ -53,27 +54,27 @@ func rsaKeyFromJwkMap(m map[string]interface{}) (interface{}, error) {
 	if dStr, _ := m["d"].(string); dStr == "" {
 		// 公開鍵だった。
 		return pubKey, nil
-	} else if dRaw, err := base64UrlDecodeString(dStr); err != nil {
+	} else if dRaw, err := base64url.DecodeString(dStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if pStr, _ := m["p"].(string); pStr == "" {
 		return nil, erro.New("no p")
-	} else if pRaw, err := base64UrlDecodeString(pStr); err != nil {
+	} else if pRaw, err := base64url.DecodeString(pStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if qStr, _ := m["q"].(string); qStr == "" {
 		return nil, erro.New("no q")
-	} else if qRaw, err := base64UrlDecodeString(qStr); err != nil {
+	} else if qRaw, err := base64url.DecodeString(qStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if dpStr, _ := m["dp"].(string); dpStr == "" {
 		return nil, erro.New("no dp")
-	} else if dpRaw, err := base64UrlDecodeString(dpStr); err != nil {
+	} else if dpRaw, err := base64url.DecodeString(dpStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if dqStr, _ := m["dq"].(string); dqStr == "" {
 		return nil, erro.New("no dq")
-	} else if dqRaw, err := base64UrlDecodeString(dqStr); err != nil {
+	} else if dqRaw, err := base64url.DecodeString(dqStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if qiStr, _ := m["qi"].(string); qiStr == "" {
 		return nil, erro.New("no qi")
-	} else if qiRaw, err := base64UrlDecodeString(qiStr); err != nil {
+	} else if qiRaw, err := base64url.DecodeString(qiStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		priKey.PublicKey = *pubKey
@@ -89,15 +90,15 @@ func rsaKeyFromJwkMap(m map[string]interface{}) (interface{}, error) {
 		for _, crt := range crts {
 			if rStr, _ := crt["r"].(string); rStr == "" {
 				return nil, erro.New("no r")
-			} else if rRaw, err := base64UrlDecodeString(rStr); err != nil {
+			} else if rRaw, err := base64url.DecodeString(rStr); err != nil {
 				return nil, erro.Wrap(err)
 			} else if dStr, _ := m["d"].(string); dStr == "" {
 				return nil, erro.New("no d")
-			} else if dRaw, err := base64UrlDecodeString(dStr); err != nil {
+			} else if dRaw, err := base64url.DecodeString(dStr); err != nil {
 				return nil, erro.Wrap(err)
 			} else if tStr, _ := m["t"].(string); tStr == "" {
 				return nil, erro.New("no t")
-			} else if tRaw, err := base64UrlDecodeString(tStr); err != nil {
+			} else if tRaw, err := base64url.DecodeString(tStr); err != nil {
 				return nil, erro.Wrap(err)
 			} else {
 				priKey.Precomputed.CRTValues = append(priKey.Precomputed.CRTValues, rsa.CRTValue{
@@ -116,11 +117,11 @@ func rsaPublicKeyFromJwkMap(m map[string]interface{}) (*rsa.PublicKey, error) {
 	var key rsa.PublicKey
 	if nStr, _ := m["n"].(string); nStr == "" {
 		return nil, erro.New("no n")
-	} else if nRaw, err := base64UrlDecodeString(nStr); err != nil {
+	} else if nRaw, err := base64url.DecodeString(nStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if eStr, _ := m["e"].(string); eStr == "" {
 		return nil, erro.New("no e")
-	} else if eRaw, err := base64UrlDecodeString(eStr); err != nil {
+	} else if eRaw, err := base64url.DecodeString(eStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		key.N = (&big.Int{}).SetBytes(nRaw)
@@ -139,7 +140,7 @@ func ecdsaKeyFromJwkMap(m map[string]interface{}) (interface{}, error) {
 	if dStr, _ := m["d"].(string); dStr == "" {
 		// 公開鍵だった。
 		return pubKey, nil
-	} else if dRaw, err := base64UrlDecodeString(dStr); err != nil {
+	} else if dRaw, err := base64url.DecodeString(dStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		key.PublicKey = *pubKey
@@ -166,11 +167,11 @@ func ecdsaPublicKeyFromJwkMap(m map[string]interface{}) (*ecdsa.PublicKey, error
 
 	if xStr, _ := m["x"].(string); xStr == "" {
 		return nil, erro.New("no x")
-	} else if xRaw, err := base64UrlDecodeString(xStr); err != nil {
+	} else if xRaw, err := base64url.DecodeString(xStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if yStr, _ := m["y"].(string); yStr == "" {
 		return nil, erro.New("no y")
-	} else if yRaw, err := base64UrlDecodeString(yStr); err != nil {
+	} else if yRaw, err := base64url.DecodeString(yStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		key.X = (&big.Int{}).SetBytes(xRaw)
@@ -202,32 +203,32 @@ func KeyToJwkMap(key interface{}, m map[string]interface{}) map[string]interface
 
 func commonKeyToJwkMap(key []byte, m map[string]interface{}) map[string]interface{} {
 	m["kty"] = "oct"
-	m["k"] = base64UrlEncodeToString(key)
+	m["k"] = base64url.EncodeToString(key)
 	return m
 }
 
 func rsaPublicKeyToJwkMap(key *rsa.PublicKey, m map[string]interface{}) map[string]interface{} {
 	m["kty"] = "RSA"
-	m["n"] = base64UrlEncodeToString(key.N.Bytes())
-	m["e"] = base64UrlEncodeToString(big.NewInt(int64(key.E)).Bytes())
+	m["n"] = base64url.EncodeToString(key.N.Bytes())
+	m["e"] = base64url.EncodeToString(big.NewInt(int64(key.E)).Bytes())
 	return m
 }
 
 func rsaPrivateKeyToJwkMap(key *rsa.PrivateKey, m map[string]interface{}) map[string]interface{} {
 	m = rsaPublicKeyToJwkMap(&key.PublicKey, m)
-	m["d"] = base64UrlEncodeToString(key.D.Bytes())
-	m["p"] = base64UrlEncodeToString(key.Primes[0].Bytes())
-	m["q"] = base64UrlEncodeToString(key.Primes[1].Bytes())
-	m["dp"] = base64UrlEncodeToString(key.Precomputed.Dp.Bytes())
-	m["dq"] = base64UrlEncodeToString(key.Precomputed.Dq.Bytes())
-	m["qi"] = base64UrlEncodeToString(key.Precomputed.Qinv.Bytes())
+	m["d"] = base64url.EncodeToString(key.D.Bytes())
+	m["p"] = base64url.EncodeToString(key.Primes[0].Bytes())
+	m["q"] = base64url.EncodeToString(key.Primes[1].Bytes())
+	m["dp"] = base64url.EncodeToString(key.Precomputed.Dp.Bytes())
+	m["dq"] = base64url.EncodeToString(key.Precomputed.Dq.Bytes())
+	m["qi"] = base64url.EncodeToString(key.Precomputed.Qinv.Bytes())
 	if len(key.Precomputed.CRTValues) > 0 {
 		var crts []map[string]interface{}
 		for _, crt := range key.Precomputed.CRTValues {
 			crts = append(crts, map[string]interface{}{
-				"r": base64UrlEncodeToString(crt.R.Bytes()),
-				"d": base64UrlEncodeToString(crt.Exp.Bytes()),
-				"t": base64UrlEncodeToString(crt.Coeff.Bytes()),
+				"r": base64url.EncodeToString(crt.R.Bytes()),
+				"d": base64url.EncodeToString(crt.Exp.Bytes()),
+				"t": base64url.EncodeToString(crt.Coeff.Bytes()),
 			})
 		}
 		m["oth"] = crts
@@ -250,8 +251,8 @@ func ecdsaPublicKeyToJwkMap(key *ecdsa.PublicKey, m map[string]interface{}) map[
 	}
 
 	size := (key.Params().BitSize + 7) / 8
-	m["x"] = base64UrlEncodeToString(paddedBigEndian(key.X, size))
-	m["y"] = base64UrlEncodeToString(paddedBigEndian(key.Y, size))
+	m["x"] = base64url.EncodeToString(paddedBigEndian(key.X, size))
+	m["y"] = base64url.EncodeToString(paddedBigEndian(key.Y, size))
 
 	return m
 }
@@ -259,7 +260,7 @@ func ecdsaPublicKeyToJwkMap(key *ecdsa.PublicKey, m map[string]interface{}) map[
 func ecdsaPrivateKeyToJwkMap(key *ecdsa.PrivateKey, m map[string]interface{}) map[string]interface{} {
 	m = ecdsaPublicKeyToJwkMap(&key.PublicKey, m)
 	size := (key.Params().BitSize + 7) / 8
-	m["d"] = base64UrlEncodeToString(paddedBigEndian(key.D, size))
+	m["d"] = base64url.EncodeToString(paddedBigEndian(key.D, size))
 	return m
 }
 
