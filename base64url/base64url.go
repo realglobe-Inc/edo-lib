@@ -12,41 +12,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package jwt
+package base64url
 
 import (
 	"encoding/base64"
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 // 末尾に = を足さない Base64URL エンコード。
 
-func base64UrlDecodeString(s string) ([]byte, error) {
-	switch len(s) % 4 {
+func Decode(src []byte) ([]byte, error) {
+	rem := len(src) % 4
+
+	switch rem {
 	case 2:
-		s += "=="
+		src = append(src, '=', '=')
 	case 3:
-		s += "="
+		src = append(src, '=')
 	}
-	return base64.URLEncoding.DecodeString(s)
+
+	dst := make([]byte, base64.URLEncoding.DecodedLen(len(src)))
+	n, err := base64.URLEncoding.Decode(dst, src)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+
+	return dst[:n], nil
 }
 
-func base64UrlEncode(src []byte) []byte {
-	buff := make([]byte, base64.URLEncoding.EncodedLen(len(src)))
-	base64.URLEncoding.Encode(buff, src)
+func DecodeString(s string) ([]byte, error) {
+	return Decode([]byte(s))
+}
+
+func Encode(src []byte) []byte {
+	dst := make([]byte, base64.URLEncoding.EncodedLen(len(src)))
+	base64.URLEncoding.Encode(dst, src)
+
 	switch len(src) % 3 {
 	case 1:
-		return buff[:len(buff)-2]
+		dst = dst[:len(dst)-2]
 	case 2:
-		return buff[:len(buff)-1]
-	default:
-		return buff
+		dst = dst[:len(dst)-1]
 	}
+
+	return dst
 }
 
-func base64UrlEncodeToString(src []byte) string {
-	return string(base64UrlEncode(src))
+func EncodeToString(src []byte) string {
+	return string(Encode(src))
 }
-
-func Base64UrlDecodeString(s string) ([]byte, error) { return base64UrlDecodeString(s) }
-func Base64UrlEncode(src []byte) []byte              { return base64UrlEncode(src) }
-func Base64UrlEncodeToString(src []byte) string      { return base64UrlEncodeToString(src) }

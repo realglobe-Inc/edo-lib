@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package jwt
+package base64url
 
 import (
 	"bytes"
@@ -21,16 +21,16 @@ import (
 )
 
 func TestBase64Url(t *testing.T) {
-	for b := []byte{}; len(b) < 100; b = append(b, byte(len(b))) {
-		if s := base64UrlEncodeToString(b); strings.Index(s, "=") > 0 {
-			t.Error(b)
-			t.Error(s)
-		} else if b2, err := base64UrlDecodeString(s); err != nil {
+	for src := []byte{}; len(src) < 300; src = append(src, byte(len(src))) {
+		if enc := EncodeToString(src); strings.Index(enc, "=") > 0 {
+			t.Error(src)
+			t.Error(enc)
+		} else if dec, err := DecodeString(enc); err != nil {
 			t.Fatal(err)
-		} else if !bytes.Equal(b2, b) {
-			t.Error(b2)
-			t.Error(b)
-			t.Error(s)
+		} else if !bytes.Equal(dec, src) {
+			t.Error(src)
+			t.Error(enc)
+			t.Error(dec)
 		}
 	}
 }

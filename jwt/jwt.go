@@ -21,6 +21,7 @@ import (
 	_ "crypto/sha256"
 	_ "crypto/sha512"
 	"encoding/json"
+	"github.com/realglobe-Inc/edo-lib/base64url"
 	"github.com/realglobe-Inc/edo-lib/secrand"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"strings"
@@ -139,13 +140,13 @@ func (this *Jwt) jwsEncode(alg string, sigKeys map[string]interface{}) ([]byte, 
 	if data, err := json.Marshal(this.head); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
-		buff = base64UrlEncode(data)
+		buff = base64url.Encode(data)
 	}
 	buff = append(buff, '.')
 	if data, err := json.Marshal(this.clms); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
-		buff = append(buff, base64UrlEncode(data)...)
+		buff = append(buff, base64url.Encode(data)...)
 	}
 
 	var sig []byte
@@ -203,7 +204,7 @@ func (this *Jwt) jwsEncode(alg string, sigKeys map[string]interface{}) ([]byte, 
 	}
 
 	buff = append(buff, '.')
-	this.encoded = append(buff, base64UrlEncode(sig)...)
+	this.encoded = append(buff, base64url.Encode(sig)...)
 
 	return this.encoded, nil
 }
@@ -316,22 +317,22 @@ func (this *Jwt) jweEncode(alg string, sigKeys, encKeys map[string]interface{}) 
 		var initVec, authTag []byte
 		initVec, encryptedKey, authTag, err = aGcmKwEncrypt(key, 16, contKey)
 		if err == nil {
-			this.SetHeader("iv", base64UrlEncodeToString(initVec))  // 副作用注意。
-			this.SetHeader("tag", base64UrlEncodeToString(authTag)) // 副作用注意。
+			this.SetHeader("iv", base64url.EncodeToString(initVec))  // 副作用注意。
+			this.SetHeader("tag", base64url.EncodeToString(authTag)) // 副作用注意。
 		}
 	case "A192GCMKW":
 		var initVec, authTag []byte
 		initVec, encryptedKey, authTag, err = aGcmKwEncrypt(key, 24, contKey)
 		if err == nil {
-			this.SetHeader("iv", base64UrlEncodeToString(initVec))  // 副作用注意。
-			this.SetHeader("tag", base64UrlEncodeToString(authTag)) // 副作用注意。
+			this.SetHeader("iv", base64url.EncodeToString(initVec))  // 副作用注意。
+			this.SetHeader("tag", base64url.EncodeToString(authTag)) // 副作用注意。
 		}
 	case "A256GCMKW":
 		var initVec, authTag []byte
 		initVec, encryptedKey, authTag, err = aGcmKwEncrypt(key, 32, contKey)
 		if err == nil {
-			this.SetHeader("iv", base64UrlEncodeToString(initVec))  // 副作用注意。
-			this.SetHeader("tag", base64UrlEncodeToString(authTag)) // 副作用注意。
+			this.SetHeader("iv", base64url.EncodeToString(initVec))  // 副作用注意。
+			this.SetHeader("tag", base64url.EncodeToString(authTag)) // 副作用注意。
 		}
 	case "PBES2-HS256+A128KW":
 		encryptedKey, err = pbes2HsAKwEncrypt(key, crypto.SHA256, 16, contKey)
@@ -347,7 +348,7 @@ func (this *Jwt) jweEncode(alg string, sigKeys, encKeys map[string]interface{}) 
 	if data, err := json.Marshal(this.head); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
-		headPart = base64UrlEncode(data)
+		headPart = base64url.Encode(data)
 	}
 
 	var initVec, encrypted, authTag []byte
@@ -372,13 +373,13 @@ func (this *Jwt) jweEncode(alg string, sigKeys, encKeys map[string]interface{}) 
 	}
 
 	buff := append(headPart, '.')
-	buff = append(buff, base64UrlEncode(encryptedKey)...)
+	buff = append(buff, base64url.Encode(encryptedKey)...)
 	buff = append(buff, '.')
-	buff = append(buff, base64UrlEncode(initVec)...)
+	buff = append(buff, base64url.Encode(initVec)...)
 	buff = append(buff, '.')
-	buff = append(buff, base64UrlEncode(encrypted)...)
+	buff = append(buff, base64url.Encode(encrypted)...)
 	buff = append(buff, '.')
-	this.encoded = append(buff, base64UrlEncode(authTag)...)
+	this.encoded = append(buff, base64url.Encode(authTag)...)
 
 	return this.encoded, nil
 }
@@ -412,14 +413,14 @@ func Parse(encoded string, veriKeys, decKeys map[string]interface{}) (*Jwt, erro
 
 func parseJwsParts(headPart, clmsPart, sigPart string, veriKeys map[string]interface{}) (*Jwt, error) {
 	var head map[string]interface{}
-	if data, err := base64UrlDecodeString(headPart); err != nil {
+	if data, err := base64url.DecodeString(headPart); err != nil {
 		return nil, erro.Wrap(err)
 	} else if err := json.Unmarshal(data, &head); err != nil {
 		return nil, erro.Wrap(err)
 	}
 
 	var clms map[string]interface{}
-	if data, err := base64UrlDecodeString(clmsPart); err != nil {
+	if data, err := base64url.DecodeString(clmsPart); err != nil {
 		return nil, erro.Wrap(err)
 	} else if err := json.Unmarshal(data, &clms); err != nil {
 		return nil, erro.Wrap(err)
@@ -437,7 +438,7 @@ func parseJwsParts(headPart, clmsPart, sigPart string, veriKeys map[string]inter
 		}
 	}
 
-	sig, err := base64UrlDecodeString(sigPart)
+	sig, err := base64url.DecodeString(sigPart)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
@@ -500,25 +501,25 @@ func parseJwsParts(headPart, clmsPart, sigPart string, veriKeys map[string]inter
 
 func parseJweParts(headPart, encryptedKeyPart, initVecPart, encryptedPart, authTagPart string, veriKeys, decKeys map[string]interface{}) (*Jwt, error) {
 	var head map[string]interface{}
-	if data, err := base64UrlDecodeString(headPart); err != nil {
+	if data, err := base64url.DecodeString(headPart); err != nil {
 		return nil, erro.Wrap(err)
 	} else if err := json.Unmarshal(data, &head); err != nil {
 		return nil, erro.Wrap(err)
 	}
 
-	encryptedKey, err := base64UrlDecodeString(encryptedKeyPart)
+	encryptedKey, err := base64url.DecodeString(encryptedKeyPart)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	initVec, err := base64UrlDecodeString(initVecPart)
+	initVec, err := base64url.DecodeString(initVecPart)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	encrypted, err := base64UrlDecodeString(encryptedPart)
+	encrypted, err := base64url.DecodeString(encryptedPart)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	authTag, err := base64UrlDecodeString(authTagPart)
+	authTag, err := base64url.DecodeString(authTagPart)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
@@ -655,11 +656,11 @@ func _getKey(kid string, keys map[string]interface{}) (interface{}, error) {
 func _getInitVecAndAuthTag(head map[string]interface{}) (initVec, authTag []byte, err error) {
 	if str, _ := head["iv"].(string); str == "" {
 		return nil, nil, erro.New("no iv")
-	} else if initVec, err = base64UrlDecodeString(str); err != nil {
+	} else if initVec, err = base64url.DecodeString(str); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if str, _ := head["tag"].(string); str == "" {
 		return nil, nil, erro.New("no tag")
-	} else if authTag, err = base64UrlDecodeString(str); err != nil {
+	} else if authTag, err = base64url.DecodeString(str); err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
 	return initVec, authTag, nil
