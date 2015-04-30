@@ -17,27 +17,32 @@ package json
 import ()
 
 func StringEscape(s string) string {
-	output := ""
-	for _, r := range s {
+	return string(Escape([]byte(s)))
+}
+
+// http://www.json.org/index.html より。
+func Escape(d []byte) []byte {
+	output := []byte{}
+	for _, r := range d {
 		switch r {
 		case '"':
-			output += "\\\""
+			output = append(output, '\\', '"')
 		case '\\':
-			output += "\\\\"
+			output = append(output, '\\', '\\')
 		case '/':
-			output += "\\/"
-		case '\n':
-			output += "\\n"
-		case '\r':
-			output += "\\r"
-		case '\t':
-			output += "\\t"
+			output = append(output, '\\', '/')
 		case '\b':
-			output += "\\b"
+			output = append(output, '\\', 'b')
 		case '\f':
-			output += "\\f"
+			output = append(output, '\\', 'f')
+		case '\n':
+			output = append(output, '\\', 'n')
+		case '\r':
+			output = append(output, '\\', 'r')
+		case '\t':
+			output = append(output, '\\', 't')
 		default:
-			output += string(r)
+			output = append(output, r)
 		}
 	}
 	return output
