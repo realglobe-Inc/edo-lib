@@ -16,12 +16,13 @@ package jwt
 
 import (
 	"bytes"
+	"github.com/realglobe-Inc/edo-lib/jwk"
 	"testing"
 )
 
 func TestAes128Kw(t *testing.T) {
 	// JWE Appendix A.3 より。
-	key, err := KeyFromJwkMap(map[string]interface{}{
+	key, err := jwk.FromMap(map[string]interface{}{
 		"kty": "oct",
 		"k":   "GawgguFyGrWKav7AX4VKUg",
 	})
@@ -38,12 +39,12 @@ func TestAes128Kw(t *testing.T) {
 		193, 11, 98, 37, 173, 61, 104, 57,
 	}
 
-	if e, err := encryptAesKw(key.([]byte), plain); err != nil {
+	if e, err := encryptAesKw(key.Common(), plain); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(e, encrypted) {
 		t.Error(e)
 		t.Error(encrypted)
-	} else if p, err := decryptAesKw(key.([]byte), encrypted); err != nil {
+	} else if p, err := decryptAesKw(key.Common(), encrypted); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)

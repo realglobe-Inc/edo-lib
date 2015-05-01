@@ -18,12 +18,13 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/rsa"
+	"github.com/realglobe-Inc/edo-lib/jwk"
 	"testing"
 )
 
 func TestRsa15Sample(t *testing.T) {
 	// JWE Appendix A.2 より。
-	key, err := KeyFromJwkMap(map[string]interface{}{
+	key, err := jwk.FromMap(map[string]interface{}{
 		"kty": "RSA",
 		"n":   "sXchDaQebHnPiGvyDOAT4saGEUetSyo9MKLOoWFsueri23bOdgWp4Dy1WlUzewbgBHod5pcM9H95GQRV3JDXboIRROSBigeC5yjU1hGzHHyXss8UDprecbAYxknTcQkhslANGRUZmdTOQ5qTRsLAt6BTYuyvVRdhS8exSZEy_c4gs_7svlJJQ4H9_NxsiIoLwAEk7-Q3UXERGYw_75IDrGA84-lA_-Ct4eTlXHBIY2EaV7t7LjJaynVJCpkv4LKjTTAumiGUIuQhrNhZLuF_RJLqHpM2kgWFLU7-VTdL1VbC2tejvcI2BlMkEpk1BzBZI0KQB0GaDWFLN-aEAw3vRw",
 		"e":   "AQAB",
@@ -60,7 +61,7 @@ func TestRsa15Sample(t *testing.T) {
 		248, 29, 232, 90, 29, 147, 110, 169, 146, 114, 165, 204, 71, 136, 41, 252,
 	}
 
-	if p, err := rsa15Decrypt(key, encrypted); err != nil {
+	if p, err := rsa15Decrypt(key.Private(), encrypted); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)
@@ -70,7 +71,7 @@ func TestRsa15Sample(t *testing.T) {
 
 func TestRsaOaepSample(t *testing.T) {
 	// JWE Appendix A.1 より。
-	key, err := KeyFromJwkMap(map[string]interface{}{
+	key, err := jwk.FromMap(map[string]interface{}{
 		"kty": "RSA",
 		"n":   "oahUIoWw0K0usKNuOR6H4wkf4oBUXHTxRvgb48E-BVvxkeDNjbC4he8rUWcJoZmds2h7M70imEVhRU5djINXtqllXI4DFqcI1DgjT9LewND8MW2Krf3Spsk_ZkoFnilakGygTwpZ3uesH-PFABNIUYpOiN15dsQRkgr0vEhxN92i2asbOenSZeyaxziK72UwxrrKoExv6kc5twXTq4h-QChLOln0_mtUZwfsRaMStPs6mS6XrgxnxbWhojf663tuEQueGC-FCMfra36C9knDFGzKsNa7LZK2djYgyD3JR_MB_4NUJW_TqOQtwHYbxevoJArm-L5StowjzGy-_bq6Gw",
 		"e":   "AQAB",
@@ -107,7 +108,7 @@ func TestRsaOaepSample(t *testing.T) {
 		233, 73, 37, 124, 42, 72, 49, 242, 35, 127, 184, 134, 117, 114, 135, 206,
 	}
 
-	if p, err := rsaOaepDecrypt(key.(*rsa.PrivateKey), crypto.SHA1, encrypted); err != nil {
+	if p, err := rsaOaepDecrypt(key.Private().(*rsa.PrivateKey), crypto.SHA1, encrypted); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)

@@ -16,6 +16,7 @@ package jwt
 
 import (
 	"fmt"
+	"github.com/realglobe-Inc/edo-lib/jwk"
 	"reflect"
 	"testing"
 )
@@ -41,7 +42,7 @@ func TestParseJwsNoneSample(t *testing.T) {
 
 func TestParseJwsHsSample(t *testing.T) {
 	// JWS Appendix A.1 より。
-	key, err := KeyFromJwkMap(map[string]interface{}{
+	key, err := jwk.FromMap(map[string]interface{}{
 		"kty": "oct",
 		"k":   "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow",
 	})
@@ -54,7 +55,7 @@ func TestParseJwsHsSample(t *testing.T) {
 		"." +
 		"dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
 
-	if jt, err := Parse(raw, map[string]interface{}{"": key}, nil); err != nil {
+	if jt, err := Parse(raw, map[string]interface{}{"": key.Common()}, nil); err != nil {
 		t.Fatal(err)
 	} else if jt.Claim("iss") != "joe" {
 		t.Error(jt.Claim("iss"))
@@ -67,7 +68,7 @@ func TestParseJwsHsSample(t *testing.T) {
 
 func TestParseJwsRsSample(t *testing.T) {
 	// JWT 3.1, JWS Appendix A.2 より。
-	key, err := KeyFromJwkMap(map[string]interface{}{
+	key, err := jwk.FromMap(map[string]interface{}{
 		"kty": "RSA",
 		"n":   "ofgWCuLjybRlzo0tZWJjNiuSfb4p4fAkd_wWJcyQoTbji9k0l8W26mPddxHmfHQp-Vaw-4qPCJrcS2mJPMEzP1Pt0Bm4d4QlL-yRT-SFd2lZS-pCgNMsD1W_YpRPEwOWvG6b32690r2jZ47soMZo9wGzjb_7OMg0LOL-bSf63kpaSHSXndS5z5rexMdbBYUsLA9e-KXBdQOS-UTo7WTBEMa2R2CapHg665xsmtdVMTBQY4uDZlxvb3qCo5ZwKh9kG4LT6_I5IhlJH7aGhyxXFvUK-DWNmoudF8NAco9_h9iaGNj8q2ethFkMLs91kzk2PAcDTW9gb54h4FRWyuXpoQ",
 		"e":   "AQAB",
@@ -81,7 +82,7 @@ func TestParseJwsRsSample(t *testing.T) {
 		"." +
 		"cC4hiUPoj9Eetdgtv3hF80EGrhuB__dzERat0XF9g2VtQgr9PJbu3XOiZj5RZmh7AAuHIm4Bh-0Qc_lF5YKt_O8W2Fp5jujGbds9uJdbF9CUAr7t1dnZcAcQjbKBYNX4BAynRFdiuB--f_nZLgrnbyTyWzO75vRK5h6xBArLIARNPvkSjtQBMHlb1L07Qe7K0GarZRmB_eSN9383LcOLn6_dO--xi12jzDwusC-eOkHWEsqtFZESc6BfI7noOPqvhJ1phCnvWh6IeYI2w9QOYEUipUTI8np6LbgGY9Fs98rqVt5AXLIhWkWywlVmtVrBp0igcN_IoypGlUPQGe77Rw"
 
-	if jt, err := Parse(raw, map[string]interface{}{"": key}, nil); err != nil {
+	if jt, err := Parse(raw, map[string]interface{}{"": key.Public()}, nil); err != nil {
 		t.Fatal(err)
 	} else if jt.Claim("iss") != "joe" {
 		t.Error(jt.Claim("iss"))
@@ -94,7 +95,7 @@ func TestParseJwsRsSample(t *testing.T) {
 
 func TestParseJwsEsSample(t *testing.T) {
 	// JWS Appendix A.3 より。
-	key, err := KeyFromJwkMap(map[string]interface{}{
+	key, err := jwk.FromMap(map[string]interface{}{
 		"kty": "EC",
 		"crv": "P-256",
 		"x":   "f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU",
@@ -109,7 +110,7 @@ func TestParseJwsEsSample(t *testing.T) {
 		"." +
 		"DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
 
-	if jt, err := Parse(raw, map[string]interface{}{"": key}, nil); err != nil {
+	if jt, err := Parse(raw, map[string]interface{}{"": key.Public()}, nil); err != nil {
 		t.Fatal(err)
 	} else if jt.Claim("iss") != "joe" {
 		t.Error(jt.Claim("iss"))
@@ -122,7 +123,7 @@ func TestParseJwsEsSample(t *testing.T) {
 
 func TestParseJweRsa15Sample(t *testing.T) {
 	// JWT Appendix A.1 より。
-	key, err := KeyFromJwkMap(map[string]interface{}{
+	key, err := jwk.FromMap(map[string]interface{}{
 		"kty": "RSA",
 		"n":   "sXchDaQebHnPiGvyDOAT4saGEUetSyo9MKLOoWFsueri23bOdgWp4Dy1WlUzewbgBHod5pcM9H95GQRV3JDXboIRROSBigeC5yjU1hGzHHyXss8UDprecbAYxknTcQkhslANGRUZmdTOQ5qTRsLAt6BTYuyvVRdhS8exSZEy_c4gs_7svlJJQ4H9_NxsiIoLwAEk7-Q3UXERGYw_75IDrGA84-lA_-Ct4eTlXHBIY2EaV7t7LjJaynVJCpkv4LKjTTAumiGUIuQhrNhZLuF_RJLqHpM2kgWFLU7-VTdL1VbC2tejvcI2BlMkEpk1BzBZI0KQB0GaDWFLN-aEAw3vRw",
 		"e":   "AQAB",
@@ -146,7 +147,7 @@ func TestParseJweRsa15Sample(t *testing.T) {
 		"." +
 		"fiK51VwhsxJ-siBMR-YFiA"
 
-	if jt, err := Parse(raw, nil, map[string]interface{}{"": key}); err != nil {
+	if jt, err := Parse(raw, nil, map[string]interface{}{"": key.Private()}); err != nil {
 		t.Fatal(err)
 	} else if jt.Claim("iss") != "joe" {
 		t.Error(jt.Claim("iss"))
@@ -159,7 +160,7 @@ func TestParseJweRsa15Sample(t *testing.T) {
 
 func TestParseJweNestingJwsSample(t *testing.T) {
 	// JWT Appendix A.2 より。
-	veriKey, err := KeyFromJwkMap(map[string]interface{}{
+	veriKey, err := jwk.FromMap(map[string]interface{}{
 		"kty": "RSA",
 		"n":   "ofgWCuLjybRlzo0tZWJjNiuSfb4p4fAkd_wWJcyQoTbji9k0l8W26mPddxHmfHQp-Vaw-4qPCJrcS2mJPMEzP1Pt0Bm4d4QlL-yRT-SFd2lZS-pCgNMsD1W_YpRPEwOWvG6b32690r2jZ47soMZo9wGzjb_7OMg0LOL-bSf63kpaSHSXndS5z5rexMdbBYUsLA9e-KXBdQOS-UTo7WTBEMa2R2CapHg665xsmtdVMTBQY4uDZlxvb3qCo5ZwKh9kG4LT6_I5IhlJH7aGhyxXFvUK-DWNmoudF8NAco9_h9iaGNj8q2ethFkMLs91kzk2PAcDTW9gb54h4FRWyuXpoQ",
 		"e":   "AQAB",
@@ -167,7 +168,7 @@ func TestParseJweNestingJwsSample(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	decKey, err := KeyFromJwkMap(map[string]interface{}{
+	decKey, err := jwk.FromMap(map[string]interface{}{
 		"kty": "RSA",
 		"n":   "sXchDaQebHnPiGvyDOAT4saGEUetSyo9MKLOoWFsueri23bOdgWp4Dy1WlUzewbgBHod5pcM9H95GQRV3JDXboIRROSBigeC5yjU1hGzHHyXss8UDprecbAYxknTcQkhslANGRUZmdTOQ5qTRsLAt6BTYuyvVRdhS8exSZEy_c4gs_7svlJJQ4H9_NxsiIoLwAEk7-Q3UXERGYw_75IDrGA84-lA_-Ct4eTlXHBIY2EaV7t7LjJaynVJCpkv4LKjTTAumiGUIuQhrNhZLuF_RJLqHpM2kgWFLU7-VTdL1VbC2tejvcI2BlMkEpk1BzBZI0KQB0GaDWFLN-aEAw3vRw",
 		"e":   "AQAB",
@@ -191,7 +192,7 @@ func TestParseJweNestingJwsSample(t *testing.T) {
 		"." +
 		"AVO9iT5AV4CzvDJCdhSFlQ"
 
-	if jt, err := Parse(raw, map[string]interface{}{"": veriKey}, map[string]interface{}{"": decKey}); err != nil {
+	if jt, err := Parse(raw, map[string]interface{}{"": veriKey.Public()}, map[string]interface{}{"": decKey.Private()}); err != nil {
 		t.Fatal(err)
 	} else if nested := jt.Nested(); nested == nil {
 		t.Error("no nested JWT")
