@@ -20,6 +20,11 @@ limitations under the License.
 edo-toolkit 用のライブラリ。
 
 
-## 1. ライセンス
+## 1. API
+
+[GoDoc](http://godoc.org/github.com/realglobe-Inc/edo-lib)
+
+
+## 2. ライセンス
 
 Apache License, Version 2.0

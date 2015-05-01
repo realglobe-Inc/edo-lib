@@ -73,3 +73,13 @@ Mongodb に保存する。
 ### 2.4. Redis
 
 redis に保存する。
+
+
+## 3. API
+
+[GoDoc](http://godoc.org/github.com/realglobe-Inc/edo-lib/driver)
+
+
+## 4. ライセンス
+
+Apache License, Version 2.0
