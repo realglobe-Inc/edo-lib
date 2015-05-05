@@ -15,19 +15,7 @@
 package jwt
 
 import (
-	"bytes"
-	"testing"
+	"github.com/realglobe-Inc/go-lib/rglog"
 )
 
-func TestDef(t *testing.T) {
-	for plain := []byte{}; len(plain) < 100; plain = append(plain, byte(len(plain))) {
-		if d, err := defCompress(plain); err != nil {
-			t.Fatal(err)
-		} else if b2, err := defDecompress(d); err != nil {
-			t.Fatal(err)
-		} else if !bytes.Equal(b2, plain) {
-			t.Error(b2)
-			t.Fatal(plain)
-		}
-	}
-}
+var log = rglog.Logger("github.com/realglobe-Inc/edo-lib/jwt")

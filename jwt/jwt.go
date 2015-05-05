@@ -15,678 +15,636 @@
 package jwt
 
 import (
+	"bytes"
 	"crypto"
-	"crypto/ecdsa"
+	_ "crypto/ecdsa"
 	_ "crypto/sha1"
 	_ "crypto/sha256"
 	_ "crypto/sha512"
 	"encoding/json"
 	"github.com/realglobe-Inc/edo-lib/base64url"
+	"github.com/realglobe-Inc/edo-lib/jwk"
 	"github.com/realglobe-Inc/edo-lib/secrand"
 	"github.com/realglobe-Inc/go-lib/erro"
-	"strings"
 )
 
 // JSON Web Token
 type Jwt struct {
-	head   map[string]interface{}
-	clms   map[string]interface{}
-	nested *Jwt
+	// 生のヘッダ。`{"alg":"ES256"}` とか。
+	rawHead []byte
+	// ヘッダ。
+	head map[string]interface{}
 
-	encoded []byte
+	// 生の本文。`{"iss":"https://example.org"}` とかを想定するが、そうでなくても良い。
+	rawBody []byte
+	// クレームセット。
+	clms map[string]interface{}
+
+	// JWS の諸々。
+	sig          []byte
+	headBodyPart []byte
+	// JWE の諸々。
+	encedKey, initVec, enced, authTag []byte
+	headPart                          []byte
+	// Compact serialization.
+	compact []byte
 }
 
 func New() *Jwt {
-	return &Jwt{
-		head: map[string]interface{}{},
-		clms: map[string]interface{}{},
-	}
+	return &Jwt{}
 }
 
-func (this *Jwt) HeaderNames() map[string]bool {
-	m := map[string]bool{}
-	for k := range this.head {
-		m[k] = true
-	}
-	return m
+// 中間生成物を削除する。
+func (this *Jwt) clear() {
+	this.sig = nil
+	this.enced = nil
+	this.compact = nil
 }
 
-func (this *Jwt) Header(headName string) interface{} {
-	return this.head[headName]
+func (this *Jwt) SetRawHeader(raw []byte) {
+	this.rawHead = raw
+	this.head = nil
+	this.clear()
 }
 
-// val が nil や空文字列の場合は削除する。
+func (this *Jwt) SetRawBody(raw []byte) {
+	this.rawBody = raw
+	this.clms = nil
+	this.clear()
+}
+
+// val が nil なら削除する。
 func (this *Jwt) SetHeader(tag string, val interface{}) {
-	this.encoded = nil
-	if val == nil || val == "" {
+	if this.head == nil {
+		this.head = parseJsonOrNew(this.rawHead)
+	}
+	if val == nil {
 		delete(this.head, tag)
 	} else {
 		this.head[tag] = val
 	}
+	this.rawHead = nil
+	this.clear()
 }
 
-func (this *Jwt) ClaimNames() map[string]bool {
-	m := map[string]bool{}
-	for k := range this.clms {
-		m[k] = true
-	}
-	return m
-}
-
-// クレームを返す。Nesting() が true のときは必ず nil を返す。
-func (this *Jwt) Claim(clmName string) interface{} {
-	return this.clms[clmName]
-}
-
-// val が nil や空文字列の場合は削除する。
+// val が nil なら削除する。
 func (this *Jwt) SetClaim(tag string, val interface{}) {
-	this.nested = nil
-	this.encoded = nil
-	if val == nil || val == "" {
+	if this.clms == nil {
+		this.clms = parseJsonOrNew(this.rawBody)
+	}
+	if val == nil {
 		delete(this.clms, tag)
 	} else {
 		this.clms[tag] = val
 	}
+	this.rawBody = nil
+	this.clear()
 }
 
-// 入れ子かどうか。
-func (this *Jwt) Nesting() bool {
-	return this.nested != nil
-}
-
-// 入れ子にされた Jwt を返す。Nesting() が true のときのみ非 nil を返す。
-func (this *Jwt) Nested() *Jwt {
-	return this.nested
-}
-
-// 入れ子にする。入れ子にしたあとで jt を操作したときの動作は定義しない。
-func (this *Jwt) Nest(jt *Jwt) {
-	if jt == this.nested {
-		return
-	}
-	if len(this.clms) > 0 {
-		this.clms = map[string]interface{}{}
-	}
-	this.encoded = nil
-	this.nested = jt
-}
-
-// Compact serialization.
-func (this *Jwt) Encode(sigKeys, encKeys map[string]interface{}) ([]byte, error) {
-	if this.encoded != nil {
-		return this.encoded, nil
-	} else if alg, _ := this.Header("alg").(string); isJwsAlgorithm(alg) {
-		return this.jwsEncode(alg, sigKeys)
-	} else if isJweAlgorithm(alg) {
-		return this.jweEncode(alg, sigKeys, encKeys)
-	} else {
-		return nil, erro.New("alg " + alg + " is not unsupported")
-	}
-}
-
-func (this *Jwt) jwsEncode(alg string, sigKeys map[string]interface{}) ([]byte, error) {
-
-	var key interface{}
-	if alg != "none" {
-		kid, _ := this.Header("kid").(string)
-		var err error
-		key, err = _getKey(kid, sigKeys)
-		if err != nil {
-			return nil, erro.Wrap(err)
-		}
+func (this *Jwt) Sign(keys []jwk.Key) error {
+	if this.sig != nil {
+		return nil
 	}
 
-	var buff []byte
-	if data, err := json.Marshal(this.head); err != nil {
-		return nil, erro.Wrap(err)
-	} else {
-		buff = base64url.Encode(data)
+	rawHead, err := this.getRawHeader()
+	if err != nil {
+		return erro.Wrap(err)
 	}
-	buff = append(buff, '.')
-	if data, err := json.Marshal(this.clms); err != nil {
-		return nil, erro.Wrap(err)
-	} else {
-		buff = append(buff, base64url.Encode(data)...)
+	rawBody, err := this.getRawBody()
+	if err != nil {
+		return erro.Wrap(err)
 	}
+
+	headBodyPart := base64url.Encode(rawHead)
+	headBodyPart = append(headBodyPart, '.')
+	headBodyPart = append(headBodyPart, base64url.Encode(rawBody)...)
+
+	kid, _ := this.Header(tagKid).(string)
+	alg, _ := this.Header(tagAlg).(string)
 
 	var sig []byte
-	var err error
 	switch alg {
-	case "none":
-	case "HS256":
-		sig, err = hsSign(key, crypto.SHA256, buff)
-	case "HS384":
-		sig, err = hsSign(key, crypto.SHA384, buff)
-	case "HS512":
-		sig, err = hsSign(key, crypto.SHA512, buff)
-	case "RS256":
-		sig, err = rsSign(key, crypto.SHA256, buff)
-	case "RS384":
-		sig, err = rsSign(key, crypto.SHA384, buff)
-	case "RS512":
-		sig, err = rsSign(key, crypto.SHA512, buff)
-	case "ES256":
-		// JWA の仕様で ESxxx は鍵のサイズが決められている。
-		priKey, ok := key.(*ecdsa.PrivateKey)
-		if !ok {
-			return nil, erro.New("not ECDSA private key")
-		} else if priKey.Params().BitSize != 256 {
-			return nil, erro.New("not P-256 EC key")
-		}
-		sig, err = esSign(priKey, crypto.SHA256, buff)
-	case "ES384":
-		priKey, ok := key.(*ecdsa.PrivateKey)
-		if !ok {
-			return nil, erro.New("not ECDSA private key")
-		} else if priKey.Params().BitSize != 384 {
-			return nil, erro.New("not P-384 EC key")
-		}
-		sig, err = esSign(priKey, crypto.SHA384, buff)
-	case "ES512":
-		priKey, ok := key.(*ecdsa.PrivateKey)
-		if !ok {
-			return nil, erro.New("not ECDSA private key")
-		} else if priKey.Params().BitSize != 521 {
-			return nil, erro.New("not P-521 EC key")
-		}
-		sig, err = esSign(priKey, crypto.SHA512, buff)
-	case "PS256":
-		sig, err = psSign(key, crypto.SHA256, buff)
-	case "PS384":
-		sig, err = psSign(key, crypto.SHA384, buff)
-	case "PS512":
-		sig, err = psSign(key, crypto.SHA512, buff)
+	case algNone:
+		sig = []byte{}
+	case algHs256:
+		sig, err = hsSign(findKey(keys, kid, ktyOct, useSig, opSign, alg), crypto.SHA256, headBodyPart)
+	case algHs384:
+		sig, err = hsSign(findKey(keys, kid, ktyOct, useSig, opSign, alg), crypto.SHA384, headBodyPart)
+	case algHs512:
+		sig, err = hsSign(findKey(keys, kid, ktyOct, useSig, opSign, alg), crypto.SHA512, headBodyPart)
+	case algRs256:
+		sig, err = rsSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA256, headBodyPart)
+	case algRs384:
+		sig, err = rsSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA384, headBodyPart)
+	case algRs512:
+		sig, err = rsSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA512, headBodyPart)
+	case algEs256:
+		sig, err = esSign(findKey(keys, kid, ktyEc, useSig, opSign, alg), crypto.SHA256, headBodyPart)
+	case algEs384:
+		sig, err = esSign(findKey(keys, kid, ktyEc, useSig, opSign, alg), crypto.SHA384, headBodyPart)
+	case algEs512:
+		sig, err = esSign(findKey(keys, kid, ktyEc, useSig, opSign, alg), crypto.SHA512, headBodyPart)
+	case algPs256:
+		sig, err = psSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA256, headBodyPart)
+	case algPs384:
+		sig, err = psSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA384, headBodyPart)
+	case algPs512:
+		sig, err = psSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA512, headBodyPart)
 	default:
-		return nil, erro.New("alg " + alg + " is unsupported")
+		return erro.New("unsupported sign algorithm " + alg)
 	}
 	if err != nil {
-		return nil, erro.Wrap(err)
+		return erro.Wrap(err)
 	}
 
-	buff = append(buff, '.')
-	this.encoded = append(buff, base64url.Encode(sig)...)
+	this.sig = sig
+	this.headBodyPart = headBodyPart
 
-	return this.encoded, nil
+	return nil
 }
 
-func (this *Jwt) jweEncode(alg string, sigKeys, encKeys map[string]interface{}) ([]byte, error) {
-	kid, _ := this.Header("kid").(string)
-	key, err := _getKey(kid, encKeys)
-	if err != nil {
-		return nil, erro.Wrap(err)
+func (this *Jwt) Encrypt(keys []jwk.Key) error {
+	if this.enced != nil {
+		return nil
 	}
 
-	var plain []byte
-	if this.Nesting() {
-		this.SetHeader("cty", "JWT") // 副作用注意。
-		plain, err = this.Nested().Encode(sigKeys, encKeys)
-	} else {
-		plain, err = json.Marshal(this.clms)
-	}
+	rawBody, err := this.getRawBody()
 	if err != nil {
-		return nil, erro.Wrap(err)
+		return erro.Wrap(err)
 	}
 
-	switch zip, _ := this.Header("zip").(string); zip {
-	case "":
-	case "DEF":
-		plain, err = defCompress(plain)
-	default:
-		return nil, erro.New("zip " + zip + " is unsupported")
-	}
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	enc, _ := this.Header("enc").(string)
+	alg, _ := this.Header(tagAlg).(string)
+	enc, _ := this.Header(tagEnc).(string)
 
 	var contKey []byte
-	if alg == "dir" {
-		var ok bool
-		contKey, ok = key.([]byte)
-		if !ok {
-			return nil, erro.New("key cannot be used for dir")
-		}
-
-		switch enc {
-		case "A128CBC-HS256":
-			ok = (len(contKey) == 32)
-		case "A192CBC-HS384":
-			ok = (len(contKey) == 48)
-		case "A256CBC-HS512":
-			ok = (len(contKey) == 64)
-		case "A128GCM":
-			ok = (len(contKey) == 16)
-		case "A192GCM":
-			ok = (len(contKey) == 24)
-		case "A256GCM":
-			ok = (len(contKey) == 32)
-		default:
-			return nil, erro.New("enc " + enc + " is unsupported")
-		}
-		if !ok {
-			return nil, erro.New("invalid key size")
-		}
-	} else {
-		switch enc {
-		case "A128CBC-HS256":
-			contKey, err = secrand.Bytes(32)
-		case "A192CBC-HS384":
-			contKey, err = secrand.Bytes(48)
-		case "A256CBC-HS512":
-			contKey, err = secrand.Bytes(64)
-		case "A128GCM":
-			contKey, err = secrand.Bytes(16)
-		case "A192GCM":
-			contKey, err = secrand.Bytes(24)
-		case "A256GCM":
-			contKey, err = secrand.Bytes(32)
-		default:
-			return nil, erro.New("enc " + enc + " is unsupported")
-		}
+	if alg != algDir {
+		contKey, err = secrand.Bytes(keySizes[enc])
 		if err != nil {
-			return nil, erro.Wrap(err)
+			return erro.Wrap(err)
+		} else if len(contKey) == 0 {
+			return erro.New("unsupported encryption " + enc)
 		}
 	}
 
-	var encryptedKey []byte
+	kid, _ := this.Header(tagKid).(string)
+
+	var encedKey []byte
 	switch alg {
-	case "RSA1_5":
-		encryptedKey, err = rsa15Encrypt(key, contKey)
-	case "RSA-OAEP":
-		encryptedKey, err = rsaOaepEncrypt(key, crypto.SHA1, contKey)
-	case "RSA-OAEP-256":
-		encryptedKey, err = rsaOaepEncrypt(key, crypto.SHA256, contKey)
-	case "A128KW":
-		encryptedKey, err = aKwEncrypt(key, 16, contKey)
-	case "A192KW":
-		encryptedKey, err = aKwEncrypt(key, 24, contKey)
-	case "A256KW":
-		encryptedKey, err = aKwEncrypt(key, 32, contKey)
-	case "dir":
-		encryptedKey, err = dirEncrypt(key)
-	case "ECDH-ES":
-		encryptedKey, err = ecdhEsEncrypt(key, contKey)
-	case "ECDH-ES+A128KW":
-		encryptedKey, err = ecdhEsAKwEncrypt(key, 16, contKey)
-	case "ECDH-ES+A192KW":
-		encryptedKey, err = ecdhEsAKwEncrypt(key, 24, contKey)
-	case "ECDH-ES+A256KW":
-		encryptedKey, err = ecdhEsAKwEncrypt(key, 32, contKey)
-	case "A128GCMKW":
+	case algRsa1_5:
+		encedKey, err = rsa15Encrypt(findKey(keys, kid, ktyRsa, useEnc, opWrapKey, alg), contKey)
+	case algRsa_oaep:
+		encedKey, err = rsaOaepEncrypt(findKey(keys, kid, ktyRsa, useEnc, opWrapKey, alg), crypto.SHA1, contKey)
+	case algRsa_oaep_256:
+		encedKey, err = rsaOaepEncrypt(findKey(keys, kid, ktyRsa, useEnc, opWrapKey, alg), crypto.SHA256, contKey)
+	case algA128Kw:
+		encedKey, err = aKwEncrypt(findKey(keys, kid, ktyOct, useEnc, opWrapKey, alg), 16, contKey)
+	case algA192Kw:
+		encedKey, err = aKwEncrypt(findKey(keys, kid, ktyOct, useEnc, opWrapKey, alg), 24, contKey)
+	case algA256Kw:
+		encedKey, err = aKwEncrypt(findKey(keys, kid, ktyOct, useEnc, opWrapKey, alg), 32, contKey)
+	case algDir:
+		key := findKey(keys, kid, ktyOct, useEnc, opEncrypt)
+		if key == nil {
+			return erro.New("no key")
+		} else if len(key.Common()) != keySizes[enc] {
+			return erro.New("invalid key size")
+		}
+		contKey = key.Common()
+		encedKey = []byte{}
+	case algEcdh_es:
+		encedKey, err = ecdhEsEncrypt(findKey(keys, kid, ktyEc, useEnc, opWrapKey, alg), contKey)
+	case algEcdh_es_a128Kw:
+		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, ktyEc, useEnc, opWrapKey, alg), 16, contKey)
+	case algEcdh_es_a192Kw:
+		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, ktyEc, useEnc, opWrapKey, alg), 24, contKey)
+	case algEcdh_es_a256Kw:
+		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, ktyEc, useEnc, opWrapKey, alg), 32, contKey)
+	case algA128Gcmkw, algA192Gcmkw, algA256Gcmkw:
 		var initVec, authTag []byte
-		initVec, encryptedKey, authTag, err = aGcmKwEncrypt(key, 16, contKey)
+		initVec, encedKey, authTag, err = aGcmKwEncrypt(findKey(keys, kid, ktyOct, useEnc, opWrapKey, alg), keySizes[alg], contKey)
 		if err == nil {
 			this.SetHeader("iv", base64url.EncodeToString(initVec))  // 副作用注意。
 			this.SetHeader("tag", base64url.EncodeToString(authTag)) // 副作用注意。
 		}
-	case "A192GCMKW":
-		var initVec, authTag []byte
-		initVec, encryptedKey, authTag, err = aGcmKwEncrypt(key, 24, contKey)
-		if err == nil {
-			this.SetHeader("iv", base64url.EncodeToString(initVec))  // 副作用注意。
-			this.SetHeader("tag", base64url.EncodeToString(authTag)) // 副作用注意。
-		}
-	case "A256GCMKW":
-		var initVec, authTag []byte
-		initVec, encryptedKey, authTag, err = aGcmKwEncrypt(key, 32, contKey)
-		if err == nil {
-			this.SetHeader("iv", base64url.EncodeToString(initVec))  // 副作用注意。
-			this.SetHeader("tag", base64url.EncodeToString(authTag)) // 副作用注意。
-		}
-	case "PBES2-HS256+A128KW":
-		encryptedKey, err = pbes2HsAKwEncrypt(key, crypto.SHA256, 16, contKey)
-	case "PBES2-HS384+A192KW":
-		encryptedKey, err = pbes2HsAKwEncrypt(key, crypto.SHA384, 24, contKey)
-	case "PBES2-HS512+A256KW":
-		encryptedKey, err = pbes2HsAKwEncrypt(key, crypto.SHA512, 32, contKey)
+	case algPbes2_hs256_a128Kw:
+		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", useEnc, opWrapKey, alg), crypto.SHA256, 16, contKey)
+	case algPbes2_hs384_a192Kw:
+		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", useEnc, opWrapKey, alg), crypto.SHA384, 24, contKey)
+	case algPbes2_hs512_a256Kw:
+		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", useEnc, opWrapKey, alg), crypto.SHA512, 32, contKey)
 	default:
-		return nil, erro.New("alg " + alg + " is unsupported")
+		return erro.New("unsupported key wrapping " + alg)
 	}
 
-	var headPart []byte
-	if data, err := json.Marshal(this.head); err != nil {
-		return nil, erro.Wrap(err)
-	} else {
-		headPart = base64url.Encode(data)
-	}
+	zip, _ := this.Header(tagZip).(string)
 
-	var initVec, encrypted, authTag []byte
-	switch enc {
-	case "A128CBC-HS256":
-		initVec, encrypted, authTag, err = aCbcHsEncrypt(contKey, 32, crypto.SHA256, plain, headPart)
-	case "A192CBC-HS384":
-		initVec, encrypted, authTag, err = aCbcHsEncrypt(contKey, 48, crypto.SHA384, plain, headPart)
-	case "A256CBC-HS512":
-		initVec, encrypted, authTag, err = aCbcHsEncrypt(contKey, 64, crypto.SHA512, plain, headPart)
-	case "A128GCM":
-		initVec, encrypted, authTag, err = aGcmEncrypt(contKey, 16, plain, headPart)
-	case "A192GCM":
-		initVec, encrypted, authTag, err = aGcmEncrypt(contKey, 24, plain, headPart)
-	case "A256GCM":
-		initVec, encrypted, authTag, err = aGcmEncrypt(contKey, 32, plain, headPart)
+	var plain []byte
+	switch zip {
+	case "":
+		plain = rawBody
+	case zipDef:
+		plain, err = defCompress(rawBody)
 	default:
-		return nil, erro.New("enc " + enc + " is unsupported")
+		return erro.New("Unsupported compression " + zip)
 	}
 	if err != nil {
-		return nil, erro.Wrap(err)
+		return erro.Wrap(err)
 	}
 
-	buff := append(headPart, '.')
-	buff = append(buff, base64url.Encode(encryptedKey)...)
-	buff = append(buff, '.')
-	buff = append(buff, base64url.Encode(initVec)...)
-	buff = append(buff, '.')
-	buff = append(buff, base64url.Encode(encrypted)...)
-	buff = append(buff, '.')
-	this.encoded = append(buff, base64url.Encode(authTag)...)
+	rawHead, err := this.getRawHeader() // A128GCMKW の初期ベクトル等を追加するので、早めに実行しちゃ駄目。
+	if err != nil {
+		return erro.Wrap(err)
+	}
+	headPart := base64url.Encode(rawHead)
 
-	return this.encoded, nil
+	var initVec, enced, authTag []byte
+	switch enc {
+	case encA128Cbc_Hs256:
+		initVec, enced, authTag, err = aCbcHsEncrypt(contKey, 32, crypto.SHA256, plain, headPart)
+	case encA192Cbc_Hs384:
+		initVec, enced, authTag, err = aCbcHsEncrypt(contKey, 48, crypto.SHA384, plain, headPart)
+	case encA256Cbc_Hs512:
+		initVec, enced, authTag, err = aCbcHsEncrypt(contKey, 64, crypto.SHA512, plain, headPart)
+	case encA128Gcm:
+		initVec, enced, authTag, err = aGcmEncrypt(contKey, 16, plain, headPart)
+	case encA192Gcm:
+		initVec, enced, authTag, err = aGcmEncrypt(contKey, 24, plain, headPart)
+	case encA256Gcm:
+		initVec, enced, authTag, err = aGcmEncrypt(contKey, 32, plain, headPart)
+	default:
+		return erro.New("unsupported encryption" + enc)
+	}
+	if err != nil {
+		return erro.Wrap(err)
+	}
+
+	this.encedKey = encedKey
+	this.initVec = initVec
+	this.enced = enced
+	this.authTag = authTag
+	this.headPart = headPart
+
+	return nil
 }
 
-// JSON serialization.
-func (this *Jwt) EncodeToJson() ([]byte, error) {
-	panic("not yet implemented")
+// Compact serialization にする。
+func (this *Jwt) Encode() ([]byte, error) {
+	if this.sig != nil {
+		// JWS.
+		buff := append(this.headBodyPart, '.')
+		this.compact = append(buff, base64url.Encode(this.sig)...)
+	} else if this.enced != nil {
+		// JWE.
+		buff := append(this.headPart, '.')
+		buff = append(buff, base64url.Encode(this.encedKey)...)
+		buff = append(buff, '.')
+		buff = append(buff, base64url.Encode(this.initVec)...)
+		buff = append(buff, '.')
+		buff = append(buff, base64url.Encode(this.enced)...)
+		buff = append(buff, '.')
+		this.compact = append(buff, base64url.Encode(this.authTag)...)
+	} else {
+		// 無署名 JWS
+		rawHead, err := this.getRawHeader()
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		rawBody, err := this.getRawBody()
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+
+		buff := append(base64url.Encode(rawHead), '.')
+		buff = append(buff, base64url.Encode(rawBody)...)
+		this.compact = append(buff, '.')
+	}
+	return this.compact, nil
 }
 
-func Parse(encoded string, veriKeys, decKeys map[string]interface{}) (*Jwt, error) {
-	var jt *Jwt
-	switch parts := strings.Split(encoded, "."); len(parts) {
+// Compact serialization を読み取る。
+func Parse(data []byte) (*Jwt, error) {
+	switch parts := bytes.Split(data, []byte{'.'}); len(parts) {
 	case 3:
-		var err error
-		jt, err = parseJwsParts(parts[0], parts[1], parts[2], veriKeys)
+		// JWS.
+		rawHead, err := base64url.Decode(parts[0])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
+		rawBody, err := base64url.Decode(parts[1])
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		sig, err := base64url.Decode(parts[2])
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		return &Jwt{
+			rawHead:      rawHead,
+			rawBody:      rawBody,
+			sig:          sig,
+			headBodyPart: data[:len(parts[0])+1+len(parts[1])],
+			compact:      data,
+		}, nil
 	case 5:
-		var err error
-		jt, err = parseJweParts(parts[0], parts[1], parts[2], parts[3], parts[4], veriKeys, decKeys)
+		// JWE.
+		rawHead, err := base64url.Decode(parts[0])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
+		encedKey, err := base64url.Decode(parts[1])
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		initVec, err := base64url.Decode(parts[2])
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		enced, err := base64url.Decode(parts[3])
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		authTag, err := base64url.Decode(parts[4])
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+		return &Jwt{
+			rawHead:  rawHead,
+			encedKey: encedKey,
+			initVec:  initVec,
+			enced:    enced,
+			authTag:  authTag,
+			headPart: parts[0],
+			compact:  data,
+		}, nil
 	default:
 		return nil, erro.New("invalid parts number")
 	}
-	jt.encoded = []byte(encoded)
-	return jt, nil
 }
 
-func parseJwsParts(headPart, clmsPart, sigPart string, veriKeys map[string]interface{}) (*Jwt, error) {
-	var head map[string]interface{}
-	if data, err := base64url.DecodeString(headPart); err != nil {
-		return nil, erro.Wrap(err)
-	} else if err := json.Unmarshal(data, &head); err != nil {
-		return nil, erro.Wrap(err)
+func (this *Jwt) RawHeader() []byte {
+	if raw, err := this.getRawHeader(); err != nil {
+		log.Warn(erro.Wrap(err))
+		return []byte("{}")
+	} else {
+		return raw
 	}
+}
 
-	var clms map[string]interface{}
-	if data, err := base64url.DecodeString(clmsPart); err != nil {
-		return nil, erro.Wrap(err)
-	} else if err := json.Unmarshal(data, &clms); err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	alg, _ := head["alg"].(string)
-
-	var key interface{}
-	if alg != "none" {
-		kid, _ := head["kid"].(string)
+func (this *Jwt) getRawHeader() ([]byte, error) {
+	if this.rawHead == nil {
+		if this.head == nil {
+			this.head = map[string]interface{}{}
+		}
 		var err error
-		key, err = _getKey(kid, veriKeys)
+		this.rawHead, err = json.Marshal(this.head)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
 	}
-
-	sig, err := base64url.DecodeString(sigPart)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	switch alg {
-	case "none":
-		err = noneVerify(sig)
-	case "HS256":
-		err = hsVerify(key, crypto.SHA256, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "HS384":
-		err = hsVerify(key, crypto.SHA384, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "HS512":
-		err = hsVerify(key, crypto.SHA512, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "RS256":
-		err = rsVerify(key, crypto.SHA256, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "RS384":
-		err = rsVerify(key, crypto.SHA384, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "RS512":
-		err = rsVerify(key, crypto.SHA512, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "ES256":
-		// JWA の仕様で ESxxx は鍵のサイズが決められている。
-		priKey, ok := key.(*ecdsa.PublicKey)
-		if !ok {
-			return nil, erro.New("not ECDSA private key")
-		} else if priKey.Params().BitSize != 256 {
-			return nil, erro.New("not P-256 EC key")
-		}
-		err = esVerify(priKey, crypto.SHA256, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "ES384":
-		priKey, ok := key.(*ecdsa.PublicKey)
-		if !ok {
-			return nil, erro.New("not ECDSA private key")
-		} else if priKey.Params().BitSize != 384 {
-			return nil, erro.New("not P-384 EC key")
-		}
-		err = esVerify(priKey, crypto.SHA384, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "ES512":
-		priKey, ok := key.(*ecdsa.PublicKey)
-		if !ok {
-			return nil, erro.New("not ECDSA private key")
-		} else if priKey.Params().BitSize != 521 {
-			return nil, erro.New("not P-521 EC key")
-		}
-		err = esVerify(priKey, crypto.SHA512, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "PS256":
-		err = psVerify(key, crypto.SHA256, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "PS384":
-		err = psVerify(key, crypto.SHA384, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	case "PS512":
-		err = psVerify(key, crypto.SHA512, sig, []byte(headPart), []byte{'.'}, []byte(clmsPart))
-	default:
-		return nil, erro.New("alg " + alg + " is unsupported")
-	}
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-
-	return &Jwt{head, clms, nil, nil}, nil
+	return this.rawHead, nil
 }
 
-func parseJweParts(headPart, encryptedKeyPart, initVecPart, encryptedPart, authTagPart string, veriKeys, decKeys map[string]interface{}) (*Jwt, error) {
-	var head map[string]interface{}
-	if data, err := base64url.DecodeString(headPart); err != nil {
-		return nil, erro.Wrap(err)
-	} else if err := json.Unmarshal(data, &head); err != nil {
-		return nil, erro.Wrap(err)
+func (this *Jwt) RawBody() []byte {
+	if raw, err := this.getRawBody(); err != nil {
+		log.Warn(erro.Wrap(err))
+		return []byte("{}")
+	} else {
+		return raw
+	}
+}
+
+func (this *Jwt) getRawBody() ([]byte, error) {
+	if this.rawBody == nil {
+		if this.clms == nil {
+			this.clms = map[string]interface{}{}
+		}
+		var err error
+		this.rawBody, err = json.Marshal(this.clms)
+		if err != nil {
+			return nil, erro.Wrap(err)
+		}
+	}
+	return this.rawBody, nil
+}
+
+func (this *Jwt) IsSigned() bool {
+	return this.sig != nil
+}
+
+func (this *Jwt) IsEncrypted() bool {
+	return this.enced != nil
+}
+
+func (this *Jwt) Verify(keys []jwk.Key) (err error) {
+	if this.sig == nil {
+		return erro.New("not signed")
 	}
 
-	encryptedKey, err := base64url.DecodeString(encryptedKeyPart)
-	if err != nil {
-		return nil, erro.Wrap(err)
+	kid, _ := this.Header(tagKid).(string)
+	alg, _ := this.Header(tagAlg).(string)
+
+	switch alg {
+	case algNone:
+		err = noneVerify(this.sig)
+	case algHs256:
+		err = hsVerify(findKey(keys, kid, ktyOct, useSig, opVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
+	case algHs384:
+		err = hsVerify(findKey(keys, kid, ktyOct, useSig, opVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
+	case algHs512:
+		err = hsVerify(findKey(keys, kid, ktyOct, useSig, opVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
+	case algRs256:
+		err = rsVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
+	case algRs384:
+		err = rsVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
+	case algRs512:
+		err = rsVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
+	case algEs256:
+		err = esVerify(findKey(keys, kid, ktyEc, useSig, opVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
+	case algEs384:
+		err = esVerify(findKey(keys, kid, ktyEc, useSig, opVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
+	case algEs512:
+		err = esVerify(findKey(keys, kid, ktyEc, useSig, opVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
+	case algPs256:
+		err = psVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
+	case algPs384:
+		err = psVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
+	case algPs512:
+		err = psVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
+	default:
+		return erro.New("unsupported sign " + alg)
 	}
-	initVec, err := base64url.DecodeString(initVecPart)
 	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-	encrypted, err := base64url.DecodeString(encryptedPart)
-	if err != nil {
-		return nil, erro.Wrap(err)
-	}
-	authTag, err := base64url.DecodeString(authTagPart)
-	if err != nil {
-		return nil, erro.Wrap(err)
+		return erro.Wrap(err)
 	}
 
-	alg, _ := head["alg"].(string)
+	return nil
+}
 
-	kid, _ := head["kid"].(string)
-	key, err := _getKey(kid, decKeys)
-	if err != nil {
-		return nil, erro.Wrap(err)
+func (this *Jwt) Decrypt(keys []jwk.Key) (err error) {
+	if this.enced == nil {
+		return erro.New("not encrypted")
 	}
+
+	alg, _ := this.Header(tagAlg).(string)
+	kid, _ := this.Header(tagKid).(string)
 
 	var contKey []byte
 	switch alg {
-	case "RSA1_5":
-		contKey, err = rsa15Decrypt(key, encryptedKey)
-	case "RSA-OAEP":
-		contKey, err = rsaOaepDecrypt(key, crypto.SHA1, encryptedKey)
-	case "RSA-OAEP-256":
-		contKey, err = rsaOaepDecrypt(key, crypto.SHA256, encryptedKey)
-	case "A128KW":
-		contKey, err = aKwDecrypt(key, 16, encryptedKey)
-	case "A192KW":
-		contKey, err = aKwDecrypt(key, 24, encryptedKey)
-	case "A256KW":
-		contKey, err = aKwDecrypt(key, 32, encryptedKey)
-	case "dir":
-		contKey, err = dirDecrypt(key, encryptedKey)
-	case "ECDH-ES":
-		contKey, err = ecdhEsDecrypt(key, encryptedKey)
-	case "ECDH-ES+A128KW":
-		contKey, err = ecdhEsAKwDecrypt(key, 16, encryptedKey)
-	case "ECDH-ES+A192KW":
-		contKey, err = ecdhEsAKwDecrypt(key, 24, encryptedKey)
-	case "ECDH-ES+A256KW":
-		contKey, err = ecdhEsAKwDecrypt(key, 32, encryptedKey)
-	case "A128GCMKW":
+	case algRsa1_5:
+		contKey, err = rsa15Decrypt(findKey(keys, kid, ktyRsa, useEnc, opUnwrapKey, alg), this.encedKey)
+	case algRsa_oaep:
+		contKey, err = rsaOaepDecrypt(findKey(keys, kid, ktyRsa, useEnc, opUnwrapKey, alg), crypto.SHA1, this.encedKey)
+	case algRsa_oaep_256:
+		contKey, err = rsaOaepDecrypt(findKey(keys, kid, ktyRsa, useEnc, opUnwrapKey, alg), crypto.SHA256, this.encedKey)
+	case algA128Kw:
+		contKey, err = aKwDecrypt(findKey(keys, kid, ktyOct, useEnc, opUnwrapKey, alg), 16, this.encedKey)
+	case algA192Kw:
+		contKey, err = aKwDecrypt(findKey(keys, kid, ktyOct, useEnc, opUnwrapKey, alg), 24, this.encedKey)
+	case algA256Kw:
+		contKey, err = aKwDecrypt(findKey(keys, kid, ktyOct, useEnc, opUnwrapKey, alg), 32, this.encedKey)
+	case algDir:
+		contKey, err = dirDecrypt(findKey(keys, kid, ktyOct, useEnc, opDecrypt, alg), this.encedKey)
+	case algEcdh_es:
+		contKey, err = ecdhEsDecrypt(findKey(keys, kid, ktyEc, useEnc, opUnwrapKey, alg), this.encedKey)
+	case algEcdh_es_a128Kw:
+		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, ktyEc, useEnc, opUnwrapKey, alg), 16, this.encedKey)
+	case algEcdh_es_a192Kw:
+		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, ktyEc, useEnc, opUnwrapKey, alg), 24, this.encedKey)
+	case algEcdh_es_a256Kw:
+		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, ktyEc, useEnc, opUnwrapKey, alg), 32, this.encedKey)
+	case algA128Gcmkw, algA192Gcmkw, algA256Gcmkw:
 		var initVec, authTag []byte
-		initVec, authTag, err = _getInitVecAndAuthTag(head)
+		initVec, authTag, err = this.getInitVecAndAuthTagFromHeader()
 		if err == nil {
-			contKey, err = aGcmKwDecrypt(key, 16, initVec, encryptedKey, authTag)
+			contKey, err = aGcmKwDecrypt(findKey(keys, kid, ktyOct, useEnc, opUnwrapKey, alg), keySizes[alg], initVec, this.encedKey, authTag)
 		}
-	case "A192GCMKW":
-		var initVec, authTag []byte
-		initVec, authTag, err = _getInitVecAndAuthTag(head)
-		if err == nil {
-			contKey, err = aGcmKwDecrypt(key, 24, initVec, encryptedKey, authTag)
-		}
-	case "A256GCMKW":
-		var initVec, authTag []byte
-		initVec, authTag, err = _getInitVecAndAuthTag(head)
-		if err == nil {
-			contKey, err = aGcmKwDecrypt(key, 32, initVec, encryptedKey, authTag)
-		}
-	case "PBES2-HS256+A128KW":
-		contKey, err = pbes2HsAKwDecrypt(key, crypto.SHA256, 16, encryptedKey)
-	case "PBES2-HS384+A192KW":
-		contKey, err = pbes2HsAKwDecrypt(key, crypto.SHA384, 24, encryptedKey)
-	case "PBES2-HS512+A256KW":
-		contKey, err = pbes2HsAKwDecrypt(key, crypto.SHA512, 32, encryptedKey)
+	case algPbes2_hs256_a128Kw:
+		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", useEnc, opUnwrapKey, alg), crypto.SHA256, 16, this.encedKey)
+	case algPbes2_hs384_a192Kw:
+		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", useEnc, opUnwrapKey, alg), crypto.SHA384, 24, this.encedKey)
+	case algPbes2_hs512_a256Kw:
+		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", useEnc, opUnwrapKey, alg), crypto.SHA512, 32, this.encedKey)
 	default:
-		return nil, erro.New("alg " + alg + " is unsupported")
+		return erro.New("unsupported key wrapping " + alg)
 	}
 	if err != nil {
-		return nil, erro.Wrap(err)
+		return erro.Wrap(err)
 	}
+
+	enc, _ := this.Header(tagEnc).(string)
 
 	var plain []byte
-	switch enc, _ := head["enc"].(string); enc {
-	case "A128CBC-HS256":
-		plain, err = aCbcHsDecrypt(contKey, 32, crypto.SHA256, []byte(headPart), initVec, encrypted, authTag)
-	case "A192CBC-HS384":
-		plain, err = aCbcHsDecrypt(contKey, 48, crypto.SHA384, []byte(headPart), initVec, encrypted, authTag)
-	case "A256CBC-HS512":
-		plain, err = aCbcHsDecrypt(contKey, 64, crypto.SHA512, []byte(headPart), initVec, encrypted, authTag)
-	case "A128GCM":
-		plain, err = aGcmDecrypt(contKey, 16, []byte(headPart), initVec, encrypted, authTag)
-	case "A192GCM":
-		plain, err = aGcmDecrypt(contKey, 24, []byte(headPart), initVec, encrypted, authTag)
-	case "A256GCM":
-		plain, err = aGcmDecrypt(contKey, 32, []byte(headPart), initVec, encrypted, authTag)
+	switch enc {
+	case encA128Cbc_Hs256:
+		plain, err = aCbcHsDecrypt(contKey, 32, crypto.SHA256, this.headPart, this.initVec, this.enced, this.authTag)
+	case encA192Cbc_Hs384:
+		plain, err = aCbcHsDecrypt(contKey, 48, crypto.SHA384, this.headPart, this.initVec, this.enced, this.authTag)
+	case encA256Cbc_Hs512:
+		plain, err = aCbcHsDecrypt(contKey, 64, crypto.SHA512, this.headPart, this.initVec, this.enced, this.authTag)
+	case encA128Gcm:
+		plain, err = aGcmDecrypt(contKey, 16, this.headPart, this.initVec, this.enced, this.authTag)
+	case encA192Gcm:
+		plain, err = aGcmDecrypt(contKey, 24, this.headPart, this.initVec, this.enced, this.authTag)
+	case encA256Gcm:
+		plain, err = aGcmDecrypt(contKey, 32, this.headPart, this.initVec, this.enced, this.authTag)
 	default:
-		return nil, erro.New("enc " + enc + " is unsupported")
+		return erro.New("unsupported encryption " + enc)
 	}
 	if err != nil {
-		return nil, erro.Wrap(err)
+		return erro.Wrap(err)
 	}
 
-	switch zip, _ := head["zip"].(string); zip {
+	zip, _ := this.Header(tagZip).(string)
+
+	var rawBody []byte
+	switch zip {
 	case "":
+		rawBody = plain
 	case "DEF":
-		plain, err = defDecompress(plain)
+		rawBody, err = defDecompress(plain)
 	default:
-		return nil, erro.New("zip " + zip + " is unsupported")
+		return erro.New("unsupported compression " + zip)
 	}
 	if err != nil {
-		return nil, erro.Wrap(err)
+		return erro.Wrap(err)
 	}
 
-	switch cty, _ := head["cty"].(string); cty {
-	case "":
-		var clms map[string]interface{}
-		if err := json.Unmarshal(plain, &clms); err != nil {
-			return nil, erro.Wrap(err)
-		}
-		return &Jwt{head, clms, nil, nil}, nil
-	case "JWT":
-		jt, err := Parse(string(plain), veriKeys, decKeys)
+	this.rawBody = rawBody
+
+	return nil
+}
+
+func (this *Jwt) Header(tag string) interface{} {
+	if val, err := this.getHeader(tag); err != nil {
+		log.Warn(erro.Wrap(err))
+		return nil
+	} else {
+		return val
+	}
+}
+
+func (this *Jwt) getHeader(tag string) (interface{}, error) {
+	if this.head == nil {
+		var err error
+		this.head, err = parseJson(this.rawHead)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		return &Jwt{head, map[string]interface{}{}, jt, nil}, nil
-	default:
-		return nil, erro.New("cty " + cty + " is unsupported")
+	}
+	return this.head[tag], nil
+}
+
+func (this *Jwt) Claim(tag string) interface{} {
+	if val, err := this.getClaim(tag); err != nil {
+		log.Warn(erro.Wrap(err))
+		return nil
+	} else {
+		return val
 	}
 }
 
-func _getKey(kid string, keys map[string]interface{}) (interface{}, error) {
-	if key := keys[kid]; key != nil {
-		return key, nil
-	}
-
-	if kid != "" {
-		return nil, erro.New("no key " + kid)
-	} else if len(keys) == 1 {
-		// 1 つだけならそれを使う。
-		for _, key := range keys {
-			return key, nil
-		}
-	}
-	return nil, erro.New("key is not specified")
-}
-
-func _getInitVecAndAuthTag(head map[string]interface{}) (initVec, authTag []byte, err error) {
-	if str, _ := head["iv"].(string); str == "" {
-		return nil, nil, erro.New("no iv")
-	} else if initVec, err = base64url.DecodeString(str); err != nil {
-		return nil, nil, erro.Wrap(err)
-	} else if str, _ := head["tag"].(string); str == "" {
-		return nil, nil, erro.New("no tag")
-	} else if authTag, err = base64url.DecodeString(str); err != nil {
-		return nil, nil, erro.Wrap(err)
-	}
-	return initVec, authTag, nil
-}
-
-// ヘッダとクレーム部を JSON 形式で返す。
-// 入れ子ならヘッダは複数になる
-func ToJsons(jt *Jwt) ([][]byte, error) {
-	jss := [][]byte{}
-	for ; ; jt = jt.Nested() {
-		headJs, err := json.Marshal(jt.head)
+func (this *Jwt) getClaim(tag string) (interface{}, error) {
+	if this.clms == nil {
+		var err error
+		this.clms, err = parseJson(this.rawBody)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		jss = append(jss, headJs)
+	}
+	return this.clms[tag], nil
+}
 
-		if !jt.Nesting() {
-			break
-		}
+func parseJson(data []byte) (map[string]interface{}, error) {
+	if data == nil {
+		return map[string]interface{}{}, nil
 	}
 
-	clmsJs, err := json.Marshal(jt.clms)
-	if err != nil {
+	var m map[string]interface{}
+	if err := json.Unmarshal(data, &m); err != nil {
 		return nil, erro.Wrap(err)
 	}
-	jss = append(jss, clmsJs)
+	return m, nil
+}
 
-	return jss, nil
+func parseJsonOrNew(data []byte) map[string]interface{} {
+	if m, err := parseJson(data); err != nil {
+		log.Warn(erro.Wrap(err))
+		return map[string]interface{}{}
+	} else {
+		return m
+	}
+}
+
+func (this *Jwt) getInitVecAndAuthTagFromHeader() (initVec, authTag []byte, err error) {
+	if str, _ := this.Header(tagIv).(string); str == "" {
+		return nil, nil, erro.New("no initialization vector")
+	} else if initVec, err := base64url.DecodeString(str); err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else if str, _ := this.Header(tagTag).(string); str == "" {
+		return nil, nil, erro.New("no authentication tag")
+	} else if authTag, err := base64url.DecodeString(str); err != nil {
+		return nil, nil, erro.Wrap(err)
+	} else {
+		return initVec, authTag, nil
+	}
 }

@@ -43,12 +43,12 @@ func TestAes128Kw(t *testing.T) {
 		t.Fatal(err)
 	} else if !bytes.Equal(e, encrypted) {
 		t.Error(e)
-		t.Error(encrypted)
+		t.Fatal(encrypted)
 	} else if p, err := decryptAesKw(key.Common(), encrypted); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)
-		t.Error(plain)
+		t.Fatal(plain)
 	}
 }
 
@@ -69,7 +69,7 @@ func TestAesKw(t *testing.T) {
 				t.Fatal(err)
 			} else if !bytes.Equal(p, plain) {
 				t.Error(p)
-				t.Error(plain)
+				t.Fatal(plain)
 			}
 		}
 	}

@@ -280,3 +280,17 @@ func TestToFromMap(t *testing.T) {
 		}
 	}
 }
+
+func TestToFromMapOperation(t *testing.T) {
+	for _, key := range []Key{
+		New(test_128Key, map[string]interface{}{"key_ops": []interface{}{"verify"}}),
+	} {
+		if key2, err := FromMap(key.ToMap()); err != nil {
+			t.Error(err)
+			t.Fatal(key)
+		} else if !reflect.DeepEqual(key2, key) {
+			t.Error(key2)
+			t.Fatal(key)
+		}
+	}
+}

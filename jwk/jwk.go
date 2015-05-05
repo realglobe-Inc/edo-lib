@@ -303,7 +303,7 @@ func (this *keyImpl) ToMap() map[string]interface{} {
 		for op := range this.ops {
 			ops = append(ops, op)
 		}
-		m[tagKey_ops] = this.ops
+		m[tagKey_ops] = ops
 	}
 	if this.alg != "" {
 		m[tagAlg] = this.alg

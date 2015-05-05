@@ -18,50 +18,14 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"github.com/realglobe-Inc/edo-lib/jwk"
 	"github.com/realglobe-Inc/edo-lib/secrand"
 	"github.com/realglobe-Inc/go-lib/erro"
 )
 
-var jweAlgs = map[string]bool{
-	"RSA1_5":             true,
-	"RSA-OAEP":           true,
-	"RSA-OAEP-256":       true,
-	"A128KW":             true,
-	"A192KW":             true,
-	"A256KW":             true,
-	"dir":                true,
-	"ECDH-ES":            true,
-	"ECDH-ES+A128KW":     true,
-	"ECDH-ES+A192KW":     true,
-	"ECDH-ES+A256KW":     true,
-	"A128GCMKW":          true,
-	"A192GCMKW":          true,
-	"A256GCMKW":          true,
-	"PBES2-HS256+A128KW": true,
-	"PBES2-HS384+A192KW": true,
-	"PBES2-HS512+A256KW": true,
-}
-
-var jweEncs = map[string]bool{
-	"A128CBC-HS256": true,
-	"A192CBC-HS384": true,
-	"A256CBC-HS512": true,
-	"A128GCM":       true,
-	"A192GCM":       true,
-	"A256GCM":       true,
-}
-
-var jweZips = map[string]bool{
-	"DEF": true,
-}
-
-func isJweAlgorithm(alg string) bool {
-	return jweAlgs[alg]
-}
-
-func aCbcHsEncrypt(key []byte, keySize int, hGen crypto.Hash, plain, authData []byte) (initVec, encrypted, authTag []byte, err error) {
+func aCbcHsEncrypt(key []byte, keySize int, hGen crypto.Hash, plain, authData []byte) (initVec, enced, authTag []byte, err error) {
 	if len(key) != keySize {
-		return nil, nil, nil, erro.New("key size is not ", keySize)
+		return nil, nil, nil, erro.New("key size ", len(key), " is not ", keySize)
 	}
 
 	initVec, err = secrand.Bytes(16)
@@ -69,24 +33,24 @@ func aCbcHsEncrypt(key []byte, keySize int, hGen crypto.Hash, plain, authData []
 		return nil, nil, nil, erro.Wrap(err)
 	}
 
-	encrypted, authTag, err = encryptAesCbcHmacSha2(key, hGen, plain, authData, initVec)
+	enced, authTag, err = encryptAesCbcHmacSha2(key, hGen, plain, authData, initVec)
 	if err != nil {
 		return nil, nil, nil, erro.Wrap(err)
 	}
-	return initVec, encrypted, authTag, nil
+	return initVec, enced, authTag, nil
 }
 
-func aCbcHsDecrypt(key []byte, keySize int, hGen crypto.Hash, authData, initVec, encrypted, authTag []byte) ([]byte, error) {
+func aCbcHsDecrypt(key []byte, keySize int, hGen crypto.Hash, authData, initVec, enced, authTag []byte) ([]byte, error) {
 	if len(key) != keySize {
-		return nil, erro.New("key size is not ", keySize)
+		return nil, erro.New("key size ", len(key), " is not ", keySize)
 	}
 
-	return decryptAesCbcHmacSha2(key, hGen, authData, initVec, encrypted, authTag)
+	return decryptAesCbcHmacSha2(key, hGen, authData, initVec, enced, authTag)
 }
 
-func aGcmEncrypt(key []byte, keySize int, plain, authData []byte) (initVec, encrypted, authTag []byte, err error) {
+func aGcmEncrypt(key []byte, keySize int, plain, authData []byte) (initVec, enced, authTag []byte, err error) {
 	if len(key) != keySize {
-		return nil, nil, nil, erro.New("key size is not ", keySize)
+		return nil, nil, nil, erro.New("key size ", len(key), " is not ", keySize)
 	}
 
 	initVec, err = secrand.Bytes(12)
@@ -94,119 +58,111 @@ func aGcmEncrypt(key []byte, keySize int, plain, authData []byte) (initVec, encr
 		return nil, nil, nil, erro.Wrap(err)
 	}
 
-	encrypted, authTag, err = encryptAesGcm(key, plain, authData, initVec)
+	enced, authTag, err = encryptAesGcm(key, plain, authData, initVec)
 	if err != nil {
 		return nil, nil, nil, erro.Wrap(err)
 	}
-	return initVec, encrypted, authTag, nil
+	return initVec, enced, authTag, nil
 }
 
-func aGcmDecrypt(key []byte, keySize int, authData, initVec, encrypted, authTag []byte) ([]byte, error) {
+func aGcmDecrypt(key []byte, keySize int, authData, initVec, enced, authTag []byte) ([]byte, error) {
 	if len(key) != keySize {
-		return nil, erro.New("key size is not ", keySize)
+		return nil, erro.New("key size ", len(key), " is not ", keySize)
 	}
 
-	return decryptAesGcm(key, authData, initVec, encrypted, authTag)
+	return decryptAesGcm(key, authData, initVec, enced, authTag)
 }
 
-func rsa15Encrypt(key interface{}, plain []byte) ([]byte, error) {
-	pubKey, ok := key.(*rsa.PublicKey)
-	if !ok {
-		return nil, erro.New("not RSA public key")
+// 以下、鍵交換用。
+
+func rsa15Encrypt(key jwk.Key, plain []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
-
-	return rsa.EncryptPKCS1v15(rand.Reader, pubKey, plain)
+	return rsa.EncryptPKCS1v15(rand.Reader, key.Public().(*rsa.PublicKey), plain)
 }
 
-func rsa15Decrypt(key interface{}, encrypted []byte) ([]byte, error) {
-	priKey, ok := key.(*rsa.PrivateKey)
-	if !ok {
-		return nil, erro.New("not RSA private key")
+func rsa15Decrypt(key jwk.Key, enced []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
-
-	return rsa.DecryptPKCS1v15(rand.Reader, priKey, encrypted)
+	return rsa.DecryptPKCS1v15(rand.Reader, key.Private().(*rsa.PrivateKey), enced)
 }
 
-func rsaOaepEncrypt(key interface{}, hGen crypto.Hash, plain []byte) ([]byte, error) {
-	pubKey, ok := key.(*rsa.PublicKey)
-	if !ok {
-		return nil, erro.New("not RSA public key")
+func rsaOaepEncrypt(key jwk.Key, hGen crypto.Hash, plain []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
-
-	return rsa.EncryptOAEP(hGen.New(), rand.Reader, pubKey, plain, nil)
+	return rsa.EncryptOAEP(hGen.New(), rand.Reader, key.Public().(*rsa.PublicKey), plain, nil)
 }
 
-func rsaOaepDecrypt(key interface{}, hGen crypto.Hash, encrypted []byte) ([]byte, error) {
-	priKey, ok := key.(*rsa.PrivateKey)
-	if !ok {
-		return nil, erro.New("not RSA private key")
+func rsaOaepDecrypt(key jwk.Key, hGen crypto.Hash, enced []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
-
-	return rsa.DecryptOAEP(hGen.New(), rand.Reader, priKey, encrypted, nil)
+	return rsa.DecryptOAEP(hGen.New(), rand.Reader, key.Private().(*rsa.PrivateKey), enced, nil)
 }
 
-func aKwEncrypt(key interface{}, keySize int, plain []byte) ([]byte, error) {
-	comKey, ok := key.([]byte)
-	if !ok {
-		return nil, erro.New("not common key")
-	} else if len(comKey) != keySize {
-		return nil, erro.New("common key size is not ", keySize)
+func aKwEncrypt(key jwk.Key, keySize int, plain []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	} else if len(key.Common()) != keySize {
+		return nil, erro.New("key size ", len(key.Common()), " is not ", keySize)
 	}
-
-	return encryptAesKw(comKey, plain)
+	return encryptAesKw(key.Common(), plain)
 }
 
-func aKwDecrypt(key interface{}, keySize int, encrypted []byte) ([]byte, error) {
-	comKey, ok := key.([]byte)
-	if !ok {
-		return nil, erro.New("not common key")
-	} else if len(comKey) != keySize {
-		return nil, erro.New("common key size is not ", keySize)
+func aKwDecrypt(key jwk.Key, keySize int, enced []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	} else if len(key.Common()) != keySize {
+		return nil, erro.New("key size ", key.Common(), " is not ", keySize)
 	}
-
-	return decryptAesKw(comKey, encrypted)
+	return decryptAesKw(key.Common(), enced)
 }
 
-func dirEncrypt(key interface{}) ([]byte, error) {
-	_, ok := key.([]byte)
-	if !ok {
-		return nil, erro.New("not common key")
+func dirDecrypt(key jwk.Key, enced []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	} else if len(enced) != 0 {
+		return nil, erro.New("invalid data")
 	}
-	return []byte{}, nil
+	return key.Common(), nil
 }
 
-func dirDecrypt(key interface{}, encrypted []byte) ([]byte, error) {
-	comKey, ok := key.([]byte)
-	if !ok {
-		return nil, erro.New("not common key")
-	} else if len(encrypted) != 0 {
-		return nil, erro.New("not empty data")
+func ecdhEsEncrypt(key jwk.Key, plain []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
-	return comKey, nil
-}
-
-func ecdhEsEncrypt(key interface{}, plain []byte) ([]byte, error) {
 	return nil, erro.New("not implemented")
 }
 
-func ecdhEsDecrypt(key interface{}, encrypted []byte) ([]byte, error) {
+func ecdhEsDecrypt(key jwk.Key, enced []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	}
 	return nil, erro.New("not implemented")
 }
 
-func ecdhEsAKwEncrypt(key interface{}, keySize int, plain []byte) ([]byte, error) {
+func ecdhEsAKwEncrypt(key jwk.Key, keySize int, plain []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	}
 	return nil, erro.New("not implemented")
 }
 
-func ecdhEsAKwDecrypt(key interface{}, keySize int, encrypted []byte) ([]byte, error) {
+func ecdhEsAKwDecrypt(key jwk.Key, keySize int, enced []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	}
 	return nil, erro.New("not implemented")
 }
 
-func aGcmKwEncrypt(key interface{}, keySize int, plain []byte) (initVec, encrypted, authTag []byte, err error) {
-	comKey, ok := key.([]byte)
-	if !ok {
-		return nil, nil, nil, erro.New("not common key")
-	} else if len(comKey) != keySize {
-		return nil, nil, nil, erro.New("common key size is not ", keySize)
+func aGcmKwEncrypt(key jwk.Key, keySize int, plain []byte) (initVec, enced, authTag []byte, err error) {
+	if key == nil {
+		return nil, nil, nil, erro.New("no key")
+	} else if len(key.Common()) != keySize {
+		return nil, nil, nil, erro.New("key size ", len(key.Common()), " is not ", keySize)
 	}
 
 	initVec, err = secrand.Bytes(12)
@@ -214,32 +170,37 @@ func aGcmKwEncrypt(key interface{}, keySize int, plain []byte) (initVec, encrypt
 		return nil, nil, nil, erro.Wrap(err)
 	}
 
-	encrypted, authTag, err = encryptAesGcm(comKey, plain, nil, initVec)
+	enced, authTag, err = encryptAesGcm(key.Common(), plain, nil, initVec)
 	if err != nil {
 		return nil, nil, nil, erro.Wrap(err)
 	}
-	return initVec, encrypted, authTag, nil
+	return initVec, enced, authTag, nil
 }
 
-func aGcmKwDecrypt(key interface{}, keySize int, initVec, encrypted, authTag []byte) ([]byte, error) {
-	comKey, ok := key.([]byte)
-	if !ok {
-		return nil, erro.New("not common key")
-	} else if len(comKey) != keySize {
-		return nil, erro.New("common key size is not ", keySize)
+func aGcmKwDecrypt(key jwk.Key, keySize int, initVec, enced, authTag []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	} else if len(key.Common()) != keySize {
+		return nil, erro.New("key size ", len(key.Common()), " is not ", keySize)
 	}
 
-	plain, err := decryptAesGcm(comKey, nil, initVec, encrypted, authTag)
+	plain, err := decryptAesGcm(key.Common(), nil, initVec, enced, authTag)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 	return plain, nil
 }
 
-func pbes2HsAKwEncrypt(key interface{}, hGen crypto.Hash, keySize int, plain []byte) ([]byte, error) {
+func pbes2HsAKwEncrypt(key jwk.Key, hGen crypto.Hash, keySize int, plain []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	}
 	return nil, erro.New("not implemented")
 }
 
-func pbes2HsAKwDecrypt(key interface{}, hGen crypto.Hash, keySize int, encrypted []byte) ([]byte, error) {
+func pbes2HsAKwDecrypt(key jwk.Key, hGen crypto.Hash, keySize int, enced []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
+	}
 	return nil, erro.New("not implemented")
 }

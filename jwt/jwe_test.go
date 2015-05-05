@@ -17,7 +17,6 @@ package jwt
 import (
 	"bytes"
 	"crypto"
-	"crypto/rsa"
 	"github.com/realglobe-Inc/edo-lib/jwk"
 	"testing"
 )
@@ -42,7 +41,7 @@ func TestRsa15Sample(t *testing.T) {
 		4, 211, 31, 197, 84, 157, 252, 254, 11, 100, 157, 250, 63, 170, 106, 206,
 		107, 124, 212, 45, 111, 107, 9, 219, 200, 177, 0, 240, 143, 156, 44, 207,
 	}
-	encrypted := []byte{
+	enced := []byte{
 		80, 104, 72, 58, 11, 130, 236, 139, 132, 189, 255, 205, 61, 86, 151, 176,
 		99, 40, 44, 233, 176, 189, 205, 70, 202, 169, 72, 40, 226, 181, 156, 223,
 		120, 156, 115, 232, 150, 209, 145, 133, 104, 112, 237, 156, 116, 250, 65, 102,
@@ -61,11 +60,11 @@ func TestRsa15Sample(t *testing.T) {
 		248, 29, 232, 90, 29, 147, 110, 169, 146, 114, 165, 204, 71, 136, 41, 252,
 	}
 
-	if p, err := rsa15Decrypt(key.Private(), encrypted); err != nil {
+	if p, err := rsa15Decrypt(key, enced); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)
-		t.Error(plain)
+		t.Fatal(plain)
 	}
 }
 
@@ -89,7 +88,7 @@ func TestRsaOaepSample(t *testing.T) {
 		177, 161, 244, 128, 84, 143, 225, 115, 63, 180, 3, 255, 107, 154, 212, 246,
 		138, 7, 110, 91, 112, 46, 34, 105, 47, 130, 203, 46, 122, 234, 64, 252,
 	}
-	encrypted := []byte{
+	enced := []byte{
 		56, 163, 154, 192, 58, 53, 222, 4, 105, 218, 136, 218, 29, 94, 203, 22,
 		150, 92, 129, 94, 211, 232, 53, 89, 41, 60, 138, 56, 196, 216, 82, 98,
 		168, 76, 37, 73, 70, 7, 36, 8, 191, 100, 136, 196, 244, 220, 145, 158,
@@ -108,11 +107,11 @@ func TestRsaOaepSample(t *testing.T) {
 		233, 73, 37, 124, 42, 72, 49, 242, 35, 127, 184, 134, 117, 114, 135, 206,
 	}
 
-	if p, err := rsaOaepDecrypt(key.Private().(*rsa.PrivateKey), crypto.SHA1, encrypted); err != nil {
+	if p, err := rsaOaepDecrypt(key, crypto.SHA1, enced); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)
-		t.Error(plain)
+		t.Fatal(plain)
 	}
 }
 
@@ -121,30 +120,30 @@ func TestACbcHs(t *testing.T) {
 		key []byte
 		crypto.Hash
 	}
-	for _, p := range []param{{test256Key, crypto.SHA256}, {test384Key, crypto.SHA384}, {test512Key, crypto.SHA512}} {
+	for _, p := range []param{{test_256Key.Common(), crypto.SHA256}, {test_384Key.Common(), crypto.SHA384}, {test_512Key.Common(), crypto.SHA512}} {
 		for plain := []byte{}; len(plain) < 50; plain = append(plain, byte(len(plain))) {
-			if initVec, encrypted, authTag, err := aCbcHsEncrypt(p.key, len(p.key), p.Hash, plain, nil); err != nil {
+			if initVec, enced, authTag, err := aCbcHsEncrypt(p.key, len(p.key), p.Hash, plain, nil); err != nil {
 				t.Fatal(err)
-			} else if decrypted, err := aCbcHsDecrypt(p.key, len(p.key), p.Hash, nil, initVec, encrypted, authTag); err != nil {
+			} else if deced, err := aCbcHsDecrypt(p.key, len(p.key), p.Hash, nil, initVec, enced, authTag); err != nil {
 				t.Fatal(err)
-			} else if !bytes.Equal(decrypted, plain) {
-				t.Error(decrypted)
-				t.Error(plain)
+			} else if !bytes.Equal(deced, plain) {
+				t.Error(deced)
+				t.Fatal(plain)
 			}
 		}
 	}
 }
 
 func TestAGcm(t *testing.T) {
-	for _, key := range [][]byte{test128Key, test192Key, test256Key} {
+	for _, key := range [][]byte{test_128Key.Common(), test_192Key.Common(), test_256Key.Common()} {
 		for plain := []byte{}; len(plain) < 50; plain = append(plain, byte(len(plain))) {
-			if initVec, encrypted, authTag, err := aGcmEncrypt(key, len(key), plain, nil); err != nil {
+			if initVec, enced, authTag, err := aGcmEncrypt(key, len(key), plain, nil); err != nil {
 				t.Fatal(err)
-			} else if decrypted, err := aGcmDecrypt(key, len(key), nil, initVec, encrypted, authTag); err != nil {
+			} else if deced, err := aGcmDecrypt(key, len(key), nil, initVec, enced, authTag); err != nil {
 				t.Fatal(err)
-			} else if !bytes.Equal(decrypted, plain) {
-				t.Error(decrypted)
-				t.Error(plain)
+			} else if !bytes.Equal(deced, plain) {
+				t.Error(deced)
+				t.Fatal(plain)
 			}
 		}
 	}
@@ -152,13 +151,13 @@ func TestAGcm(t *testing.T) {
 
 func TestRsa15(t *testing.T) {
 	for plain := []byte{}; len(plain) < 50; plain = append(plain, byte(len(plain))) {
-		if encrypted, err := rsa15Encrypt(&testRsaKey.PublicKey, plain); err != nil {
+		if enced, err := rsa15Encrypt(test_rsaKey, plain); err != nil {
 			t.Fatal(err)
-		} else if decrypted, err := rsa15Decrypt(testRsaKey, encrypted); err != nil {
+		} else if deced, err := rsa15Decrypt(test_rsaKey, enced); err != nil {
 			t.Fatal(err)
-		} else if !bytes.Equal(decrypted, plain) {
-			t.Error(decrypted)
-			t.Error(plain)
+		} else if !bytes.Equal(deced, plain) {
+			t.Error(deced)
+			t.Fatal(plain)
 		}
 	}
 }
@@ -166,13 +165,13 @@ func TestRsa15(t *testing.T) {
 func TestRsaOaep(t *testing.T) {
 	for _, hGen := range []crypto.Hash{crypto.SHA1, crypto.SHA256} {
 		for plain := []byte{}; len(plain) < 50; plain = append(plain, byte(len(plain))) {
-			if encrypted, err := rsaOaepEncrypt(&testRsaKey.PublicKey, hGen, plain); err != nil {
+			if enced, err := rsaOaepEncrypt(test_rsaKey, hGen, plain); err != nil {
 				t.Fatal(err)
-			} else if decrypted, err := rsaOaepDecrypt(testRsaKey, hGen, encrypted); err != nil {
+			} else if deced, err := rsaOaepDecrypt(test_rsaKey, hGen, enced); err != nil {
 				t.Fatal(err)
-			} else if !bytes.Equal(decrypted, plain) {
-				t.Error(decrypted)
-				t.Error(plain)
+			} else if !bytes.Equal(deced, plain) {
+				t.Error(deced)
+				t.Fatal(plain)
 			}
 		}
 	}
@@ -183,45 +182,43 @@ func TestAKw(t *testing.T) {
 	for ; len(buff) < 8*8; buff = append(buff, byte(len(buff))) {
 	}
 
-	for _, key := range [][]byte{test128Key, test192Key, test256Key} {
+	for _, key := range []jwk.Key{test_128Key, test_192Key, test_256Key} {
 		for i := 2; i <= 8; i++ {
 			plain := make([]byte, 8*i)
 			copy(plain, buff[:8*i])
-			if encrypted, err := aKwEncrypt(key, len(key), plain); err != nil {
+			if enced, err := aKwEncrypt(key, len(key.Common()), plain); err != nil {
 				t.Fatal(err)
-			} else if decrypted, err := aKwDecrypt(key, len(key), encrypted); err != nil {
+			} else if deced, err := aKwDecrypt(key, len(key.Common()), enced); err != nil {
 				t.Fatal(err)
-			} else if !bytes.Equal(decrypted, plain) {
-				t.Error(decrypted)
-				t.Error(plain)
+			} else if !bytes.Equal(deced, plain) {
+				t.Error(deced)
+				t.Fatal(plain)
 			}
 		}
 	}
 }
 
 func TestDir(t *testing.T) {
-	for _, key := range [][]byte{test128Key, test192Key, test256Key} {
-		if encrypted, err := dirEncrypt(key); err != nil {
+	for _, key := range []jwk.Key{test_128Key, test_192Key, test_256Key} {
+		if deced, err := dirDecrypt(key, []byte{}); err != nil {
 			t.Fatal(err)
-		} else if decrypted, err := dirDecrypt(key, encrypted); err != nil {
-			t.Fatal(err)
-		} else if !bytes.Equal(decrypted, key) {
-			t.Error(decrypted)
-			t.Error(key)
+		} else if !bytes.Equal(deced, key.Common()) {
+			t.Error(deced)
+			t.Fatal(key)
 		}
 	}
 }
 
 func TestAGcmKw(t *testing.T) {
-	for _, key := range [][]byte{test128Key, test192Key, test256Key} {
+	for _, key := range []jwk.Key{test_128Key, test_192Key, test_256Key} {
 		for plain := []byte{}; len(plain) < 50; plain = append(plain, byte(len(plain))) {
-			if initVec, encrypted, authTag, err := aGcmKwEncrypt(key, len(key), plain); err != nil {
+			if initVec, enced, authTag, err := aGcmKwEncrypt(key, len(key.Common()), plain); err != nil {
 				t.Fatal(err)
-			} else if decrypted, err := aGcmKwDecrypt(key, len(key), initVec, encrypted, authTag); err != nil {
+			} else if deced, err := aGcmKwDecrypt(key, len(key.Common()), initVec, enced, authTag); err != nil {
 				t.Fatal(err)
-			} else if !bytes.Equal(decrypted, plain) {
-				t.Error(decrypted)
-				t.Error(plain)
+			} else if !bytes.Equal(deced, plain) {
+				t.Error(deced)
+				t.Fatal(plain)
 			}
 		}
 	}
