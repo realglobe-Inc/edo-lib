@@ -29,13 +29,13 @@ func TestNew(t *testing.T) {
 
 	a := New(m)
 	if !reflect.DeepEqual(map[string]bool(a), m) {
-		t.Error(a, m)
+		t.Fatal(a, m)
 	}
 
 	// コピーしてあるか。
 	a["d"] = true
 	if reflect.DeepEqual(map[string]bool(a), m) {
-		t.Error(a, m)
+		t.Fatal(a, m)
 	}
 }
 
@@ -49,7 +49,7 @@ func TestFromSlice(t *testing.T) {
 
 	a := FromSlice(l)
 	if !reflect.DeepEqual(map[string]bool(a), m) {
-		t.Error(a, m)
+		t.Fatal(a, m)
 	}
 }
 
@@ -61,7 +61,7 @@ func TestJson(t *testing.T) {
 		t.Fatal(err)
 	} else if buff[0] != '[' {
 		// JSON 配列じゃない。
-		t.Error(string(buff))
+		t.Fatal(string(buff))
 	}
 
 	var b StringSet
@@ -70,7 +70,7 @@ func TestJson(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
+		t.Fatal(b, a)
 	}
 }
 
@@ -94,7 +94,7 @@ func TestNestedJson(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
+		t.Fatal(b, a)
 	}
 }
 
@@ -149,7 +149,7 @@ func TestBson(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
+		t.Fatal(b, a)
 	}
 }
 
@@ -157,13 +157,13 @@ func TestCopy(t *testing.T) {
 	a := New(map[string]bool{"a": true, "b": true, "c": true})
 	b := a.Copy()
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
+		t.Fatal(b, a)
 	}
 
 	// コピーしてあるか。
 	b["d"] = true
 	if reflect.DeepEqual(b, a) {
-		t.Error(b, a)
+		t.Fatal(b, a)
 	}
 }
 
@@ -171,6 +171,6 @@ func TestOneOf(t *testing.T) {
 	a := New(map[string]bool{"a": true, "b": true, "c": true})
 
 	if v := a.OneOf(); !a[v] {
-		t.Error(v, a)
+		t.Fatal(v, a)
 	}
 }

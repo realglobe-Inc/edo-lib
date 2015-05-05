@@ -27,7 +27,7 @@ func testListedKeyValueStore(t *testing.T, drv ListedKeyValueStore) {
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 
 	// 入れる。
@@ -40,7 +40,7 @@ func testListedKeyValueStore(t *testing.T, drv ListedKeyValueStore) {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -48,7 +48,7 @@ func testListedKeyValueStore(t *testing.T, drv ListedKeyValueStore) {
 	if err != nil {
 		t.Fatal(err)
 	} else if len(keys) != 1 || !keys[testKey] {
-		t.Error(keys)
+		t.Fatal(keys)
 	}
 
 	// 消す。
@@ -60,7 +60,7 @@ func testListedKeyValueStore(t *testing.T, drv ListedKeyValueStore) {
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 }
 
@@ -71,7 +71,7 @@ func testListedKeyValueStoreStamp(t *testing.T, drv ListedKeyValueStore) {
 	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s != nil {
-		t.Error(v, s)
+		t.Fatal(v, s)
 	}
 
 	// 入れる。
@@ -84,10 +84,10 @@ func testListedKeyValueStoreStamp(t *testing.T, drv ListedKeyValueStore) {
 	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
-		t.Error(s)
+		t.Fatal(s)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -95,17 +95,17 @@ func testListedKeyValueStoreStamp(t *testing.T, drv ListedKeyValueStore) {
 	if v, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s == nil {
-		t.Error(v, s)
+		t.Fatal(v, s)
 	}
 
 	// キャッシュが古いから返る。
 	if v, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
-		t.Error(s)
+		t.Fatal(s)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -113,10 +113,10 @@ func testListedKeyValueStoreStamp(t *testing.T, drv ListedKeyValueStore) {
 	if v, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
-		t.Error(s)
+		t.Fatal(s)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -129,6 +129,6 @@ func testListedKeyValueStoreStamp(t *testing.T, drv ListedKeyValueStore) {
 	if v, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s != nil {
-		t.Error(v, s)
+		t.Fatal(v, s)
 	}
 }

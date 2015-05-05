@@ -24,13 +24,13 @@ func TestBase64Url(t *testing.T) {
 	for src := []byte{}; len(src) < 300; src = append(src, byte(len(src))) {
 		if enc := EncodeToString(src); strings.Index(enc, "=") > 0 {
 			t.Error(src)
-			t.Error(enc)
+			t.Fatal(enc)
 		} else if dec, err := DecodeString(enc); err != nil {
 			t.Fatal(err)
 		} else if !bytes.Equal(dec, src) {
 			t.Error(src)
 			t.Error(enc)
-			t.Error(dec)
+			t.Fatal(dec)
 		}
 	}
 }

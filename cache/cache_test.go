@@ -30,16 +30,16 @@ func TestCache(t *testing.T) {
 	ca.Put("key2", "val2", time.Unix(2, 0))
 
 	if val, _ := ca.Get("key"); val != "val" {
-		t.Error(val)
+		t.Fatal(val)
 	}
 
 	ca.Update("key2", time.Unix(3, 0))
 	ca.CleanLower(time.Unix(2, 0))
 
 	if val, _ := ca.Get("key"); val != nil {
-		t.Error(val)
+		t.Fatal(val)
 	} else if val, _ := ca.Get("key2"); val != "val2" {
-		t.Error(val)
+		t.Fatal(val)
 	}
 }
 
@@ -63,13 +63,13 @@ func TestCacheManyElements(t *testing.T) {
 			val, prio := ca.Get("key" + strconv.Itoa(i))
 			if !prios[i].Before(thres) {
 				if val == nil {
-					t.Error(i, val, prio, thres)
+					t.Fatal(i, val, prio, thres)
 				} else if !prio.(time.Time).Equal(prios[i]) {
-					t.Error(i, val, prio, thres)
+					t.Fatal(i, val, prio, thres)
 				}
 			} else {
 				if val != nil {
-					t.Error(i, val, prio, thres)
+					t.Fatal(i, val, prio, thres)
 				}
 			}
 		}
@@ -86,7 +86,7 @@ func TestCacheSameKeys(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			ca.Put("key"+strconv.Itoa(i), "val"+strconv.Itoa(i*j), rand.Int63())
 			if len(ca.(*cache).prioQueue) > 100 || len(ca.(*cache).keyToIdx) > 100 {
-				t.Error(len(ca.(*cache).prioQueue), len(ca.(*cache).keyToIdx))
+				t.Fatal(len(ca.(*cache).prioQueue), len(ca.(*cache).keyToIdx))
 			}
 		}
 	}
@@ -94,9 +94,9 @@ func TestCacheSameKeys(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		val, _ := ca.Get("key" + strconv.Itoa(i))
 		if val == nil {
-			t.Error(i, val)
+			t.Fatal(i, val)
 		} else if val != "val"+strconv.Itoa(i*jMax) {
-			t.Error(i, val)
+			t.Fatal(i, val)
 		}
 	}
 }

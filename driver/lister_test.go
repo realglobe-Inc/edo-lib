@@ -25,6 +25,6 @@ func testLister(t *testing.T, drv Lister) {
 	if err != nil {
 		t.Fatal(err)
 	} else if len(keys) != 1 || !keys[testKey] {
-		t.Error(keys)
+		t.Fatal(keys)
 	}
 }

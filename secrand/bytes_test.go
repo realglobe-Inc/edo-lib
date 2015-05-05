@@ -24,7 +24,7 @@ func TestBytes(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		} else if len(buff) != i {
-			t.Error(i, len(buff))
+			t.Fatal(i, len(buff))
 		}
 	}
 }

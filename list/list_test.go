@@ -25,11 +25,10 @@ func TestJson(t *testing.T) {
 
 		buff, err := json.Marshal(a)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		} else if buff[0] != '[' {
 			// JSON 配列じゃない。
-			t.Error(string(buff))
+			t.Fatal(string(buff))
 		}
 
 		var b List
@@ -40,7 +39,7 @@ func TestJson(t *testing.T) {
 		if !reflect.DeepEqual(&b, a) {
 			t.Error(string(buff))
 			t.Error(&b)
-			t.Error(a)
+			t.Fatal(a)
 		}
 	}
 }

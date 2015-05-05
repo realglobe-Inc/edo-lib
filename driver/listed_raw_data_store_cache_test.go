@@ -57,7 +57,7 @@ func TestCachingListedRawDataStoreExpiration(t *testing.T) {
 		}
 		caDataStmp = newCaStmp
 		if !reflect.DeepEqual(caData, testData) {
-			t.Error(caData)
+			t.Fatal(caData)
 		}
 
 		keys, newCaStmp, err := drv.Keys(caKeysStmp)
@@ -69,7 +69,7 @@ func TestCachingListedRawDataStoreExpiration(t *testing.T) {
 		}
 		caKeysStmp = newCaStmp
 		if len(caKeys) != 2 {
-			t.Error(caKeys)
+			t.Fatal(caKeys)
 		}
 
 		time.Sleep(staleDur / 3)

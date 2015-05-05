@@ -30,7 +30,7 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 
 	// 入れる。
@@ -43,7 +43,7 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -56,7 +56,7 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 
 	// また入れる。
@@ -70,7 +70,7 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -105,14 +105,12 @@ func testConcurrentVolatileKeyValueStore(t *testing.T, drv ConcurrentVolatileKey
 		if aft.UnixNano() <= cutOff(exp.UnixNano(), 1e6)-diff { // redis の粒度がミリ秒のため。
 			if v == nil {
 				t.Error(aft)
-				t.Error(exp)
-				return
+				t.Fatal(exp)
 			}
 		} else if bef.UnixNano() > cutOff(exp.UnixNano(), 1e6)+1e6+diff { // redis の粒度がミリ秒のため。
 			if v != nil {
 				t.Error(bef)
-				t.Error(exp)
-				return
+				t.Fatal(exp)
 			}
 			// 消えた。
 			return
@@ -179,13 +177,13 @@ func testConcurrentVolatileKeyValueStoreConsistency(t *testing.T, drv Concurrent
 	}
 	a, _ := v.(float64)
 	if int(a) != res {
-		t.Error(a, res)
+		t.Fatal(a, res)
 	}
 
 	for ok := false; !ok; {
 		select {
 		case err := <-errCh:
-			t.Error(err)
+			t.Fatal(err)
 		default:
 			ok = true
 		}

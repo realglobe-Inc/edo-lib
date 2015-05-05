@@ -49,16 +49,16 @@ func TestHttpServer(t *testing.T) {
 	rcvReq := <-reqCh
 
 	if rcvReq.Method != req.Method {
-		t.Error(rcvReq, req)
+		t.Fatal(rcvReq, req)
 	} else if rcvReq.Host != req.Host {
-		t.Error(rcvReq, req)
+		t.Fatal(rcvReq, req)
 	} else if resp.StatusCode != http.StatusOK {
-		t.Error(rcvReq, req)
+		t.Fatal(rcvReq, req)
 	} else if resp.Header.Get("Test-Header") != "test header" {
-		t.Error(rcvReq, req)
+		t.Fatal(rcvReq, req)
 	} else if body, err := ioutil.ReadAll(resp.Body); err != nil {
 		t.Fatal(err)
 	} else if string(body) != "test body" {
-		t.Error(string(body), "test body")
+		t.Fatal(string(body), "test body")
 	}
 }

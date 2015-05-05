@@ -35,7 +35,7 @@ VwIDAQAB
 	if err != nil {
 		t.Fatal(err)
 	} else if _, ok := key.(*rsa.PublicKey); !ok {
-		t.Error(key)
+		t.Fatal(key)
 	}
 }
 
@@ -70,7 +70,7 @@ PC1uutoixe1WZTzrWYPIOFBXeQVFlUbnmZdj0LnqAJsIz1Vec9K8
 	if err != nil {
 		t.Fatal(err)
 	} else if _, ok := key.(*rsa.PrivateKey); !ok {
-		t.Error(key)
+		t.Fatal(key)
 	}
 }
 
@@ -82,7 +82,7 @@ SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 	if err != nil {
 		t.Fatal(err)
 	} else if _, ok := key.(*ecdsa.PublicKey); !ok {
-		t.Error(key)
+		t.Fatal(key)
 	}
 }
 
@@ -95,7 +95,7 @@ twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 	if err != nil {
 		t.Fatal(err)
 	} else if _, ok := key.(*ecdsa.PrivateKey); !ok {
-		t.Error(key)
+		t.Fatal(key)
 	}
 }
 
@@ -118,6 +118,6 @@ SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 	if err != nil {
 		t.Fatal(err)
 	} else if _, ok := key.(*ecdsa.PublicKey); !ok {
-		t.Error(key)
+		t.Fatal(key)
 	}
 }

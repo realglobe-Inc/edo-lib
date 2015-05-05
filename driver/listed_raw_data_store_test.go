@@ -27,7 +27,7 @@ func testListedRawDataStore(t *testing.T, drv ListedRawDataStore) {
 	if d, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d != nil {
-		t.Error(d)
+		t.Fatal(d)
 	}
 
 	// 入れる。
@@ -39,14 +39,14 @@ func testListedRawDataStore(t *testing.T, drv ListedRawDataStore) {
 	if d, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d == nil || !reflect.DeepEqual(d, testData) {
-		t.Error(d)
+		t.Fatal(d)
 	}
 
 	keys, _, err := drv.Keys(nil)
 	if err != nil {
 		t.Fatal(err)
 	} else if len(keys) != 1 || !keys[testKey] {
-		t.Error(keys)
+		t.Fatal(keys)
 	}
 
 	// 消す。
@@ -58,7 +58,7 @@ func testListedRawDataStore(t *testing.T, drv ListedRawDataStore) {
 	if d, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d != nil {
-		t.Error(d)
+		t.Fatal(d)
 	}
 }
 
@@ -69,7 +69,7 @@ func testListedRawDataStoreStamp(t *testing.T, drv ListedRawDataStore) {
 	if d, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d != nil || s != nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// 入れる。
@@ -82,28 +82,28 @@ func testListedRawDataStoreStamp(t *testing.T, drv ListedRawDataStore) {
 	if d, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// キャッシュと同じだから返らない。
 	if d, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if d != nil || s == nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// キャッシュが古いから返る。
 	if d, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
 		t.Fatal(err)
 	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// ダイジェストが違うから返る。
 	if d, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
 		t.Fatal(err)
 	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// 消す。
@@ -115,6 +115,6 @@ func testListedRawDataStoreStamp(t *testing.T, drv ListedRawDataStore) {
 	if d, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if d != nil || s != nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 }
