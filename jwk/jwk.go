@@ -24,23 +24,6 @@ import (
 	"math/big"
 )
 
-const (
-	tagKty     = "kty"
-	tagUse     = "use"
-	tagKey_ops = "key_ops"
-	tagAlg     = "alg"
-	tagKid     = "kid"
-
-	tagCrv = "crv"
-	tagOth = "oth"
-)
-
-const (
-	ktyEc  = "EC"
-	ktyRsa = "RSA"
-	ktyOct = "oct"
-)
-
 type Key interface {
 	// kty
 	Type() string
