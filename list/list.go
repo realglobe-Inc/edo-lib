@@ -20,17 +20,16 @@ import (
 )
 
 // JSON にしたときに配列になる list。
-type List struct {
-	list.List
-}
-
-func New() *List {
-	return &List{}
-}
+type List list.List
 
 func (this *List) MarshalJSON() ([]byte, error) {
+	if this == nil {
+		return json.Marshal(nil)
+	}
+
 	a := []interface{}{}
-	for elem := this.Front(); elem != nil; elem = elem.Next() {
+	l := (*list.List)(this)
+	for elem := l.Front(); elem != nil; elem = elem.Next() {
 		a = append(a, elem.Value)
 	}
 	return json.Marshal(a)
@@ -41,8 +40,14 @@ func (this *List) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &a); err != nil {
 		return err
 	}
-	for _, val := range a {
-		this.PushBack(val)
+	if a == nil {
+		return nil
 	}
+
+	l := list.New()
+	for _, val := range a {
+		l.PushBack(val)
+	}
+	*this = List(*l)
 	return nil
 }
