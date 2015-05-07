@@ -21,36 +21,40 @@ import (
 	"io/ioutil"
 )
 
-func ParsePem(pemData []byte) (interface{}, error) {
-	for block, rest := pem.Decode(pemData); block != nil; block, rest = pem.Decode(rest) {
-		switch block.Type {
-		case "PUBLIC KEY":
-			key, err := x509.ParsePKIXPublicKey(block.Bytes)
-			if err != nil {
-				return nil, erro.Wrap(err)
-			}
-			return key, nil
-		case "RSA PRIVATE KEY":
-			key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-			if err != nil {
-				return nil, erro.Wrap(err)
-			}
-			return key, nil
-		case "EC PRIVATE KEY":
-			key, err := x509.ParseECPrivateKey(block.Bytes)
-			if err != nil {
-				return nil, erro.Wrap(err)
-			}
+func perseBlock(block *pem.Block) (interface{}, error) {
+	var key interface{}
+	var err error
+	switch block.Type {
+	case "PUBLIC KEY":
+		key, err = x509.ParsePKIXPublicKey(block.Bytes)
+	case "RSA PRIVATE KEY":
+		key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	case "EC PRIVATE KEY":
+		key, err = x509.ParseECPrivateKey(block.Bytes)
+	}
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return key, nil
+}
+
+// PEM 形式のデータから最初の鍵を取り出す。
+func ParsePem(data []byte) (interface{}, error) {
+	for block, rest := pem.Decode(data); block != nil; block, rest = pem.Decode(rest) {
+		if key, err := perseBlock(block); err != nil {
+			return nil, erro.Wrap(err)
+		} else if key != nil {
 			return key, nil
 		}
 	}
 	return nil, erro.New("no supported key")
 }
 
+// PEM 形式のファイルから最初の鍵を読む。
 func ReadPem(path string) (interface{}, error) {
-	pemData, err := ioutil.ReadFile(path)
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	return ParsePem(pemData)
+	return ParsePem(data)
 }

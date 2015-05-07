@@ -74,7 +74,7 @@ PC1uutoixe1WZTzrWYPIOFBXeQVFlUbnmZdj0LnqAJsIz1Vec9K8
 	}
 }
 
-func TestParsePemEcdsaPublic(t *testing.T) {
+func TestParsePemEcPublic(t *testing.T) {
 	key, err := ParsePem([]byte(`-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWv
 SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
@@ -86,7 +86,7 @@ SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 	}
 }
 
-func TestParsePemEcdsaPrivate(t *testing.T) {
+func TestParsePemEcPrivate(t *testing.T) {
 	key, err := ParsePem([]byte(`-----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIEqu+CBiCePKkS6V1YLsjMsiEk86fV18cEHMgt0qLSwFoAoGCCqGSM49
 AwEHoUQDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWvSFeYEjDv3p7hDnDS+vrPmEQ3
@@ -99,22 +99,21 @@ twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 	}
 }
 
-const testLabel = "edo-test"
 
 func TestReadPem(t *testing.T) {
-	f, err := ioutil.TempFile("", testLabel)
+	file, err := ioutil.TempFile("", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(f.Name())
-	if _, err := f.Write([]byte(`-----BEGIN PUBLIC KEY-----
+	defer os.RemoveAll(file.Name())
+	if _, err := file.Write([]byte(`-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWv
 SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 -----END PUBLIC KEY-----`)); err != nil {
 		t.Fatal(err)
 	}
 
-	key, err := ReadPem(f.Name())
+	key, err := ReadPem(file.Name())
 	if err != nil {
 		t.Fatal(err)
 	} else if _, ok := key.(*ecdsa.PublicKey); !ok {
