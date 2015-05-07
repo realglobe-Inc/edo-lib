@@ -20,9 +20,9 @@ import (
 )
 
 // JSON にしたときに要素の配列になる文字列集合型。
-type StringSet map[string]bool
+type Set map[string]bool
 
-func (this StringSet) MarshalJSON() ([]byte, error) {
+func (this Set) MarshalJSON() ([]byte, error) {
 	if this == nil {
 		return json.Marshal(nil)
 	}
@@ -36,7 +36,7 @@ func (this StringSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(a)
 }
 
-func (this *StringSet) UnmarshalJSON(data []byte) error {
+func (this *Set) UnmarshalJSON(data []byte) error {
 	var a []string
 	if err := json.Unmarshal(data, &a); err != nil {
 		return err
@@ -48,11 +48,11 @@ func (this *StringSet) UnmarshalJSON(data []byte) error {
 	for _, elem := range a {
 		s[elem] = true
 	}
-	*this = StringSet(s)
+	*this = Set(s)
 	return nil
 }
 
-func (this StringSet) GetBSON() (interface{}, error) {
+func (this Set) GetBSON() (interface{}, error) {
 	if this == nil {
 		return nil, nil
 	}
@@ -66,7 +66,7 @@ func (this StringSet) GetBSON() (interface{}, error) {
 	return a, nil
 }
 
-func (this *StringSet) SetBSON(raw bson.Raw) error {
+func (this *Set) SetBSON(raw bson.Raw) error {
 	var a []string
 	if err := raw.Unmarshal(&a); err != nil {
 		return err
@@ -78,6 +78,6 @@ func (this *StringSet) SetBSON(raw bson.Raw) error {
 	for _, elem := range a {
 		s[elem] = true
 	}
-	*this = StringSet(s)
+	*this = Set(s)
 	return nil
 }

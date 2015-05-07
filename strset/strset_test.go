@@ -25,7 +25,7 @@ import (
 )
 
 func TestJson(t *testing.T) {
-	a := New(map[string]bool{"a": true, "b": true, "c": true})
+	a := Set(map[string]bool{"a": true, "b": true, "c": true})
 
 	buff, err := json.Marshal(a)
 	if err != nil {
@@ -35,7 +35,7 @@ func TestJson(t *testing.T) {
 		t.Fatal(string(buff))
 	}
 
-	var b StringSet
+	var b Set
 	if err := json.Unmarshal(buff, &b); err != nil {
 		t.Fatal(err, string(buff))
 	}
@@ -48,11 +48,11 @@ func TestJson(t *testing.T) {
 // 何かの中に入ってても大丈夫か。
 func TestNestedJson(t *testing.T) {
 	type testType struct {
-		S StringSet
+		S Set
 	}
 
 	var a testType
-	a.S = New(map[string]bool{"a": true, "b": true, "c": true})
+	a.S = Set(map[string]bool{"a": true, "b": true, "c": true})
 
 	buff, err := json.Marshal(&a)
 	if err != nil {
@@ -102,13 +102,13 @@ func TestBson(t *testing.T) {
 	defer conn.Close()
 
 	type testType struct {
-		K string    `bson:"key"`
-		S StringSet `bson:"set"`
+		K string `bson:"key"`
+		S Set    `bson:"set"`
 	}
 
 	var a testType
 	a.K = strconv.FormatInt(time.Now().UnixNano(), 16)
-	a.S = New(map[string]bool{"a": true, "b": true, "c": true})
+	a.S = Set(map[string]bool{"a": true, "b": true, "c": true})
 
 	if err := conn.DB(testMongoDb).C(testMongoColl).Insert(&a); err != nil {
 		t.Fatal(err)
