@@ -23,6 +23,10 @@ import (
 type StringSet map[string]bool
 
 func (this StringSet) MarshalJSON() ([]byte, error) {
+	if this == nil {
+		return json.Marshal(nil)
+	}
+
 	a := []string{}
 	for elem, ok := range this {
 		if ok {
@@ -36,7 +40,10 @@ func (this *StringSet) UnmarshalJSON(data []byte) error {
 	var a []string
 	if err := json.Unmarshal(data, &a); err != nil {
 		return err
+	} else if a == nil {
+		return nil
 	}
+
 	s := map[string]bool{}
 	for _, elem := range a {
 		s[elem] = true
@@ -46,6 +53,10 @@ func (this *StringSet) UnmarshalJSON(data []byte) error {
 }
 
 func (this StringSet) GetBSON() (interface{}, error) {
+	if this == nil {
+		return nil, nil
+	}
+
 	a := []string{}
 	for elem, ok := range this {
 		if ok {
@@ -59,7 +70,10 @@ func (this *StringSet) SetBSON(raw bson.Raw) error {
 	var a []string
 	if err := raw.Unmarshal(&a); err != nil {
 		return err
+	} else if a == nil {
+		return nil
 	}
+
 	s := map[string]bool{}
 	for _, elem := range a {
 		s[elem] = true
