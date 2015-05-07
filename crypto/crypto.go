@@ -58,3 +58,25 @@ func ReadPem(path string) (interface{}, error) {
 	}
 	return ParsePem(data)
 }
+
+// PEM 形式のデータから鍵を取り出す。
+func ParsePemAll(data []byte) ([]interface{}, error) {
+	keys := []interface{}{}
+	for block, rest := pem.Decode(data); block != nil; block, rest = pem.Decode(rest) {
+		if key, err := perseBlock(block); err != nil {
+			return nil, erro.Wrap(err)
+		} else if key != nil {
+			keys = append(keys, key)
+		}
+	}
+	return keys, nil
+}
+
+// PEM 形式のファイルから鍵を読む。
+func ReadPemAll(path string) ([]interface{}, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return ParsePemAll(data)
+}

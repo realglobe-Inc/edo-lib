@@ -99,6 +99,27 @@ twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 	}
 }
 
+func TestParsePemAll(t *testing.T) {
+	keys, err := ParsePemAll([]byte(`-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWv
+SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
+-----END PUBLIC KEY-----
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIEqu+CBiCePKkS6V1YLsjMsiEk86fV18cEHMgt0qLSwFoAoGCCqGSM49
+AwEHoUQDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWvSFeYEjDv3p7hDnDS+vrPmEQ3
+twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
+-----END EC PRIVATE KEY-----`))
+	if err != nil {
+		t.Fatal(err)
+	} else if len(keys) != 2 {
+		t.Error(len(keys))
+		t.Fatal(2)
+	} else if _, ok := keys[0].(*ecdsa.PublicKey); !ok {
+		t.Fatal(keys[0])
+	} else if _, ok := keys[1].(*ecdsa.PrivateKey); !ok {
+		t.Fatal(keys[1])
+	}
+}
 
 func TestReadPem(t *testing.T) {
 	file, err := ioutil.TempFile("", "")
@@ -118,5 +139,36 @@ SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
 		t.Fatal(err)
 	} else if _, ok := key.(*ecdsa.PublicKey); !ok {
 		t.Fatal(key)
+	}
+}
+
+func TestReadPemAll(t *testing.T) {
+	file, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(file.Name())
+	if _, err := file.Write([]byte(`-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWv
+SFeYEjDv3p7hDnDS+vrPmEQ3twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
+-----END PUBLIC KEY-----
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIEqu+CBiCePKkS6V1YLsjMsiEk86fV18cEHMgt0qLSwFoAoGCCqGSM49
+AwEHoUQDQgAEOCbnPn2SPA92u2G09XmrB9rTeqWvSFeYEjDv3p7hDnDS+vrPmEQ3
+twGw7vn38JoIIhYdowJX4+deWcezFDtI1A==
+-----END EC PRIVATE KEY-----`)); err != nil {
+		t.Fatal(err)
+	}
+
+	keys, err := ReadPemAll(file.Name())
+	if err != nil {
+		t.Fatal(err)
+	} else if len(keys) != 2 {
+		t.Error(len(keys))
+		t.Fatal(2)
+	} else if _, ok := keys[0].(*ecdsa.PublicKey); !ok {
+		t.Fatal(keys[0])
+	} else if _, ok := keys[1].(*ecdsa.PrivateKey); !ok {
+		t.Fatal(keys[1])
 	}
 }
