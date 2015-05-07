@@ -22,25 +22,6 @@ import (
 // JSON にしたときに要素の配列になる文字列集合型。
 type StringSet map[string]bool
 
-// コピーするだけ。
-func New(m map[string]bool) StringSet {
-	s := map[string]bool{}
-	for elem, ok := range m {
-		if ok {
-			s[elem] = true
-		}
-	}
-	return StringSet(s)
-}
-
-func FromSlice(l []string) StringSet {
-	s := map[string]bool{}
-	for _, elem := range l {
-		s[elem] = true
-	}
-	return StringSet(s)
-}
-
 func (this StringSet) MarshalJSON() ([]byte, error) {
 	a := []string{}
 	for elem, ok := range this {
@@ -85,25 +66,4 @@ func (this *StringSet) SetBSON(raw bson.Raw) error {
 	}
 	*this = StringSet(s)
 	return nil
-}
-
-func (this StringSet) Copy() StringSet {
-	c := StringSet{}
-	for elem, ok := range this {
-		if ok {
-			c[elem] = true
-		}
-	}
-	return c
-}
-
-func (this StringSet) OneOf() string {
-	return OneOf(this)
-}
-
-func OneOf(s StringSet) string {
-	for elem := range s {
-		return elem
-	}
-	return ""
 }

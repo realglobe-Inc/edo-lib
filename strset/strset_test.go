@@ -24,35 +24,6 @@ import (
 	"time"
 )
 
-func TestNew(t *testing.T) {
-	m := map[string]bool{"a": true, "b": true, "c": true}
-
-	a := New(m)
-	if !reflect.DeepEqual(map[string]bool(a), m) {
-		t.Fatal(a, m)
-	}
-
-	// コピーしてあるか。
-	a["d"] = true
-	if reflect.DeepEqual(map[string]bool(a), m) {
-		t.Fatal(a, m)
-	}
-}
-
-func TestFromSlice(t *testing.T) {
-	m := map[string]bool{"a": true, "b": true, "c": true}
-
-	l := []string{}
-	for elem := range m {
-		l = append(l, elem)
-	}
-
-	a := FromSlice(l)
-	if !reflect.DeepEqual(map[string]bool(a), m) {
-		t.Fatal(a, m)
-	}
-}
-
 func TestJson(t *testing.T) {
 	a := New(map[string]bool{"a": true, "b": true, "c": true})
 
@@ -150,27 +121,5 @@ func TestBson(t *testing.T) {
 
 	if !reflect.DeepEqual(b, a) {
 		t.Fatal(b, a)
-	}
-}
-
-func TestCopy(t *testing.T) {
-	a := New(map[string]bool{"a": true, "b": true, "c": true})
-	b := a.Copy()
-	if !reflect.DeepEqual(b, a) {
-		t.Fatal(b, a)
-	}
-
-	// コピーしてあるか。
-	b["d"] = true
-	if reflect.DeepEqual(b, a) {
-		t.Fatal(b, a)
-	}
-}
-
-func TestOneOf(t *testing.T) {
-	a := New(map[string]bool{"a": true, "b": true, "c": true})
-
-	if v := a.OneOf(); !a[v] {
-		t.Fatal(v, a)
 	}
 }
