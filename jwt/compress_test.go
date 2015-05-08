@@ -27,7 +27,7 @@ func TestDef(t *testing.T) {
 			t.Fatal(err)
 		} else if !bytes.Equal(b2, plain) {
 			t.Error(b2)
-			t.Error(plain)
+			t.Fatal(plain)
 		}
 	}
 }

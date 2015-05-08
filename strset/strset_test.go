@@ -24,64 +24,35 @@ import (
 	"time"
 )
 
-func TestNew(t *testing.T) {
-	m := map[string]bool{"a": true, "b": true, "c": true}
-
-	a := New(m)
-	if !reflect.DeepEqual(map[string]bool(a), m) {
-		t.Error(a, m)
-	}
-
-	// コピーしてあるか。
-	a["d"] = true
-	if reflect.DeepEqual(map[string]bool(a), m) {
-		t.Error(a, m)
-	}
-}
-
-func TestFromSlice(t *testing.T) {
-	m := map[string]bool{"a": true, "b": true, "c": true}
-
-	l := []string{}
-	for elem := range m {
-		l = append(l, elem)
-	}
-
-	a := FromSlice(l)
-	if !reflect.DeepEqual(map[string]bool(a), m) {
-		t.Error(a, m)
-	}
-}
-
 func TestJson(t *testing.T) {
-	a := New(map[string]bool{"a": true, "b": true, "c": true})
+	a := Set(map[string]bool{"a": true, "b": true, "c": true})
 
 	buff, err := json.Marshal(a)
 	if err != nil {
 		t.Fatal(err)
 	} else if buff[0] != '[' {
 		// JSON 配列じゃない。
-		t.Error(string(buff))
+		t.Fatal(string(buff))
 	}
 
-	var b StringSet
+	var b Set
 	if err := json.Unmarshal(buff, &b); err != nil {
 		t.Fatal(err, string(buff))
 	}
 
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
+		t.Fatal(b, a)
 	}
 }
 
 // 何かの中に入ってても大丈夫か。
 func TestNestedJson(t *testing.T) {
 	type testType struct {
-		S StringSet
+		S Set
 	}
 
 	var a testType
-	a.S = New(map[string]bool{"a": true, "b": true, "c": true})
+	a.S = Set(map[string]bool{"a": true, "b": true, "c": true})
 
 	buff, err := json.Marshal(&a)
 	if err != nil {
@@ -94,7 +65,7 @@ func TestNestedJson(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
+		t.Fatal(b, a)
 	}
 }
 
@@ -131,13 +102,13 @@ func TestBson(t *testing.T) {
 	defer conn.Close()
 
 	type testType struct {
-		K string    `bson:"key"`
-		S StringSet `bson:"set"`
+		K string `bson:"key"`
+		S Set    `bson:"set"`
 	}
 
 	var a testType
 	a.K = strconv.FormatInt(time.Now().UnixNano(), 16)
-	a.S = New(map[string]bool{"a": true, "b": true, "c": true})
+	a.S = Set(map[string]bool{"a": true, "b": true, "c": true})
 
 	if err := conn.DB(testMongoDb).C(testMongoColl).Insert(&a); err != nil {
 		t.Fatal(err)
@@ -149,28 +120,6 @@ func TestBson(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
-	}
-}
-
-func TestCopy(t *testing.T) {
-	a := New(map[string]bool{"a": true, "b": true, "c": true})
-	b := a.Copy()
-	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
-	}
-
-	// コピーしてあるか。
-	b["d"] = true
-	if reflect.DeepEqual(b, a) {
-		t.Error(b, a)
-	}
-}
-
-func TestOneOf(t *testing.T) {
-	a := New(map[string]bool{"a": true, "b": true, "c": true})
-
-	if v := a.OneOf(); !a[v] {
-		t.Error(v, a)
+		t.Fatal(b, a)
 	}
 }

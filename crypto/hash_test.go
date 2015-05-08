@@ -40,7 +40,7 @@ func TestHashFunction(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		} else if h2 != h {
-			t.Error(h2, h)
+			t.Fatal(h2, h)
 		}
 	}
 }
@@ -48,13 +48,13 @@ func TestHashFunction(t *testing.T) {
 func TestParseUnknownHashFunction(t *testing.T) {
 	_, err := ParseHashFunction("unknown")
 	if err == nil {
-		t.Error("no error")
+		t.Fatal("no error")
 	}
 }
 
 func TestUnknownHashFunctionString(t *testing.T) {
 	str := HashFunctionString(crypto.Hash(1000000))
 	if _, ok := strToHash[str]; ok {
-		t.Error(str)
+		t.Fatal(str)
 	}
 }

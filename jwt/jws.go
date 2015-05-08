@@ -22,29 +22,10 @@ import (
 	"crypto/rsa"
 	_ "crypto/sha256"
 	_ "crypto/sha512"
+	"github.com/realglobe-Inc/edo-lib/jwk"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"math/big"
 )
-
-var jwsAlgs = map[string]bool{
-	"none":  true,
-	"HS256": true,
-	"HS384": true,
-	"HS512": true,
-	"RS256": true,
-	"RS384": true,
-	"RS512": true,
-	"ES256": true,
-	"ES384": true,
-	"ES512": true,
-	"PS256": true,
-	"PS384": true,
-	"PS512": true,
-}
-
-func isJwsAlgorithm(alg string) bool {
-	return jwsAlgs[alg]
-}
 
 func HashFunction(alg string) (crypto.Hash, error) {
 	switch alg {
@@ -57,7 +38,7 @@ func HashFunction(alg string) (crypto.Hash, error) {
 	case "HS512", "RS512", "ES512", "PS512":
 		return crypto.SHA512, nil
 	default:
-		return 0, erro.New("alg " + alg + " is unsupported")
+		return 0, erro.New("unsupported algorithm " + alg)
 	}
 }
 
@@ -68,75 +49,63 @@ func noneVerify(sig []byte) error {
 	return nil
 }
 
-func hsSign(key interface{}, hGen crypto.Hash, ds ...[]byte) ([]byte, error) {
-	comKey, ok := key.([]byte)
-	if !ok {
-		return nil, erro.New("not common key")
+func hsSign(key jwk.Key, hGen crypto.Hash, data []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
-
-	h := hmac.New(hGen.New, comKey)
-	for _, d := range ds {
-		h.Write(d)
-	}
+	h := hmac.New(hGen.New, key.Common())
+	h.Write(data)
 	return h.Sum(nil), nil
 }
 
-func hsVerify(key interface{}, hGen crypto.Hash, sig []byte, ds ...[]byte) error {
-	comKey, ok := key.([]byte)
-	if !ok {
-		return erro.New("not common key")
+func hsVerify(key jwk.Key, hGen crypto.Hash, sig []byte, data []byte) error {
+	if key == nil {
+		return erro.New("no key")
 	}
-
-	h := hmac.New(hGen.New, comKey)
-	for _, d := range ds {
-		h.Write(d)
-	}
+	h := hmac.New(hGen.New, key.Common())
+	h.Write(data)
 	if !hmac.Equal(h.Sum(nil), sig) {
 		return erro.New("verification failed")
 	}
 	return nil
 }
 
-func rsSign(key interface{}, hGen crypto.Hash, ds ...[]byte) ([]byte, error) {
-	priKey, ok := key.(*rsa.PrivateKey)
-	if !ok {
-		return nil, erro.New("not RSA private key")
+func rsSign(key jwk.Key, hGen crypto.Hash, data []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
 
 	h := hGen.New()
-	for _, d := range ds {
-		h.Write(d)
-	}
-	sig, err := rsa.SignPKCS1v15(rand.Reader, priKey, hGen, h.Sum(nil))
+	h.Write(data)
+	sig, err := rsa.SignPKCS1v15(rand.Reader, key.Private().(*rsa.PrivateKey), hGen, h.Sum(nil))
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 	return sig, nil
 }
 
-func rsVerify(key interface{}, hGen crypto.Hash, sig []byte, ds ...[]byte) error {
-	pubKey, ok := key.(*rsa.PublicKey)
-	if !ok {
-		return erro.New("not RSA public key")
+func rsVerify(key jwk.Key, hGen crypto.Hash, sig []byte, data []byte) error {
+	if key == nil {
+		return erro.New("no key")
 	}
 
 	h := hGen.New()
-	for _, d := range ds {
-		h.Write(d)
-	}
-	return rsa.VerifyPKCS1v15(pubKey, hGen, h.Sum(nil), sig)
+	h.Write(data)
+	return rsa.VerifyPKCS1v15(key.Public().(*rsa.PublicKey), hGen, h.Sum(nil), sig)
 }
 
-func esSign(priKey *ecdsa.PrivateKey, hGen crypto.Hash, ds ...[]byte) ([]byte, error) {
-
-	byteSize := (priKey.Params().BitSize + 7) / 8
-
-	h := hGen.New()
-	for _, d := range ds {
-		h.Write(d)
+func esSign(key jwk.Key, hGen crypto.Hash, data []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
 
-	r, s, err := ecdsa.Sign(rand.Reader, priKey, h.Sum(nil))
+	pri := key.Private().(*ecdsa.PrivateKey)
+	byteSize := (pri.Params().BitSize + 7) / 8
+
+	h := hGen.New()
+	h.Write(data)
+
+	r, s, err := ecdsa.Sign(rand.Reader, pri, h.Sum(nil))
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
@@ -149,50 +118,47 @@ func esSign(priKey *ecdsa.PrivateKey, hGen crypto.Hash, ds ...[]byte) ([]byte, e
 	return sig, nil
 }
 
-func esVerify(pubKey *ecdsa.PublicKey, hGen crypto.Hash, sig []byte, ds ...[]byte) error {
-	byteSize := (pubKey.Params().BitSize + 7) / 8
+func esVerify(key jwk.Key, hGen crypto.Hash, sig []byte, data []byte) error {
+	if key == nil {
+		return erro.New("no key")
+	}
+
+	pub := key.Public().(*ecdsa.PublicKey)
+	byteSize := (pub.Params().BitSize + 7) / 8
 	if len(sig) != 2*byteSize {
 		return erro.New("verification failed")
 	}
 	r, s := (&big.Int{}).SetBytes(sig[:byteSize]), (&big.Int{}).SetBytes(sig[byteSize:])
 
 	h := hGen.New()
-	for _, d := range ds {
-		h.Write(d)
-	}
+	h.Write(data)
 
-	if !ecdsa.Verify(pubKey, h.Sum(nil), r, s) {
+	if !ecdsa.Verify(pub, h.Sum(nil), r, s) {
 		return erro.New("verification failed")
 	}
 	return nil
 }
 
-func psSign(key interface{}, hGen crypto.Hash, ds ...[]byte) ([]byte, error) {
-	priKey, ok := key.(*rsa.PrivateKey)
-	if !ok {
-		return nil, erro.New("not RSA private key")
+func psSign(key jwk.Key, hGen crypto.Hash, data []byte) ([]byte, error) {
+	if key == nil {
+		return nil, erro.New("no key")
 	}
 
 	h := hGen.New()
-	for _, d := range ds {
-		h.Write(d)
-	}
-	sig, err := rsa.SignPSS(rand.Reader, priKey, hGen, h.Sum(nil), &rsa.PSSOptions{hGen.Size(), hGen})
+	h.Write(data)
+	sig, err := rsa.SignPSS(rand.Reader, key.Private().(*rsa.PrivateKey), hGen, h.Sum(nil), &rsa.PSSOptions{hGen.Size(), hGen})
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
 	return sig, nil
 }
 
-func psVerify(key crypto.PublicKey, hGen crypto.Hash, sig []byte, ds ...[]byte) error {
-	pubKey, ok := key.(*rsa.PublicKey)
-	if !ok {
-		return erro.New("not RSA public key")
+func psVerify(key jwk.Key, hGen crypto.Hash, sig []byte, data []byte) error {
+	if key == nil {
+		return erro.New("no key")
 	}
 
 	h := hGen.New()
-	for _, d := range ds {
-		h.Write(d)
-	}
-	return rsa.VerifyPSS(pubKey, hGen, h.Sum(nil), sig, &rsa.PSSOptions{hGen.Size(), hGen})
+	h.Write(data)
+	return rsa.VerifyPSS(key.Public().(*rsa.PublicKey), hGen, h.Sum(nil), sig, &rsa.PSSOptions{hGen.Size(), hGen})
 }

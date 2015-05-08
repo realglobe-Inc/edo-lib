@@ -32,7 +32,7 @@ func TestJson(t *testing.T) {
 		t.Fatal(err)
 	} else if buff[0] != '"' {
 		// JSON 文字列じゃない。
-		t.Error(string(buff))
+		t.Fatal(string(buff))
 	}
 
 	var b Duration
@@ -41,7 +41,7 @@ func TestJson(t *testing.T) {
 	}
 
 	if b != a {
-		t.Error(b, a, string(buff))
+		t.Fatal(b, a, string(buff))
 	}
 }
 
@@ -65,7 +65,7 @@ func TestNestedJson(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a, string(buff))
+		t.Fatal(b, a, string(buff))
 	}
 }
 
@@ -120,6 +120,6 @@ func TestBson(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(b, a) {
-		t.Error(b, a)
+		t.Fatal(b, a)
 	}
 }

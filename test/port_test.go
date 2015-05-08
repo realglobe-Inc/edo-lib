@@ -12,21 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package secrand
+package test
 
 import (
+	"net"
+	"strconv"
 	"testing"
 )
 
-func TestString(t *testing.T) {
+func TestFreePort(t *testing.T) {
+	m := map[int]net.Listener{}
+	defer func() {
+		for _, lis := range m {
+			lis.Close()
+		}
+	}()
+
 	for i := 0; i < 100; i++ {
-		buff, err := String(i)
+		port, err := FreePort()
 		if err != nil {
 			t.Fatal(err)
-		} else if len(buff) != i {
-			t.Fatal(i, len(buff), " "+buff)
-		} else if len(buff) > 0 && buff[len(buff)-1] == '=' {
-			t.Fatal(i, len(buff), " "+buff)
+		} else if m[port] != nil {
+			t.Fatal("overlap ", port)
+		}
+
+		m[port], err = net.Listen("tcp", ":"+strconv.Itoa(port))
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }

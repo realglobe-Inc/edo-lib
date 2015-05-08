@@ -18,24 +18,19 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 )
 
-func TestFreePort(t *testing.T) {
-	_, err := FreePort()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestHttpServer(t *testing.T) {
-	server, err := NewHttpServer(0)
+	server, err := NewHttpServer(time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer server.Close()
 
 	reqCh := server.AddResponse(http.StatusOK, http.Header{"Test-Header": {"test header"}}, []byte("test body"))
 
-	req, err := http.NewRequest("GET", "http://"+server.Address()+"/", nil)
+	req, err := http.NewRequest("GET", server.URL+"/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,16 +44,18 @@ func TestHttpServer(t *testing.T) {
 	rcvReq := <-reqCh
 
 	if rcvReq.Method != req.Method {
-		t.Error(rcvReq, req)
+		t.Fatal(rcvReq, req)
 	} else if rcvReq.Host != req.Host {
-		t.Error(rcvReq, req)
+		t.Fatal(rcvReq, req)
 	} else if resp.StatusCode != http.StatusOK {
-		t.Error(rcvReq, req)
+		t.Fatal(rcvReq, req)
 	} else if resp.Header.Get("Test-Header") != "test header" {
-		t.Error(rcvReq, req)
+		t.Error(rcvReq)
+		t.Fatal(req)
 	} else if body, err := ioutil.ReadAll(resp.Body); err != nil {
 		t.Fatal(err)
 	} else if string(body) != "test body" {
-		t.Error(string(body), "test body")
+		t.Error(string(body))
+		t.Fatal("test body")
 	}
 }

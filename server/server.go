@@ -110,8 +110,7 @@ func Serve(param Parameter, handler http.Handler) error {
 				l, err = net.Listen("unix", param.SocketPath())
 				if err != nil {
 					return true, erro.Wrap(err)
-				}
-				if err := os.Chmod(param.SocketPath(), 0777); err != nil {
+				} else if err := os.Chmod(param.SocketPath(), 0777); err != nil {
 					return true, erro.Wrap(err)
 				}
 				log.Info("Wait on UNIX socket " + param.SocketPath())

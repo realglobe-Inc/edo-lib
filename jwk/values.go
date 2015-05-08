@@ -12,21 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package secrand
+package jwk
 
-import (
-	"testing"
+import ()
+
+const (
+	tagKty     = "kty"
+	tagUse     = "use"
+	tagKey_ops = "key_ops"
+	tagAlg     = "alg"
+	tagKid     = "kid"
+
+	tagCrv = "crv"
+	tagOth = "oth"
 )
 
-func TestString(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		buff, err := String(i)
-		if err != nil {
-			t.Fatal(err)
-		} else if len(buff) != i {
-			t.Fatal(i, len(buff), " "+buff)
-		} else if len(buff) > 0 && buff[len(buff)-1] == '=' {
-			t.Fatal(i, len(buff), " "+buff)
-		}
-	}
-}
+const (
+	ktyEc  = "EC"
+	ktyRsa = "RSA"
+	ktyOct = "oct"
+)

@@ -41,6 +41,6 @@ func TestStringEscape(t *testing.T) {
 	if s2 != s1 {
 		t.Error(s)
 		t.Error(s2)
-		t.Error(s1)
+		t.Fatal(s1)
 	}
 }

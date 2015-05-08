@@ -20,28 +20,13 @@ import (
 )
 
 // JSON にしたときに要素の配列になる文字列集合型。
-type StringSet map[string]bool
+type Set map[string]bool
 
-// コピーするだけ。
-func New(m map[string]bool) StringSet {
-	s := map[string]bool{}
-	for elem, ok := range m {
-		if ok {
-			s[elem] = true
-		}
+func (this Set) MarshalJSON() ([]byte, error) {
+	if this == nil {
+		return json.Marshal(nil)
 	}
-	return StringSet(s)
-}
 
-func FromSlice(l []string) StringSet {
-	s := map[string]bool{}
-	for _, elem := range l {
-		s[elem] = true
-	}
-	return StringSet(s)
-}
-
-func (this StringSet) MarshalJSON() ([]byte, error) {
 	a := []string{}
 	for elem, ok := range this {
 		if ok {
@@ -51,20 +36,27 @@ func (this StringSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(a)
 }
 
-func (this *StringSet) UnmarshalJSON(data []byte) error {
+func (this *Set) UnmarshalJSON(data []byte) error {
 	var a []string
 	if err := json.Unmarshal(data, &a); err != nil {
 		return err
+	} else if a == nil {
+		return nil
 	}
+
 	s := map[string]bool{}
 	for _, elem := range a {
 		s[elem] = true
 	}
-	*this = StringSet(s)
+	*this = Set(s)
 	return nil
 }
 
-func (this StringSet) GetBSON() (interface{}, error) {
+func (this Set) GetBSON() (interface{}, error) {
+	if this == nil {
+		return nil, nil
+	}
+
 	a := []string{}
 	for elem, ok := range this {
 		if ok {
@@ -74,36 +66,18 @@ func (this StringSet) GetBSON() (interface{}, error) {
 	return a, nil
 }
 
-func (this *StringSet) SetBSON(raw bson.Raw) error {
+func (this *Set) SetBSON(raw bson.Raw) error {
 	var a []string
 	if err := raw.Unmarshal(&a); err != nil {
 		return err
+	} else if a == nil {
+		return nil
 	}
+
 	s := map[string]bool{}
 	for _, elem := range a {
 		s[elem] = true
 	}
-	*this = StringSet(s)
+	*this = Set(s)
 	return nil
-}
-
-func (this StringSet) Copy() StringSet {
-	c := StringSet{}
-	for elem, ok := range this {
-		if ok {
-			c[elem] = true
-		}
-	}
-	return c
-}
-
-func (this StringSet) OneOf() string {
-	return OneOf(this)
-}
-
-func OneOf(s StringSet) string {
-	for elem := range s {
-		return elem
-	}
-	return ""
 }

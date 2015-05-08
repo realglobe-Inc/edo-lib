@@ -27,7 +27,7 @@ func testRawDataStore(t *testing.T, drv RawDataStore) {
 	if d, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d != nil {
-		t.Error(d)
+		t.Fatal(d)
 	}
 
 	// 入れる。
@@ -39,7 +39,7 @@ func testRawDataStore(t *testing.T, drv RawDataStore) {
 	if d, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d == nil || !reflect.DeepEqual(d, testData) {
-		t.Error(d)
+		t.Fatal(d)
 	}
 
 	// 消す。
@@ -51,7 +51,7 @@ func testRawDataStore(t *testing.T, drv RawDataStore) {
 	if d, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d != nil {
-		t.Error(d)
+		t.Fatal(d)
 	}
 }
 
@@ -62,7 +62,7 @@ func testRawDataStoreStamp(t *testing.T, drv RawDataStore) {
 	if d, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d != nil || s != nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// 入れる。
@@ -75,28 +75,28 @@ func testRawDataStoreStamp(t *testing.T, drv RawDataStore) {
 	if d, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// キャッシュと同じだから返らない。
 	if d, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if d != nil || s == nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// キャッシュが古いから返る。
 	if d, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
 		t.Fatal(err)
 	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// ダイジェストが違うから返る。
 	if d, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
 		t.Fatal(err)
 	} else if d == nil || !reflect.DeepEqual(d, testData) || s == nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 
 	// 消す。
@@ -108,6 +108,6 @@ func testRawDataStoreStamp(t *testing.T, drv RawDataStore) {
 	if d, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if d != nil || s != nil {
-		t.Error(d, s)
+		t.Fatal(d, s)
 	}
 }

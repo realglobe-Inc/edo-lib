@@ -33,15 +33,15 @@ func TestSample1(t *testing.T) {
 	}
 
 	if key, err := FromMap(m); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	} else if key.Type() != "RSA" {
 		t.Error(key.Type())
-		t.Error("RSA")
+		t.Fatal("RSA")
 	} else if _, ok := key.Public().(*rsa.PublicKey); !ok {
-		t.Error(key.Public())
+		t.Fatal(key.Public())
 	} else if buff := key.ToMap(); !reflect.DeepEqual(m, buff) {
 		t.Error(m)
-		t.Error(buff)
+		t.Fatal(buff)
 	}
 }
 
@@ -55,15 +55,15 @@ func TestSample2(t *testing.T) {
 	}
 
 	if key, err := FromMap(m); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	} else if key.Type() != "EC" {
 		t.Error(key.Type())
-		t.Error("EX")
+		t.Fatal("EX")
 	} else if _, ok := key.Public().(*ecdsa.PublicKey); !ok {
-		t.Error(key.Public())
+		t.Fatal(key.Public())
 	} else if buff := key.ToMap(); !reflect.DeepEqual(m, buff) {
 		t.Error(m)
-		t.Error(buff)
+		t.Fatal(buff)
 	}
 }
 
@@ -105,20 +105,20 @@ func TestSample3(t *testing.T) {
 	}
 
 	if key, err := FromMap(m); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	} else if key.Type() != "RSA" {
 		t.Error(key.Type())
-		t.Error("RSA")
+		t.Fatal("RSA")
 	} else if pri, ok := key.Private().(*rsa.PrivateKey); !ok {
-		t.Error(key.Private())
+		t.Fatal(key.Private())
 	} else if buff := key.ToMap(); !reflect.DeepEqual(m, buff) {
 		t.Error(m)
-		t.Error(buff)
+		t.Fatal(buff)
 	} else if decrypted, err := rsa.DecryptPKCS1v15(rand.Reader, pri, encrypted); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	} else if !bytes.Equal(decrypted, plain) {
 		t.Error(decrypted)
-		t.Error(plain)
+		t.Fatal(plain)
 	}
 }
 
@@ -134,15 +134,15 @@ func TestSample4(t *testing.T) {
 	}
 
 	if key, err := FromMap(m); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	} else if key.Type() != "EC" {
 		t.Error(key.Type())
-		t.Error("EC")
+		t.Fatal("EC")
 	} else if _, ok := key.Private().(*ecdsa.PrivateKey); !ok {
-		t.Error(key.Private())
+		t.Fatal(key.Private())
 	} else if buff := key.ToMap(); !reflect.DeepEqual(m, buff) {
 		t.Error(m)
-		t.Error(buff)
+		t.Fatal(buff)
 	}
 }
 
@@ -229,28 +229,28 @@ func TestKey(t *testing.T) {
 		"use": "sig",
 	}); key.Use() != "sig" {
 		t.Error(key.Use())
-		t.Error("sig")
+		t.Fatal("sig")
 	}
 
 	if key := New(test_128Key, map[string]interface{}{
 		"key_ops": []interface{}{"sign", "verify"},
 	}); !reflect.DeepEqual(key.Operations(), map[string]bool{"sign": true, "verify": true}) {
 		t.Error(key.Operations())
-		t.Error(map[string]bool{"sign": true, "verify": true})
+		t.Fatal(map[string]bool{"sign": true, "verify": true})
 	}
 
 	if key := New(test_128Key, map[string]interface{}{
 		"alg": "A128KW",
 	}); key.Algorithm() != "A128KW" {
 		t.Error(key.Algorithm())
-		t.Error("A128KW")
+		t.Fatal("A128KW")
 	}
 
 	if key := New(test_128Key, map[string]interface{}{
 		"kid": "test-key",
 	}); key.Id() != "test-key" {
 		t.Error(key.Id())
-		t.Error("test-key")
+		t.Fatal("test-key")
 	}
 }
 
@@ -273,10 +273,24 @@ func TestToFromMap(t *testing.T) {
 		key := New(rawKey, nil)
 		if key2, err := FromMap(key.ToMap()); err != nil {
 			t.Error(err)
-			t.Error(key)
+			t.Fatal(key)
 		} else if !reflect.DeepEqual(key2, key) {
 			t.Error(key2)
-			t.Error(key)
+			t.Fatal(key)
+		}
+	}
+}
+
+func TestToFromMapOperation(t *testing.T) {
+	for _, key := range []Key{
+		New(test_128Key, map[string]interface{}{"key_ops": []interface{}{"verify"}}),
+	} {
+		if key2, err := FromMap(key.ToMap()); err != nil {
+			t.Error(err)
+			t.Fatal(key)
+		} else if !reflect.DeepEqual(key2, key) {
+			t.Error(key2)
+			t.Fatal(key)
 		}
 	}
 }

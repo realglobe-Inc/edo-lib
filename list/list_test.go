@@ -15,32 +15,34 @@
 package list
 
 import (
+	"container/list"
 	"encoding/json"
 	"reflect"
 	"testing"
 )
 
 func TestJson(t *testing.T) {
-	for a := New(); a.Len() < 10; a.PushFront(float64(a.Len())) {
+	for a := list.New(); a.Len() < 10; a.PushFront(float64(a.Len())) {
 
-		buff, err := json.Marshal(a)
+		l := (*List)(a)
+		buff, err := json.Marshal(l)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		} else if buff[0] != '[' {
 			// JSON 配列じゃない。
-			t.Error(string(buff))
+			t.Fatal(string(buff))
 		}
 
-		var b List
-		if err := json.Unmarshal(buff, &b); err != nil {
+		var l2 List
+		if err := json.Unmarshal(buff, &l2); err != nil {
 			t.Fatal(err, string(buff))
 		}
 
-		if !reflect.DeepEqual(&b, a) {
+		if !reflect.DeepEqual(&l2, l) {
+			t.Error(a.Len())
 			t.Error(string(buff))
-			t.Error(&b)
-			t.Error(a)
+			t.Error(&l2)
+			t.Fatal(l)
 		}
 	}
 }

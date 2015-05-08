@@ -12,21 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package secrand
+package jwt
 
 import (
-	"testing"
+	"github.com/realglobe-Inc/go-lib/rglog"
 )
 
-func TestString(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		buff, err := String(i)
-		if err != nil {
-			t.Fatal(err)
-		} else if len(buff) != i {
-			t.Fatal(i, len(buff), " "+buff)
-		} else if len(buff) > 0 && buff[len(buff)-1] == '=' {
-			t.Fatal(i, len(buff), " "+buff)
-		}
-	}
-}
+var log = rglog.Logger("github.com/realglobe-Inc/edo-lib/jwt")

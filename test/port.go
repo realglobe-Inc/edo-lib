@@ -12,21 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package secrand
+package test
 
 import (
-	"testing"
+	"github.com/realglobe-Inc/go-lib/erro"
+	"net"
+	"strconv"
 )
 
-func TestString(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		buff, err := String(i)
-		if err != nil {
-			t.Fatal(err)
-		} else if len(buff) != i {
-			t.Fatal(i, len(buff), " "+buff)
-		} else if len(buff) > 0 && buff[len(buff)-1] == '=' {
-			t.Fatal(i, len(buff), " "+buff)
-		}
+func FreePort() (port int, err error) {
+	lis, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, erro.Wrap(err)
 	}
+	lis.Close()
+
+	_, portStr, err := net.SplitHostPort(lis.Addr().String())
+	if err != nil {
+		return 0, erro.Wrap(err)
+	}
+
+	port, err = strconv.Atoi(portStr)
+	if err != nil {
+		return 0, erro.Wrap(err)
+	}
+
+	return port, nil
 }

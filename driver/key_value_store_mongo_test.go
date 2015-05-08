@@ -29,8 +29,7 @@ func TestMongoKeyValueStore(t *testing.T) {
 
 	sess, err := mgo.Dial(mongoAddr)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	drv := NewMongoKeyValueStore(sess, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
@@ -44,7 +43,7 @@ func TestMongoKeyValueStore(t *testing.T) {
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 
 	// 入れる。
@@ -64,7 +63,7 @@ func TestMongoKeyValueStore(t *testing.T) {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, val) {
 		if !jsonEqual(v, val) {
-			t.Error(v, val)
+			t.Fatal(v, val)
 		}
 	}
 
@@ -77,7 +76,7 @@ func TestMongoKeyValueStore(t *testing.T) {
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 }
 
@@ -92,8 +91,7 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 
 	sess, err := mgo.Dial(mongoAddr)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	drv := NewMongoKeyValueStore(sess, testLabel, "key-value-store", "key", nil, func(val interface{}) (interface{}, error) {
@@ -107,7 +105,7 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err, testKey)
 	} else if v != nil || s != nil {
-		t.Error(v, s)
+		t.Fatal(v, s)
 	}
 
 	// 入れる。
@@ -127,10 +125,10 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	if v, s, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
-		t.Error(s)
+		t.Fatal(s)
 	} else if !reflect.DeepEqual(v, val) {
 		if !jsonEqual(v, val) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -138,17 +136,17 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	if v, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s == nil {
-		t.Error(v, s)
+		t.Fatal(v, s)
 	}
 
 	// キャッシュが古いから返る。
 	if v, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date.Add(-time.Second), Digest: stmp.Digest}); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
-		t.Error(s)
+		t.Fatal(s)
 	} else if !reflect.DeepEqual(v, val) {
 		if !jsonEqual(v, val) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -156,10 +154,10 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	if v, s, err := drv.Get(testKey, &Stamp{Date: stmp.Date, Digest: stmp.Digest + "a"}); err != nil {
 		t.Fatal(err)
 	} else if s == nil {
-		t.Error(s)
+		t.Fatal(s)
 	} else if !reflect.DeepEqual(v, val) {
 		if !jsonEqual(v, val) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -172,7 +170,7 @@ func TestMongoKeyValueStoreStamp(t *testing.T) {
 	if v, s, err := drv.Get(testKey, stmp); err != nil {
 		t.Fatal(err)
 	} else if v != nil || s != nil {
-		t.Error(v, s)
+		t.Fatal(v, s)
 	}
 }
 
@@ -183,8 +181,7 @@ func TestMongoNKeyValueStore(t *testing.T) {
 
 	sess, err := mgo.Dial(mongoAddr)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	drv := NewMongoNKeyValueStore(sess, testLabel, "key-value-store", []string{"key1", "key2"}, nil, func(val interface{}) (interface{}, error) {
@@ -201,7 +198,7 @@ func TestMongoNKeyValueStore(t *testing.T) {
 	if v, _, err := drv.NGet(tagKeys, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 
 	// 入れる。
@@ -222,14 +219,14 @@ func TestMongoNKeyValueStore(t *testing.T) {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, val) {
 		if !jsonEqual(v, val) {
-			t.Error(v, val)
+			t.Fatal(v, val)
 		}
 	}
 	// キーが 1 つ違うので無い。
 	if v, _, err := drv.NGet(bson.M{"key1": testKey, "key2": testKey}, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v, val)
+		t.Fatal(v, val)
 	}
 
 	// 消す。
@@ -241,6 +238,6 @@ func TestMongoNKeyValueStore(t *testing.T) {
 	if v, _, err := drv.NGet(tagKeys, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 }

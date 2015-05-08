@@ -26,8 +26,25 @@ func Decode(src []byte) ([]byte, error) {
 
 	switch rem {
 	case 2:
+		// 上書きしてしまう場合は戻す。
+		if cap(src) > len(src)+2 {
+			buff := src[:len(src)+2]
+			old := []byte{buff[len(src)], buff[len(src)+1]}
+			defer func() {
+				src[len(src)-2] = old[0]
+				src[len(src)-1] = old[1]
+			}()
+		}
 		src = append(src, '=', '=')
 	case 3:
+		// 上書きしてしまう場合は戻す。
+		if cap(src) > len(src)+1 {
+			buff := src[:len(src)+1]
+			old := []byte{buff[len(src)]}
+			defer func() {
+				src[len(src)-1] = old[0]
+			}()
+		}
 		src = append(src, '=')
 	}
 

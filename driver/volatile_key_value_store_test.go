@@ -29,7 +29,7 @@ func testVolatileKeyValueStore(t *testing.T, drv VolatileKeyValueStore) {
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 
 	// 入れる。
@@ -42,7 +42,7 @@ func testVolatileKeyValueStore(t *testing.T, drv VolatileKeyValueStore) {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, testVal) {
 		if !jsonEqual(v, testVal) {
-			t.Error(v)
+			t.Fatal(v)
 		}
 	}
 
@@ -55,7 +55,7 @@ func testVolatileKeyValueStore(t *testing.T, drv VolatileKeyValueStore) {
 	if v, _, err := drv.Get(testKey, nil); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
-		t.Error(v)
+		t.Fatal(v)
 	}
 
 	// また入れる。
@@ -82,14 +82,12 @@ func testVolatileKeyValueStore(t *testing.T, drv VolatileKeyValueStore) {
 		if aft.UnixNano() <= cutOff(exp.UnixNano(), 1e6)-diff { // redis の粒度がミリ秒のため。
 			if v == nil {
 				t.Error(aft)
-				t.Error(exp)
-				return
+				t.Fatal(exp)
 			}
 		} else if bef.UnixNano() > cutOff(exp.UnixNano(), 1e6)+1e6+diff { // redis の粒度がミリ秒のため。
 			if v != nil {
 				t.Error(bef)
-				t.Error(exp)
-				return
+				t.Fatal(exp)
 			}
 			// 消えた。
 			return

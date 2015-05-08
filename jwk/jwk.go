@@ -24,23 +24,6 @@ import (
 	"math/big"
 )
 
-const (
-	tagKty     = "kty"
-	tagUse     = "use"
-	tagKey_ops = "key_ops"
-	tagAlg     = "alg"
-	tagKid     = "kid"
-
-	tagCrv = "crv"
-	tagOth = "oth"
-)
-
-const (
-	ktyEc  = "EC"
-	ktyRsa = "RSA"
-	ktyOct = "oct"
-)
-
 type Key interface {
 	// kty
 	Type() string
@@ -320,7 +303,7 @@ func (this *keyImpl) ToMap() map[string]interface{} {
 		for op := range this.ops {
 			ops = append(ops, op)
 		}
-		m[tagKey_ops] = this.ops
+		m[tagKey_ops] = ops
 	}
 	if this.alg != "" {
 		m[tagAlg] = this.alg

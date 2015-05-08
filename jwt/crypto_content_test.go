@@ -77,15 +77,15 @@ bd 34 d8 48 b3 d6 95 50 a6 76 46 34 44 27 ad e5
 		t.Fatal(err)
 	} else if !bytes.Equal(e, encrypted) {
 		t.Error(e)
-		t.Error(encrypted)
+		t.Fatal(encrypted)
 	} else if !bytes.Equal(at, authTag) {
 		t.Error(at)
-		t.Error(authTag)
+		t.Fatal(authTag)
 	} else if p, err := decryptAesCbcHmacSha2(key, crypto.SHA256, authData, initVec, encrypted, authTag); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)
-		t.Error(plain)
+		t.Fatal(plain)
 	}
 }
 
@@ -134,15 +134,15 @@ f2 80 ad c9 1a c0 c4 e7 9c 7b 11 ef c6 00 54 e3
 		t.Fatal(err)
 	} else if !bytes.Equal(e, encrypted) {
 		t.Error(e)
-		t.Error(encrypted)
+		t.Fatal(encrypted)
 	} else if !bytes.Equal(at, authTag) {
 		t.Error(at)
-		t.Error(authTag)
+		t.Fatal(authTag)
 	} else if p, err := decryptAesCbcHmacSha2(key, crypto.SHA384, authData, initVec, encrypted, authTag); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)
-		t.Error(plain)
+		t.Fatal(plain)
 	}
 }
 
@@ -192,15 +192,15 @@ be 26 38 d0 9d d7 a4 93 09 30 80 6d 07 03 b1 f6
 		t.Fatal(err)
 	} else if !bytes.Equal(e, encrypted) {
 		t.Error(e)
-		t.Error(encrypted)
+		t.Fatal(encrypted)
 	} else if !bytes.Equal(at, authTag) {
 		t.Error(at)
-		t.Error(authTag)
+		t.Fatal(authTag)
 	} else if p, err := decryptAesCbcHmacSha2(key, crypto.SHA512, authData, initVec, encrypted, authTag); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)
-		t.Error(plain)
+		t.Fatal(plain)
 	}
 }
 
@@ -226,15 +226,15 @@ func TestAes128GCM(t *testing.T) {
 		t.Fatal(err)
 	} else if !bytes.Equal(e, encrypted) {
 		t.Error(e)
-		t.Error(encrypted)
+		t.Fatal(encrypted)
 	} else if !bytes.Equal(at, authTag) {
 		t.Error(at)
-		t.Error(authTag)
+		t.Fatal(authTag)
 	} else if p, err := decryptAesGcm(key, authData, initVec, encrypted, authTag); err != nil {
 		t.Fatal(err)
 	} else if !bytes.Equal(p, plain) {
 		t.Error(p)
-		t.Error(plain)
+		t.Fatal(plain)
 	}
 }
 
@@ -262,7 +262,7 @@ func TestAesCbcHmacSha2(t *testing.T) {
 					t.Fatal(err)
 				} else if !bytes.Equal(p, plain) {
 					t.Error(p)
-					t.Error(plain)
+					t.Fatal(plain)
 				}
 			}
 		}
@@ -289,7 +289,7 @@ func TestAesGCM(t *testing.T) {
 					t.Fatal(err)
 				} else if !bytes.Equal(p, plain) {
 					t.Error(p)
-					t.Error(plain)
+					t.Fatal(plain)
 				}
 			}
 		}

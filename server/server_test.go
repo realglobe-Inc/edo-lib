@@ -57,7 +57,7 @@ func TestServerShutdown(t *testing.T) {
 	}
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		t.Error(resp)
+		t.Fatal(resp)
 	}
 
 	shutCh <- struct{}{}
@@ -99,7 +99,7 @@ func TestServerRestart(t *testing.T) {
 	}
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		t.Error(resp)
+		t.Fatal(resp)
 	}
 
 	shutCh2 := make(chan struct{}, 10)
@@ -125,7 +125,7 @@ func TestServerRestart(t *testing.T) {
 	}
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		t.Error(resp)
+		t.Fatal(resp)
 	}
 
 	shutCh2 <- struct{}{}
