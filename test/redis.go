@@ -62,7 +62,7 @@ func NewRedisServer() (*RedisServer, error) {
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	file, err := ioutil.TempFile("", "")
+	file, err := ioutil.TempFile("", "edo-lib.test")
 	if err != nil {
 		return nil, erro.Wrap(err)
 	} else if _, err := file.Write([]byte("port " + strconv.Itoa(port))); err != nil {
