@@ -71,9 +71,9 @@ func NewRedisServer() (*RedisServer, error) {
 		return nil, erro.Wrap(err)
 	}
 	// 失敗したら設定ファイルは消す。
-	delete := true
+	failed := true
 	defer func() {
-		if delete {
+		if failed {
 			os.Remove(file.Name())
 		}
 	}()
@@ -97,7 +97,7 @@ func NewRedisServer() (*RedisServer, error) {
 		}
 	}
 
-	delete = false
+	failed = false
 	return &RedisServer{&redis.Pool{
 		MaxIdle:     5,
 		IdleTimeout: time.Second,
