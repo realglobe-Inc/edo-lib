@@ -86,8 +86,7 @@ func NewRedisServer() (*RedisServer, error) {
 
 	// 起動待ち。
 	for i := time.Nanosecond; ; i *= 2 {
-		_, err := redis.Dial("tcp", ":"+strconv.Itoa(port))
-		if err == nil {
+		if _, err := redis.Dial("tcp", ":"+strconv.Itoa(port)); err == nil {
 			break
 		}
 		select {
