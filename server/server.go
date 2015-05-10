@@ -137,8 +137,8 @@ func Serve(param Parameter, handler http.Handler) error {
 
 			start := time.Now()
 			if err := func() error {
-				log.Debug("Service starts.")
-				defer log.Debug("Service exits.")
+				log.Debug("Service starts")
+				defer log.Debug("Service exits")
 				return erro.Wrap(serv(l, handler))
 			}(); err != nil {
 				err := erro.Wrap(err)
@@ -360,8 +360,8 @@ func TerminableServe(socType, socPath string, socPort int, protType string,
 
 			start := time.Now()
 			if err := func() error {
-				log.Debug("Service starts.")
-				defer log.Debug("Service exits.")
+				log.Debug("Service starts")
+				defer log.Debug("Service exits")
 				return erro.Wrap(serv(l, mux))
 			}(); err != nil {
 				err := erro.Wrap(err)
