@@ -223,7 +223,7 @@ func responseError(w http.ResponseWriter, err error) {
 		Msg  string `json:"message"`
 	}
 	switch e := erro.Unwrap(err).(type) {
-	case *StatusError:
+	case *Error:
 		log.Err(e.Message())
 		log.Debug(e)
 		v.Stat = e.Status()

@@ -19,18 +19,18 @@ import (
 )
 
 // HTTP のステータスコードを付加したエラー。
-type StatusError struct {
+type Error struct {
 	status int
 	msg    string
 
 	cause error
 }
 
-func NewStatusError(status int, msg string, cause error) *StatusError {
-	return &StatusError{status, msg, cause}
+func NewError(status int, msg string, cause error) *Error {
+	return &Error{status, msg, cause}
 }
 
-func (err *StatusError) Error() string {
+func (err *Error) Error() string {
 	buff := err.msg
 	if err.cause != nil {
 		buff += fmt.Sprintln()
@@ -40,14 +40,14 @@ func (err *StatusError) Error() string {
 	return buff
 }
 
-func (err *StatusError) Status() int {
+func (err *Error) Status() int {
 	return err.status
 }
 
-func (err *StatusError) Message() string {
+func (err *Error) Message() string {
 	return err.msg
 }
 
-func (err *StatusError) Cause() error {
+func (err *Error) Cause() error {
 	return err.cause
 }
