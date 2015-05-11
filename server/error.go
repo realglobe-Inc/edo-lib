@@ -15,6 +15,7 @@
 package server
 
 import (
+	"github.com/realglobe-Inc/go-lib/erro"
 	"net/http"
 	"strconv"
 )
@@ -53,4 +54,17 @@ func (this *Error) Message() string {
 
 func (this *Error) Cause() error {
 	return this.cause
+}
+
+// 通常のエラーから変換する。
+func ErrorFrom(err error) *Error {
+	if e, ok := err.(*Error); ok {
+		return e
+	}
+	e2 := erro.Unwrap(err)
+	if e, ok := e2.(*Error); ok {
+		return NewError(e.Status(), e.Message(), err)
+	} else {
+		return NewError(http.StatusInternalServerError, e2.Error(), err)
+	}
 }
