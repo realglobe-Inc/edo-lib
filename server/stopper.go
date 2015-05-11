@@ -21,19 +21,15 @@ import (
 // 処理途中でサーバーが終了するのを防ぐ。
 //
 // メイン側で、
-// <pre>
-// s.Lock()
-// defer s.Unlock()
-// for s.Stopped() {
-// 	s.Wait()
-// }
-// </pre>
+//  s.Lock()
+//  defer s.Unlock()
+//  for s.Stopped() {
+//  	s.Wait()
+//  }
 //
 // 処理側で、
-// <pre>
-// s.Stop()
-// defer s.Unstop()
-// </pre>
+//  s.Stop()
+//  defer s.Unstop()
 type Stopper struct {
 	c *sync.Cond
 	n int

@@ -15,7 +15,8 @@
 package server
 
 import (
-	"fmt"
+	"net/http"
+	"strconv"
 )
 
 // HTTP のステータスコードを付加したエラー。
@@ -26,28 +27,30 @@ type Error struct {
 	cause error
 }
 
-func NewError(status int, msg string, cause error) *Error {
-	return &Error{status, msg, cause}
-}
-
-func (err *Error) Error() string {
-	buff := err.msg
-	if err.cause != nil {
-		buff += fmt.Sprintln()
-		buff += "caused by: "
-		buff += err.cause.Error()
+// stat が 0 の場合、代わりに http.StatusInternalServerError が入る。
+func NewError(stat int, msg string, cause error) *Error {
+	if stat <= 0 {
+		stat = http.StatusInternalServerError
 	}
-	return buff
+	return &Error{stat, msg, cause}
 }
 
-func (err *Error) Status() int {
-	return err.status
+func (this *Error) Error() string {
+	prefix := ""
+	if this.cause != nil {
+		prefix += this.cause.Error() + "\ncaused "
+	}
+	return prefix + strconv.Itoa(this.status) + " " + http.StatusText(this.status) + ": " + this.msg
 }
 
-func (err *Error) Message() string {
-	return err.msg
+func (this *Error) Status() int {
+	return this.status
 }
 
-func (err *Error) Cause() error {
-	return err.cause
+func (this *Error) Message() string {
+	return this.msg
+}
+
+func (this *Error) Cause() error {
+	return this.cause
 }

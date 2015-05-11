@@ -49,7 +49,6 @@ var MaxSleepTime = time.Minute
 var ResetInterval = time.Minute
 
 // サーバーを立てる。
-// shutCh に信号を入れると落とせる。
 func Serve(param Parameter, handler http.Handler) error {
 	// 冷却期間の揺らぎの最大値。
 	// 冷却期間は前回の 2 倍に一様乱数の揺らぎを加えたものになる。
@@ -256,6 +255,7 @@ func responseError(w http.ResponseWriter, err error) {
 	return
 }
 
+// shutCh に信号を入れると落とせる。
 func TerminableServe(socType, socPath string, socPort int, protType string,
 	routes map[string]HandlerFunc, shutCh chan struct{},
 	wrapper func(HandlerFunc) http.HandlerFunc) error {
