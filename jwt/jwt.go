@@ -616,6 +616,22 @@ func (this *Jwt) getClaim(tag string) (interface{}, error) {
 	return this.clms[tag], nil
 }
 
+func (this *Jwt) ClaimNames() []string {
+	if this.clms == nil {
+		var err error
+		this.clms, err = parseJson(this.rawBody)
+		if err != nil {
+			log.Warn(erro.Unwrap(err))
+			log.Debug(erro.Wrap(err))
+		}
+	}
+	names := []string{}
+	for name := range this.clms {
+		names = append(names, name)
+	}
+	return names
+}
+
 func parseJson(data []byte) (map[string]interface{}, error) {
 	if data == nil {
 		return map[string]interface{}{}, nil
