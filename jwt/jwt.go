@@ -576,7 +576,8 @@ func (this *Jwt) Decrypt(keys []jwk.Key) (err error) {
 
 func (this *Jwt) Header(tag string) interface{} {
 	if val, err := this.getHeader(tag); err != nil {
-		log.Warn(erro.Wrap(err))
+		log.Warn(erro.Unwrap(err))
+		log.Debug(erro.Wrap(err))
 		return nil
 	} else {
 		return val
@@ -596,7 +597,8 @@ func (this *Jwt) getHeader(tag string) (interface{}, error) {
 
 func (this *Jwt) Claim(tag string) interface{} {
 	if val, err := this.getClaim(tag); err != nil {
-		log.Warn(erro.Wrap(err))
+		log.Warn(erro.Unwrap(err))
+		log.Debug(erro.Wrap(err))
 		return nil
 	} else {
 		return val
@@ -628,7 +630,8 @@ func parseJson(data []byte) (map[string]interface{}, error) {
 
 func parseJsonOrNew(data []byte) map[string]interface{} {
 	if m, err := parseJson(data); err != nil {
-		log.Warn(erro.Wrap(err))
+		log.Warn(erro.Unwrap(err))
+		log.Debug(erro.Wrap(err))
 		return map[string]interface{}{}
 	} else {
 		return m
