@@ -62,7 +62,7 @@ func NewRedisServer() (*RedisServer, error) {
 	if err != nil {
 		return nil, erro.Wrap(err)
 	}
-	file, err := ioutil.TempFile("", "")
+	file, err := ioutil.TempFile("", "edo-lib.test")
 	if err != nil {
 		return nil, erro.Wrap(err)
 	} else if _, err := file.Write([]byte("port " + strconv.Itoa(port))); err != nil {
@@ -71,9 +71,9 @@ func NewRedisServer() (*RedisServer, error) {
 		return nil, erro.Wrap(err)
 	}
 	// 失敗したら設定ファイルは消す。
-	delete := true
+	failed := true
 	defer func() {
-		if delete {
+		if failed {
 			os.Remove(file.Name())
 		}
 	}()
@@ -86,8 +86,7 @@ func NewRedisServer() (*RedisServer, error) {
 
 	// 起動待ち。
 	for i := time.Nanosecond; ; i *= 2 {
-		_, err := redis.Dial("tcp", ":"+strconv.Itoa(port))
-		if err == nil {
+		if _, err := redis.Dial("tcp", ":"+strconv.Itoa(port)); err == nil {
 			break
 		}
 		select {
@@ -97,7 +96,7 @@ func NewRedisServer() (*RedisServer, error) {
 		}
 	}
 
-	delete = false
+	failed = false
 	return &RedisServer{&redis.Pool{
 		MaxIdle:     5,
 		IdleTimeout: time.Second,

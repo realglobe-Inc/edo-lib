@@ -49,7 +49,6 @@ var MaxSleepTime = time.Minute
 var ResetInterval = time.Minute
 
 // サーバーを立てる。
-// shutCh に信号を入れると落とせる。
 func Serve(param Parameter, handler http.Handler) error {
 	// 冷却期間の揺らぎの最大値。
 	// 冷却期間は前回の 2 倍に一様乱数の揺らぎを加えたものになる。
@@ -137,8 +136,8 @@ func Serve(param Parameter, handler http.Handler) error {
 
 			start := time.Now()
 			if err := func() error {
-				log.Debug("Service starts.")
-				defer log.Debug("Service exits.")
+				log.Debug("Service starts")
+				defer log.Debug("Service exits")
 				return erro.Wrap(serv(l, handler))
 			}(); err != nil {
 				err := erro.Wrap(err)
@@ -223,7 +222,7 @@ func responseError(w http.ResponseWriter, err error) {
 		Msg  string `json:"message"`
 	}
 	switch e := erro.Unwrap(err).(type) {
-	case *StatusError:
+	case *Error:
 		log.Err(e.Message())
 		log.Debug(e)
 		v.Stat = e.Status()
@@ -256,6 +255,7 @@ func responseError(w http.ResponseWriter, err error) {
 	return
 }
 
+// shutCh に信号を入れると落とせる。
 func TerminableServe(socType, socPath string, socPort int, protType string,
 	routes map[string]HandlerFunc, shutCh chan struct{},
 	wrapper func(HandlerFunc) http.HandlerFunc) error {
@@ -360,8 +360,8 @@ func TerminableServe(socType, socPath string, socPort int, protType string,
 
 			start := time.Now()
 			if err := func() error {
-				log.Debug("Service starts.")
-				defer log.Debug("Service exits.")
+				log.Debug("Service starts")
+				defer log.Debug("Service exits")
 				return erro.Wrap(serv(l, mux))
 			}(); err != nil {
 				err := erro.Wrap(err)

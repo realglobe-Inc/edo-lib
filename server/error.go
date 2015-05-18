@@ -15,39 +15,56 @@
 package server
 
 import (
-	"fmt"
+	"github.com/realglobe-Inc/go-lib/erro"
+	"net/http"
+	"strconv"
 )
 
 // HTTP のステータスコードを付加したエラー。
-type StatusError struct {
+type Error struct {
 	status int
 	msg    string
 
 	cause error
 }
 
-func NewStatusError(status int, msg string, cause error) *StatusError {
-	return &StatusError{status, msg, cause}
-}
-
-func (err *StatusError) Error() string {
-	buff := err.msg
-	if err.cause != nil {
-		buff += fmt.Sprintln()
-		buff += "caused by: "
-		buff += err.cause.Error()
+// stat が 0 の場合、代わりに http.StatusInternalServerError が入る。
+func NewError(stat int, msg string, cause error) *Error {
+	if stat <= 0 {
+		stat = http.StatusInternalServerError
 	}
-	return buff
+	return &Error{stat, msg, cause}
 }
 
-func (err *StatusError) Status() int {
-	return err.status
+func (this *Error) Error() string {
+	prefix := ""
+	if this.cause != nil {
+		prefix += this.cause.Error() + "\ncaused "
+	}
+	return prefix + strconv.Itoa(this.status) + " " + http.StatusText(this.status) + ": " + this.msg
 }
 
-func (err *StatusError) Message() string {
-	return err.msg
+func (this *Error) Status() int {
+	return this.status
 }
 
-func (err *StatusError) Cause() error {
-	return err.cause
+func (this *Error) Message() string {
+	return this.msg
+}
+
+func (this *Error) Cause() error {
+	return this.cause
+}
+
+// 通常のエラーから変換する。
+func ErrorFrom(err error) *Error {
+	if e, ok := err.(*Error); ok {
+		return e
+	}
+	e2 := erro.Unwrap(err)
+	if e, ok := e2.(*Error); ok {
+		return NewError(e.Status(), e.Message(), err)
+	} else {
+		return NewError(http.StatusInternalServerError, e2.Error(), err)
+	}
 }

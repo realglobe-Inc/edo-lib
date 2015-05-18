@@ -20,9 +20,9 @@ import (
 	"testing"
 )
 
-func TestStatusError(t *testing.T) {
+func TestError(t *testing.T) {
 	cause := errors.New("test error")
-	err := NewStatusError(http.StatusBadRequest, "test error", cause)
+	err := NewError(http.StatusBadRequest, "test error", cause)
 
 	if err.Status() != http.StatusBadRequest {
 		t.Fatal(err.Status(), http.StatusBadRequest)
