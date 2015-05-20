@@ -15,8 +15,6 @@
 package server
 
 import (
-	"encoding/json"
-	jsonutil "github.com/realglobe-Inc/edo-lib/json"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"math/rand"
@@ -194,12 +192,12 @@ func nextSleepTime(cur, fluc, max time.Duration) time.Duration {
 type HandlerFunc func(http.ResponseWriter, *http.Request) error
 
 // パニックとエラーの処理をまとめる。
-func PanicErrorWrapper(hndl HandlerFunc) http.HandlerFunc {
+func PanicErrorWrapper(f HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// panic時にプロセス終了しないようにrecoverする
 		defer func() {
 			if rcv := recover(); rcv != nil {
-				responseError(w, erro.New(rcv))
+				RespondPageError(w, r, erro.New(rcv), nil, "")
 				return
 			}
 		}()
@@ -208,51 +206,11 @@ func PanicErrorWrapper(hndl HandlerFunc) http.HandlerFunc {
 		LogRequest(level.DEBUG, r, true)
 		//////////////////////////////
 
-		if err := hndl(w, r); err != nil {
-			responseError(w, erro.Wrap(err))
+		if err := f(w, r); err != nil {
+			RespondPageError(w, r, erro.Wrap(err), nil, "")
 			return
 		}
 	}
-}
-
-func responseError(w http.ResponseWriter, err error) {
-
-	var v struct {
-		Stat int    `json:"status"`
-		Msg  string `json:"message"`
-	}
-	switch e := erro.Unwrap(err).(type) {
-	case *Error:
-		log.Err(e.Message())
-		log.Debug(e)
-		v.Stat = e.Status()
-		v.Msg = e.Message()
-	default:
-		log.Err(e)
-		log.Debug(err)
-		v.Stat = http.StatusInternalServerError
-		v.Msg = e.Error()
-	}
-
-	buff, err := json.Marshal(&v)
-	if err != nil {
-		err = erro.Wrap(err)
-		log.Err(erro.Unwrap(err))
-		log.Debug(err)
-		// 最後の手段。たぶん正しい変換。
-		buff = []byte(`{status="` + jsonutil.StringEscape(strconv.Itoa(v.Stat)) +
-			`",message="` + jsonutil.StringEscape(v.Msg) + `"}`)
-	}
-
-	w.Header().Set("Content-Type", ContentTypeJson)
-	w.Header().Set("Content-Length", strconv.Itoa(len(buff)))
-	w.WriteHeader(v.Stat)
-	if _, err := w.Write(buff); err != nil {
-		err = erro.Wrap(err)
-		log.Err(erro.Unwrap(err))
-		log.Debug(err)
-	}
-	return
 }
 
 // shutCh に信号を入れると落とせる。

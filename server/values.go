@@ -17,7 +17,15 @@ package server
 import ()
 
 const (
-	ContentTypeForm = "application/x-www-form-urlencoded"
-	ContentTypeHtml = "text/html"
-	ContentTypeJson = "application/json"
+	tagStatus  = "status"
+	tagDebug   = "debug"
+	tagMessage = "message"
+
+	tagContent_type = "Content-Type"
+)
+
+const (
+	contTypeForm = "application/x-www-form-urlencoded"
+	contTypeHtml = "text/html"
+	contTypeJson = "application/json"
 )
