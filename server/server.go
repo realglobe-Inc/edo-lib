@@ -192,7 +192,7 @@ func nextSleepTime(cur, fluc, max time.Duration) time.Duration {
 type HandlerFunc func(http.ResponseWriter, *http.Request) error
 
 // パニックとエラーの処理をまとめる。
-func PanicErrorWrapper(hndl HandlerFunc) http.HandlerFunc {
+func PanicErrorWrapper(f HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// panic時にプロセス終了しないようにrecoverする
 		defer func() {
@@ -206,7 +206,7 @@ func PanicErrorWrapper(hndl HandlerFunc) http.HandlerFunc {
 		LogRequest(level.DEBUG, r, true)
 		//////////////////////////////
 
-		if err := hndl(w, r); err != nil {
+		if err := f(w, r); err != nil {
 			RespondPageError(w, r, erro.Wrap(err), nil, "")
 			return
 		}
