@@ -16,6 +16,7 @@ package strset
 
 import (
 	"encoding/json"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -46,6 +47,9 @@ func (this *Set) UnmarshalJSON(data []byte) error {
 
 	s := map[string]bool{}
 	for _, elem := range a {
+		if s[elem] {
+			return erro.New("element " + elem + " overlaps")
+		}
 		s[elem] = true
 	}
 	*this = Set(s)
@@ -76,6 +80,9 @@ func (this *Set) SetBSON(raw bson.Raw) error {
 
 	s := map[string]bool{}
 	for _, elem := range a {
+		if s[elem] {
+			return erro.New("element " + elem + " overlaps")
+		}
 		s[elem] = true
 	}
 	*this = Set(s)
