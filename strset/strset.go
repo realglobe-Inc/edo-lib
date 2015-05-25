@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// JSON にしたときに要素の配列になる文字列集合型。
 package strset
 
 import (
@@ -20,7 +21,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// JSON にしたときに要素の配列になる文字列集合型。
 type Set map[string]bool
 
 func (this Set) MarshalJSON() ([]byte, error) {
