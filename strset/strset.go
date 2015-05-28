@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// JSON にしたときに要素の配列になる文字列集合型。
 package strset
 
 import (
 	"encoding/json"
+	"github.com/realglobe-Inc/go-lib/erro"
 	"gopkg.in/mgo.v2/bson"
 )
 
-// JSON にしたときに要素の配列になる文字列集合型。
 type Set map[string]bool
 
 func (this Set) MarshalJSON() ([]byte, error) {
@@ -46,6 +47,9 @@ func (this *Set) UnmarshalJSON(data []byte) error {
 
 	s := map[string]bool{}
 	for _, elem := range a {
+		if s[elem] {
+			return erro.New("element " + elem + " overlaps")
+		}
 		s[elem] = true
 	}
 	*this = Set(s)
@@ -76,6 +80,9 @@ func (this *Set) SetBSON(raw bson.Raw) error {
 
 	s := map[string]bool{}
 	for _, elem := range a {
+		if s[elem] {
+			return erro.New("element " + elem + " overlaps")
+		}
 		s[elem] = true
 	}
 	*this = Set(s)

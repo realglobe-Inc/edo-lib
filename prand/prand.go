@@ -22,42 +22,42 @@ import (
 )
 
 // 安全な乱数が使えない場合の代替。
-type Random struct {
-	interval time.Duration
+type Generator struct {
+	intrv time.Duration
 
 	lock sync.Mutex
 	exp  time.Time
 	rand *rand.Rand
 }
 
-// interval: 乱数種を切り替える間隔。
-func New(interval time.Duration) *Random {
+// intrv: 乱数種を切り替える間隔。
+func New(intrv time.Duration) *Generator {
 	now := time.Now()
-	return &Random{
-		interval: interval,
-		exp:      now.Add(interval),
-		rand:     rand.New(rand.NewSource(now.UnixNano())),
+	return &Generator{
+		intrv: intrv,
+		exp:   now.Add(intrv),
+		rand:  rand.New(rand.NewSource(now.UnixNano())),
 	}
 }
 
-func (this *Random) Bytes(length int) []byte {
-	now := time.Now()
+func (this *Generator) Bytes(n int) []byte {
 	func() {
+		now := time.Now()
 		this.lock.Lock()
 		defer this.lock.Unlock()
 		if now.After(this.exp) {
-			this.exp = now.Add(this.interval)
+			this.exp = now.Add(this.intrv)
 			this.rand = rand.New(rand.NewSource(now.UnixNano()))
 		}
 	}()
 
-	buff := make([]byte, length)
-	for i := 0; i < len(buff); i++ {
+	buff := make([]byte, n)
+	for i := 0; i < n; i++ {
 		buff[i] = byte(this.rand.Intn(256))
 	}
 	return buff
 }
 
-func (this *Random) String(length int) string {
-	return base64.URLEncoding.EncodeToString(this.Bytes((length*6 + 7) / 8))[:length]
+func (this *Generator) String(n int) string {
+	return base64.URLEncoding.EncodeToString(this.Bytes((n*6 + 7) / 8))[:n]
 }
