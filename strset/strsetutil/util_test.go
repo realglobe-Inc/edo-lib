@@ -15,31 +15,37 @@
 package strsetutil
 
 import (
+	"reflect"
 	"testing"
 )
 
-func newSet(elems ...string) map[string]bool {
-	s := map[string]bool{}
-	for _, elem := range elems {
-		s[elem] = true
+func TestNew(t *testing.T) {
+	if s1, s2 := map[string]bool{}, New(); !reflect.DeepEqual(s2, s1) {
+		t.Error(s2)
+		t.Fatal(s1)
+	} else if s1, s2 := map[string]bool{"a": true}, New("a"); !reflect.DeepEqual(s2, s1) {
+		t.Error(s2)
+		t.Fatal(s1)
+	} else if s1, s2 := map[string]bool{"a": true, "b": true}, New("a", "b"); !reflect.DeepEqual(s2, s1) {
+		t.Error(s2)
+		t.Fatal(s1)
 	}
-	return s
 }
 
 func TestContains(t *testing.T) {
-	if s1, s2 := newSet(), newSet(); !Contains(s1, s2) {
+	if s1, s2 := New(), New(); !Contains(s1, s2) {
 		t.Error(s1)
 		t.Fatal(s2)
-	} else if s1, s2 := newSet("a"), newSet(); !Contains(s1, s2) {
+	} else if s1, s2 := New("a"), New(); !Contains(s1, s2) {
 		t.Error(s1)
 		t.Fatal(s2)
-	} else if s1, s2 := newSet("a"), newSet("a"); !Contains(s1, s2) {
+	} else if s1, s2 := New("a"), New("a"); !Contains(s1, s2) {
 		t.Error(s1)
 		t.Fatal(s2)
-	} else if s1, s2 := newSet("a", "b"), newSet("a"); !Contains(s1, s2) {
+	} else if s1, s2 := New("a", "b"), New("a"); !Contains(s1, s2) {
 		t.Error(s1)
 		t.Fatal(s2)
-	} else if s1, s2 := newSet("a"), newSet("a", "b"); Contains(s1, s2) {
+	} else if s1, s2 := New("a"), New("a", "b"); Contains(s1, s2) {
 		t.Error(s1)
 		t.Fatal(s2)
 	}
