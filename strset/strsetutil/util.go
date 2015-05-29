@@ -16,6 +16,15 @@ package strsetutil
 
 import ()
 
+// 文字列集合をつくる。
+func New(strs ...string) map[string]bool {
+	s := map[string]bool{}
+	for _, str := range strs {
+		s[str] = true
+	}
+	return s
+}
+
 // s1 が s2 を含むかどうか。
 func Contains(s1, s2 map[string]bool) bool {
 	for k := range s2 {
