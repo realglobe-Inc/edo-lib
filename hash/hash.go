@@ -16,37 +16,8 @@
 package hash
 
 import (
-	"crypto"
-	"github.com/realglobe-Inc/go-lib/erro"
 	"hash"
 )
-
-// related_users に入れるハッシュ値の文字列としての長さを返す。
-func StringSize(alg string) (int, error) {
-	switch alg {
-	case "SHA256":
-		return (128 + 5) / 6, nil
-	case "SHA384":
-		return (192 + 5) / 6, nil
-	case "SHA512":
-		return (256 + 5) / 6, nil
-	default:
-		return 0, erro.New("unsupported algorithm " + alg)
-	}
-}
-
-func HashFunction(alg string) (crypto.Hash, error) {
-	switch alg {
-	case "SHA256":
-		return crypto.SHA256, nil
-	case "SHA384":
-		return crypto.SHA384, nil
-	case "SHA512":
-		return crypto.SHA512, nil
-	default:
-		return 0, erro.New("unsupported algorithm " + alg)
-	}
-}
 
 // ハッシュ値を計算して返す。
 func Hashing(h hash.Hash, data ...[]byte) []byte {
