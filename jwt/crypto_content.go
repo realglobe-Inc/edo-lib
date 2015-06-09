@@ -19,6 +19,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
+	hash "github.com/realglobe-Inc/edo-lib/hash"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"math/big"
 )
@@ -44,13 +45,9 @@ func encryptAesCbcHmacSha2(key []byte, hGen crypto.Hash, plain, authData, initVe
 	encrypter.CryptBlocks(encrypted, plain)
 
 	// 署名？
-	h := hmac.New(hGen.New, macKey)
-	h.Write(authData)
-	h.Write(initVec)
-	h.Write(encrypted)
-	h.Write(bigEndian(int64(8*len(authData)), authDataLenByteSize))
+	h := hash.Hashing(hmac.New(hGen.New, macKey), authData, initVec, encrypted, bigEndian(int64(8*len(authData)), authDataLenByteSize))
 
-	return encrypted, h.Sum(nil)[:authTagLen], nil
+	return encrypted, h[:authTagLen], nil
 }
 
 // AES_CBC_HMAC_SHA2 復号。
@@ -75,12 +72,8 @@ func decryptAesCbcHmacSha2(key []byte, hGen crypto.Hash, authData, initVec, encr
 	}
 
 	// 検証。
-	h := hmac.New(hGen.New, macKey)
-	h.Write(authData)
-	h.Write(initVec)
-	h.Write(encrypted)
-	h.Write(bigEndian(int64(8*len(authData)), authDataLenByteSize))
-	if !hmac.Equal(authTag, h.Sum(nil)[:authTagLen]) {
+	h := hash.Hashing(hmac.New(hGen.New, macKey), authData, initVec, encrypted, bigEndian(int64(8*len(authData)), authDataLenByteSize))
+	if !hmac.Equal(authTag, h[:authTagLen]) {
 		return nil, erro.New("verification error")
 	}
 
