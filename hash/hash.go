@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// ハッシュ値計算用関数。
 package hash
 
 import (
 	"crypto"
 	"github.com/realglobe-Inc/go-lib/erro"
+	"hash"
 )
 
 // related_users に入れるハッシュ値の文字列としての長さを返す。
@@ -44,4 +46,12 @@ func HashFunction(alg string) (crypto.Hash, error) {
 	default:
 		return 0, erro.New("unsupported algorithm " + alg)
 	}
+}
+
+// ハッシュ値を計算して返す。
+func Hashing(h hash.Hash, data ...[]byte) []byte {
+	for _, d := range data {
+		h.Write(d)
+	}
+	return h.Sum(nil)
 }
