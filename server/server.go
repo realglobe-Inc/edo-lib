@@ -30,15 +30,24 @@ import (
 	"time"
 )
 
+// Serve に入力するパラメータ。
 type Parameter interface {
 	// ソケットの種類。tcp か unix。
 	SocketType() string
-	// tcp のポート番号。
-	SocketPort() int
-	// unix のファイルパス。
-	SocketPath() string
 	// プロトコルの種類。http か fcgi。
 	ProtocolType() string
+}
+
+// SocketType が tcp のときに追加で必要な関数。
+type TcpParameter interface {
+	// tcp のポート番号。
+	SocketPort() int
+}
+
+// SocketType が unix のときに追加で必要な関数。
+type UnixParameter interface {
+	// unix のファイルパス。
+	SocketPath() string
 }
 
 // 冷却期間の最大値。
@@ -105,19 +114,27 @@ func Serve(param Parameter, handler http.Handler) error {
 
 			switch param.SocketType() {
 			case "unix":
-				l, err = net.Listen("unix", param.SocketPath())
+				p, ok := param.(UnixParameter)
+				if !ok {
+					return false, erro.New("SocketPath function is not implemented")
+				}
+				l, err = net.Listen("unix", p.SocketPath())
 				if err != nil {
 					return true, erro.Wrap(err)
-				} else if err := os.Chmod(param.SocketPath(), 0777); err != nil {
+				} else if err := os.Chmod(p.SocketPath(), 0777); err != nil {
 					return true, erro.Wrap(err)
 				}
-				log.Info("Wait on UNIX socket " + param.SocketPath())
+				log.Info("Wait on UNIX socket " + p.SocketPath())
 			case "tcp":
-				l, err = net.Listen("tcp", ":"+strconv.Itoa(param.SocketPort()))
+				p, ok := param.(TcpParameter)
+				if !ok {
+					return false, erro.New("SocketPort function is not implemented")
+				}
+				l, err = net.Listen("tcp", ":"+strconv.Itoa(p.SocketPort()))
 				if err != nil {
 					return true, erro.Wrap(err)
 				}
-				log.Info("Wait on TCP socket ", param.SocketPort())
+				log.Info("Wait on TCP socket ", p.SocketPort())
 			default:
 				return false, erro.New("invalid socket type " + param.SocketType())
 			}
