@@ -17,7 +17,6 @@ package server
 
 import (
 	"github.com/realglobe-Inc/go-lib/erro"
-	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"math/rand"
 	"net"
 	"net/http"
@@ -216,28 +215,4 @@ func nextSleepTime(cur, fluc, max time.Duration) time.Duration {
 		next = max
 	}
 	return next
-}
-
-type HandlerFunc func(http.ResponseWriter, *http.Request) error
-
-// パニックとエラーの処理をまとめる。
-func PanicErrorWrapper(f HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// panic時にプロセス終了しないようにrecoverする
-		defer func() {
-			if rcv := recover(); rcv != nil {
-				RespondErrorHtml(w, r, erro.New(rcv), nil, "")
-				return
-			}
-		}()
-
-		//////////////////////////////
-		LogRequest(level.DEBUG, r, true)
-		//////////////////////////////
-
-		if err := f(w, r); err != nil {
-			RespondErrorHtml(w, r, erro.Wrap(err), nil, "")
-			return
-		}
-	}
 }
