@@ -50,6 +50,11 @@ type UnixParameter interface {
 	SocketPath() string
 }
 
+// デバッグに使える関数。
+type DebugParameter interface {
+	ShutdownChannel() chan struct{}
+}
+
 // 冷却期間の最大値。
 var MaxSleepTime = time.Minute
 
@@ -72,7 +77,13 @@ func Serve(param Parameter, handler http.Handler) error {
 		return erro.New("invalid protocol type " + param.ProtocolType())
 	}
 
-	shutCh := make(chan struct{}, 10) // 多分 1 でも大丈夫だが。
+	var shutCh chan struct{}
+	if p, ok := param.(DebugParameter); ok {
+		shutCh = p.ShutdownChannel()
+	} else {
+		shutCh = make(chan struct{}, 10) // 余裕を持って。
+	}
+
 	var lis net.Listener
 	var lisLock sync.Mutex
 
