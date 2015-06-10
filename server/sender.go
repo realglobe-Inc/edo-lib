@@ -14,19 +14,19 @@
 
 package server
 
-import ()
-
-const (
-	tagStatus  = "status"
-	tagDebug   = "debug"
-	tagMessage = "message"
-
-	tagContent_type    = "Content-Type"
-	tagX_forwarded_for = "X-Forwarded-For"
+import (
+	"net/http"
+	"strings"
 )
 
-const (
-	contTypeForm = "application/x-www-form-urlencoded"
-	contTypeHtml = "text/html"
-	contTypeJson = "application/json"
-)
+// HTTP リクエストの送り元を返す。
+// X-Forwarded-For ヘッダがあれば、その情報を優先する。
+func ParseSender(r *http.Request) string {
+	if fwd := r.Header.Get(tagX_forwarded_for); fwd == "" {
+		return r.RemoteAddr
+	} else if idx := strings.Index(fwd, ","); idx < 0 {
+		return fwd
+	} else {
+		return fwd[:idx]
+	}
+}
