@@ -21,7 +21,8 @@ const (
 	tagDebug   = "debug"
 	tagMessage = "message"
 
-	tagContent_type = "Content-Type"
+	tagContent_type    = "Content-Type"
+	tagX_forwarded_for = "X-Forwarded-For"
 )
 
 const (

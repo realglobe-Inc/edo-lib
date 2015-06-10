@@ -12,17 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ハッシュ値計算用関数。
-package hash
+package server
 
 import (
-	"hash"
+	"net/http"
+	"strings"
 )
 
-// ハッシュ値を計算して返す。
-func Hashing(h hash.Hash, data ...[]byte) []byte {
-	for _, d := range data {
-		h.Write(d)
+// HTTP リクエストの送り元を返す。
+// X-Forwarded-For ヘッダがあれば、その情報を優先する。
+func ParseSender(r *http.Request) string {
+	if fwd := r.Header.Get(tagX_forwarded_for); fwd == "" {
+		return r.RemoteAddr
+	} else if idx := strings.Index(fwd, ","); idx < 0 {
+		return fwd
+	} else {
+		return fwd[:idx]
 	}
-	return h.Sum(nil)
 }

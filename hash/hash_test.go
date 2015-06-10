@@ -12,17 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ハッシュ値計算用関数。
 package hash
 
 import (
-	"hash"
+	"bytes"
+	"crypto/sha256"
+	"testing"
 )
 
-// ハッシュ値を計算して返す。
-func Hashing(h hash.Hash, data ...[]byte) []byte {
-	for _, d := range data {
-		h.Write(d)
+func TestHashing(t *testing.T) {
+	hFun := sha256.New()
+	data := [][]byte{}
+	for i := 0; i < 100; i++ {
+		hFun.Write([]byte{byte(i)})
+		data = append(data, []byte{byte(i)})
 	}
-	return h.Sum(nil)
+	h := hFun.Sum(nil)
+
+	hFun.Reset()
+	h2 := Hashing(hFun, data...)
+	if !bytes.Equal(h2, h) {
+		t.Error(h)
+		t.Fatal(h2)
+	}
 }

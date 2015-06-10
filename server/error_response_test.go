@@ -23,16 +23,15 @@ import (
 	"net/http/httptest"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 )
 
-func TestRespondApiError(t *testing.T) {
+func TestRespondErrorJson(t *testing.T) {
 	origErr := NewError(http.StatusBadRequest, "invalid request", nil)
 
 	w := httptest.NewRecorder()
-	if err := RespondApiError(w, nil, erro.Wrap(origErr), ""); err != nil {
-		t.Fatal(err)
-	}
+	RespondErrorJson(w, nil, erro.Wrap(origErr), "")
 
 	if w.Code != origErr.Status() {
 		t.Error(w.Code)
@@ -60,13 +59,11 @@ func TestRespondApiError(t *testing.T) {
 	}
 }
 
-func TestRespondPageError(t *testing.T) {
+func TestRespondErrorHtml(t *testing.T) {
 	origErr := NewError(http.StatusBadRequest, "invalid request", nil)
 
 	w := httptest.NewRecorder()
-	if err := RespondPageError(w, nil, erro.Wrap(origErr), nil, ""); err != nil {
-		t.Fatal(err)
-	}
+	RespondErrorHtml(w, nil, erro.Wrap(origErr), nil, "")
 
 	if w.Code != origErr.Status() {
 		t.Error(w.Code)
@@ -79,7 +76,7 @@ func TestRespondPageError(t *testing.T) {
 	}
 }
 
-func TestRespondPageErrorTemplate(t *testing.T) {
+func TestRespondErrorHtmlTemplate(t *testing.T) {
 	origErr := NewError(http.StatusBadRequest, "invalid request", nil)
 
 	file, err := ioutil.TempFile("", "edo-lib")
@@ -98,9 +95,7 @@ func TestRespondPageErrorTemplate(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	if err := RespondPageError(w, nil, erro.Wrap(origErr), tmpl, ""); err != nil {
-		t.Fatal(err)
-	}
+	RespondErrorHtml(w, nil, erro.Wrap(origErr), tmpl, "")
 
 	if w.Code != origErr.Status() {
 		t.Error(w.Code)
@@ -116,6 +111,46 @@ func TestRespondPageErrorTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	} else if string(buff) != strconv.Itoa(origErr.Status()) {
+		t.Error(string(buff))
+		t.Fatal(origErr.Status())
+	}
+}
+
+func TestRespondErrorHtmlTemplateFunction(t *testing.T) {
+	origErr := NewError(http.StatusBadRequest, "invalid request", erro.New("mazui"))
+
+	file, err := ioutil.TempFile("", "edo-lib")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(file.Name())
+	if _, err := file.Write([]byte("{{.Status}} {{.StatusText}} {{.Error}} {{.Debug}}")); err != nil {
+		t.Fatal(err)
+	}
+	file.Close()
+
+	tmpl, err := template.ParseFiles(file.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	RespondErrorHtml(w, nil, erro.Wrap(origErr), tmpl, "")
+
+	if w.Code != origErr.Status() {
+		t.Error(w.Code)
+		t.Fatal(origErr.Status())
+	} else if w.HeaderMap.Get("Content-Type") != "text/html" {
+		t.Error(w.HeaderMap.Get("Content-Type"))
+		t.Fatal("text/html")
+	} else if w.Body == nil {
+		t.Fatal("no body")
+	}
+
+	buff, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Fatal(err)
+	} else if parts := strings.Fields(string(buff)); parts[0] != strconv.Itoa(origErr.Status()) {
 		t.Error(string(buff))
 		t.Fatal(origErr.Status())
 	}

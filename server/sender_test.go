@@ -12,17 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ハッシュ値計算用関数。
-package hash
+package server
 
 import (
-	"hash"
+	"net/http"
+	"testing"
 )
 
-// ハッシュ値を計算して返す。
-func Hashing(h hash.Hash, data ...[]byte) []byte {
-	for _, d := range data {
-		h.Write(d)
+func TestParseSender(t *testing.T) {
+	r, err := http.NewRequest("GET", "https://server.example.org/", nil)
+	if err != nil {
+		t.Fatal(err)
 	}
-	return h.Sum(nil)
+
+	r.RemoteAddr = "192.168.0.18:55555"
+	if src := ParseSender(r); src != "192.168.0.18:55555" {
+		t.Error(src)
+		t.Fatal("192.168.0.18:55555")
+	}
+
+	r.Header.Set("X-Forwarded-For", "203.0.113.34, 192.168.0.12")
+	if src := ParseSender(r); src != "203.0.113.34" {
+		t.Error(src)
+		t.Fatal("203.0.113.34")
+	}
 }

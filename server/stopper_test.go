@@ -12,17 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ハッシュ値計算用関数。
-package hash
+package server
 
 import (
-	"hash"
+	"sync/atomic"
+	"testing"
+	"time"
 )
 
-// ハッシュ値を計算して返す。
-func Hashing(h hash.Hash, data ...[]byte) []byte {
-	for _, d := range data {
-		h.Write(d)
+func TestStopper(t *testing.T) {
+	loop := 100
+	proc := 100
+	for i := 0; i < loop; i++ {
+		var n int64 = 0
+
+		s := NewStopper()
+		for j := 0; j < proc; j++ {
+			s.Stop()
+			go func() {
+				time.Sleep(time.Millisecond)
+				atomic.AddInt64(&n, 1)
+				s.Unstop()
+			}()
+		}
+
+		s.Lock()
+		defer s.Unlock()
+		for s.Stopped() {
+			s.Wait()
+		}
+
+		if n != int64(proc) {
+			t.Error(n)
+			t.Fatal(proc)
+		}
 	}
-	return h.Sum(nil)
 }

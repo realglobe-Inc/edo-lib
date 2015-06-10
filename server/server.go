@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// サーバー関係。
+// HTTP サーバー関係。
 package server
 
 import (
 	"github.com/realglobe-Inc/go-lib/erro"
-	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"math/rand"
 	"net"
 	"net/http"
@@ -30,15 +29,29 @@ import (
 	"time"
 )
 
+// Serve に入力するパラメータ。
 type Parameter interface {
 	// ソケットの種類。tcp か unix。
 	SocketType() string
-	// tcp のポート番号。
-	SocketPort() int
-	// unix のファイルパス。
-	SocketPath() string
 	// プロトコルの種類。http か fcgi。
 	ProtocolType() string
+}
+
+// SocketType が tcp のときに追加で必要な関数。
+type TcpParameter interface {
+	// tcp のポート番号。
+	SocketPort() int
+}
+
+// SocketType が unix のときに追加で必要な関数。
+type UnixParameter interface {
+	// unix のファイルパス。
+	SocketPath() string
+}
+
+// デバッグに使える関数。
+type DebugParameter interface {
+	ShutdownChannel() chan struct{}
 }
 
 // 冷却期間の最大値。
@@ -63,7 +76,13 @@ func Serve(param Parameter, handler http.Handler) error {
 		return erro.New("invalid protocol type " + param.ProtocolType())
 	}
 
-	shutCh := make(chan struct{}, 10) // 多分 1 でも大丈夫だが。
+	var shutCh chan struct{}
+	if p, ok := param.(DebugParameter); ok {
+		shutCh = p.ShutdownChannel()
+	} else {
+		shutCh = make(chan struct{}, 10) // 余裕を持って。
+	}
+
 	var lis net.Listener
 	var lisLock sync.Mutex
 
@@ -105,19 +124,27 @@ func Serve(param Parameter, handler http.Handler) error {
 
 			switch param.SocketType() {
 			case "unix":
-				l, err = net.Listen("unix", param.SocketPath())
+				p, ok := param.(UnixParameter)
+				if !ok {
+					return false, erro.New("SocketPath function is not implemented")
+				}
+				l, err = net.Listen("unix", p.SocketPath())
 				if err != nil {
 					return true, erro.Wrap(err)
-				} else if err := os.Chmod(param.SocketPath(), 0777); err != nil {
+				} else if err := os.Chmod(p.SocketPath(), 0777); err != nil {
 					return true, erro.Wrap(err)
 				}
-				log.Info("Wait on UNIX socket " + param.SocketPath())
+				log.Info("Wait on UNIX socket " + p.SocketPath())
 			case "tcp":
-				l, err = net.Listen("tcp", ":"+strconv.Itoa(param.SocketPort()))
+				p, ok := param.(TcpParameter)
+				if !ok {
+					return false, erro.New("SocketPort function is not implemented")
+				}
+				l, err = net.Listen("tcp", ":"+strconv.Itoa(p.SocketPort()))
 				if err != nil {
 					return true, erro.Wrap(err)
 				}
-				log.Info("Wait on TCP socket ", param.SocketPort())
+				log.Info("Wait on TCP socket ", p.SocketPort())
 			default:
 				return false, erro.New("invalid socket type " + param.SocketType())
 			}
@@ -188,28 +215,4 @@ func nextSleepTime(cur, fluc, max time.Duration) time.Duration {
 		next = max
 	}
 	return next
-}
-
-type HandlerFunc func(http.ResponseWriter, *http.Request) error
-
-// パニックとエラーの処理をまとめる。
-func PanicErrorWrapper(f HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// panic時にプロセス終了しないようにrecoverする
-		defer func() {
-			if rcv := recover(); rcv != nil {
-				RespondPageError(w, r, erro.New(rcv), nil, "")
-				return
-			}
-		}()
-
-		//////////////////////////////
-		LogRequest(level.DEBUG, r, true)
-		//////////////////////////////
-
-		if err := f(w, r); err != nil {
-			RespondPageError(w, r, erro.Wrap(err), nil, "")
-			return
-		}
-	}
 }
