@@ -26,11 +26,11 @@ import (
 	"testing"
 )
 
-func TestRespondApiError(t *testing.T) {
+func TestRespondErrorJson(t *testing.T) {
 	origErr := NewError(http.StatusBadRequest, "invalid request", nil)
 
 	w := httptest.NewRecorder()
-	if err := RespondApiError(w, nil, erro.Wrap(origErr), ""); err != nil {
+	if err := RespondErrorJson(w, nil, erro.Wrap(origErr), ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,11 +60,11 @@ func TestRespondApiError(t *testing.T) {
 	}
 }
 
-func TestRespondPageError(t *testing.T) {
+func TestRespondErrorHtml(t *testing.T) {
 	origErr := NewError(http.StatusBadRequest, "invalid request", nil)
 
 	w := httptest.NewRecorder()
-	if err := RespondPageError(w, nil, erro.Wrap(origErr), nil, ""); err != nil {
+	if err := RespondErrorHtml(w, nil, erro.Wrap(origErr), nil, ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -79,7 +79,7 @@ func TestRespondPageError(t *testing.T) {
 	}
 }
 
-func TestRespondPageErrorTemplate(t *testing.T) {
+func TestRespondErrorHtmlTemplate(t *testing.T) {
 	origErr := NewError(http.StatusBadRequest, "invalid request", nil)
 
 	file, err := ioutil.TempFile("", "edo-lib")
@@ -98,7 +98,7 @@ func TestRespondPageErrorTemplate(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	if err := RespondPageError(w, nil, erro.Wrap(origErr), tmpl, ""); err != nil {
+	if err := RespondErrorHtml(w, nil, erro.Wrap(origErr), tmpl, ""); err != nil {
 		t.Fatal(err)
 	}
 

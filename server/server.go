@@ -198,7 +198,7 @@ func PanicErrorWrapper(f HandlerFunc) http.HandlerFunc {
 		// panic時にプロセス終了しないようにrecoverする
 		defer func() {
 			if rcv := recover(); rcv != nil {
-				RespondPageError(w, r, erro.New(rcv), nil, "")
+				RespondErrorHtml(w, r, erro.New(rcv), nil, "")
 				return
 			}
 		}()
@@ -208,7 +208,7 @@ func PanicErrorWrapper(f HandlerFunc) http.HandlerFunc {
 		//////////////////////////////
 
 		if err := f(w, r); err != nil {
-			RespondPageError(w, r, erro.Wrap(err), nil, "")
+			RespondErrorHtml(w, r, erro.Wrap(err), nil, "")
 			return
 		}
 	}

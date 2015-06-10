@@ -27,7 +27,7 @@ import (
 )
 
 // JSON でエラーを返す。
-func RespondApiError(w http.ResponseWriter, r *http.Request, origErr error, logPrefix string) error {
+func RespondErrorJson(w http.ResponseWriter, r *http.Request, origErr error, logPrefix string) error {
 	e := ErrorFrom(origErr)
 	log.Err(logPrefix, e.Status(), " "+http.StatusText(e.Status())+": "+e.Message())
 	log.Debug(logPrefix, origErr)
@@ -61,7 +61,7 @@ func RespondApiError(w http.ResponseWriter, r *http.Request, origErr error, logP
 // {{.StatusText}}: HTTP ステータスコード。Not Found とか
 // {{.Error}}: エラー内容
 // {{.Debug}}: エラー詳細
-func RespondPageError(w http.ResponseWriter, r *http.Request, origErr error, errTmpl *template.Template, logPrefix string) error {
+func RespondErrorHtml(w http.ResponseWriter, r *http.Request, origErr error, errTmpl *template.Template, logPrefix string) error {
 	e := ErrorFrom(origErr)
 	log.Err(logPrefix, e.Status(), " "+http.StatusText(e.Status())+": "+e.Message())
 	log.Debug(logPrefix, origErr)
