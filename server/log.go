@@ -15,6 +15,7 @@
 package server
 
 import (
+	"github.com/realglobe-Inc/go-lib/erro"
 	"github.com/realglobe-Inc/go-lib/rglog"
 	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"net/http"
@@ -25,14 +26,24 @@ var log = rglog.Logger("github.com/realglobe-Inc/edo-lib/http")
 
 func LogRequest(lv level.Level, r *http.Request, useBody bool, prefs ...interface{}) {
 	if log.IsLoggable(lv) {
-		buff, _ := httputil.DumpRequest(r, useBody)
+		buff, err := httputil.DumpRequest(r, useBody)
+		if err != nil {
+			log.Warn(append(prefs, erro.Unwrap(err)))
+			log.Debug(append(prefs, erro.Wrap(err)))
+			return
+		}
 		log.Log(lv, append(prefs, "Request: ", string(buff))...)
 	}
 }
 
 func LogResponse(lv level.Level, r *http.Response, useBody bool, prefs ...interface{}) {
 	if log.IsLoggable(lv) {
-		buff, _ := httputil.DumpResponse(r, useBody)
+		buff, err := httputil.DumpResponse(r, useBody)
+		if err != nil {
+			log.Warn(append(prefs, erro.Unwrap(err)))
+			log.Debug(append(prefs, erro.Wrap(err)))
+			return
+		}
 		log.Log(lv, append(prefs, "Response: ", string(buff))...)
 	}
 }
