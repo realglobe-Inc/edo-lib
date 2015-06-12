@@ -21,6 +21,9 @@ import (
 	"net/http"
 )
 
+// デバッグログにリクエストボディを記録するかどうか。
+var Debug = false
+
 // WrapPage や WrapApi に渡す処理。
 type HandlerFunc func(http.ResponseWriter, *http.Request) error
 
@@ -41,7 +44,7 @@ func WrapPage(stopper *Stopper, f HandlerFunc, errTmpl *template.Template) http.
 		}()
 
 		//////////////////////////////
-		LogRequest(level.DEBUG, r, true)
+		LogRequest(level.DEBUG, r, Debug)
 		//////////////////////////////
 
 		if err := f(w, r); err != nil {
@@ -68,7 +71,7 @@ func WrapApi(stopper *Stopper, f HandlerFunc) http.HandlerFunc {
 		}()
 
 		//////////////////////////////
-		LogRequest(level.DEBUG, r, true)
+		LogRequest(level.DEBUG, r, Debug)
 		//////////////////////////////
 
 		if err := f(w, r); err != nil {
