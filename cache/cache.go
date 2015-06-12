@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// キャッシュ。
 package cache
 
 import (
@@ -19,8 +20,6 @@ import (
 )
 
 // キャッシュ。
-// スレッドセーフではない。
-
 type Cache interface {
 	// 入れる。
 	Put(key, val, prio interface{})
@@ -35,6 +34,7 @@ type Cache interface {
 	CleanLower(prioThres interface{})
 }
 
+// スレッドセーフではないキャッシュを返す。
 // less は非 nil の優先度 2 つを比べる関数。優先度 nil に対する挙動は指定できない。
 func New(less func(interface{}, interface{}) bool) Cache {
 	ca := &cache{less, []*cacheElement{}, map[interface{}]int{}}

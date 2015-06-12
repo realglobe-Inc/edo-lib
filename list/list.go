@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// JSON にしたときに配列になる list.List のラッパー。
 package list
 
 import (
@@ -19,7 +20,6 @@ import (
 	"encoding/json"
 )
 
-// JSON にしたときに配列になる list。
 type List list.List
 
 func (this *List) MarshalJSON() ([]byte, error) {

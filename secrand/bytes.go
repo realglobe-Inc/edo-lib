@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// 安全なランダム文字列とバイト列の生成器。
 package secrand
 
 import (

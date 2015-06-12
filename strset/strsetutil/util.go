@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// 文字列集合関係。
 package strsetutil
 
 import ()

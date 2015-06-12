@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// 安全な乱数が使えない場合の代替。
 package prand
 
 import (
@@ -21,7 +22,6 @@ import (
 	"time"
 )
 
-// 安全な乱数が使えない場合の代替。
 type Generator struct {
 	intrv time.Duration
 

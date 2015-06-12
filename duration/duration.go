@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// JSON にしたときに 72h3m0.5s みたいな文字列になる time.Duration のラッパー。
 package duration
 
 import (
@@ -20,7 +21,6 @@ import (
 	"time"
 )
 
-// JSON にしたときに 72h3m0.5s みたいな文字列になる time.Duration。
 type Duration time.Duration
 
 func (this Duration) MarshalJSON() ([]byte, error) {
