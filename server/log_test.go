@@ -32,7 +32,7 @@ func TestLogRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	LogRequest(level.ALL, req, true, "test")
+	LogRequest(level.ALL, req, true, "test: ")
 }
 
 func TestLogResponse(t *testing.T) {
@@ -52,5 +52,5 @@ a
 		t.Fatal(err)
 	}
 
-	LogResponse(level.ALL, resp, true, "test")
+	LogResponse(level.ALL, resp, true, "test: ")
 }
