@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// JSON にしたときに要素の配列になる文字列集合型。
+// JSON にしたときに配列になる文字列集合のラッパー。
 package strset
 
 import (

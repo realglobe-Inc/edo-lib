@@ -12,31 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// テスト用。
-package test
+package password
 
-import (
-	"github.com/realglobe-Inc/go-lib/erro"
-	"net"
-	"strconv"
+const (
+	tagPbkdf2 = "pbkdf2"
 )
-
-func FreePort() (port int, err error) {
-	lis, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, erro.Wrap(err)
-	}
-	lis.Close()
-
-	_, portStr, err := net.SplitHostPort(lis.Addr().String())
-	if err != nil {
-		return 0, erro.Wrap(err)
-	}
-
-	port, err = strconv.Atoi(portStr)
-	if err != nil {
-		return 0, erro.Wrap(err)
-	}
-
-	return port, nil
-}

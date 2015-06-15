@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// 末尾に = を足さない Base64URL エンコード。
 package base64url
 
 import (
 	"encoding/base64"
 	"github.com/realglobe-Inc/go-lib/erro"
 )
-
-// 末尾に = を足さない Base64URL エンコード。
 
 func Decode(src []byte) ([]byte, error) {
 	rem := len(src) % 4

@@ -12,31 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// テスト用。
-package test
+package password
 
 import (
-	"github.com/realglobe-Inc/go-lib/erro"
-	"net"
-	"strconv"
+	_ "crypto/sha256"
 )
 
-func FreePort() (port int, err error) {
-	lis, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, erro.Wrap(err)
-	}
-	lis.Close()
+const (
+	test_passwd = "ltFq9kclPgMK4ilaOF7fNlx2TE9OYFiyrX4x9gwCc9n"
+)
 
-	_, portStr, err := net.SplitHostPort(lis.Addr().String())
-	if err != nil {
-		return 0, erro.Wrap(err)
+var (
+	test_salt = []byte{
+		0, 1, 2, 3, 4, 5, 6, 7,
+		8, 9, 10, 11, 12, 13, 14, 15,
+		16, 17, 18, 19,
 	}
-
-	port, err = strconv.Atoi(portStr)
-	if err != nil {
-		return 0, erro.Wrap(err)
+	// "pbkdf2:sha256:1000" test_salt, test_passwd
+	// base64url で MQZoSIrxyBwdSFFXW3geZpjBAJi0qPrFR1h84DDPD48。
+	test_pbkdf2Hash = []byte{
+		49, 6, 104, 72, 138, 241, 200, 28,
+		29, 72, 81, 87, 91, 120, 30, 102,
+		152, 193, 0, 152, 180, 168, 250, 197,
+		71, 88, 124, 224, 48, 207, 15, 143,
 	}
-
-	return port, nil
-}
+)

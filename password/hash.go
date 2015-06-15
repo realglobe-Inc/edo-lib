@@ -12,31 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// テスト用。
-package test
+package password
 
 import (
+	"crypto"
 	"github.com/realglobe-Inc/go-lib/erro"
-	"net"
-	"strconv"
 )
 
-func FreePort() (port int, err error) {
-	lis, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, erro.Wrap(err)
+func hashFunction(alg string) (crypto.Hash, error) {
+	switch alg {
+	case "sha256":
+		return crypto.SHA256, nil
+	case "sha384":
+		return crypto.SHA384, nil
+	case "sha512":
+		return crypto.SHA512, nil
+	default:
+		return 0, erro.New("unsupported algorithm " + alg)
 	}
-	lis.Close()
-
-	_, portStr, err := net.SplitHostPort(lis.Addr().String())
-	if err != nil {
-		return 0, erro.Wrap(err)
-	}
-
-	port, err = strconv.Atoi(portStr)
-	if err != nil {
-		return 0, erro.Wrap(err)
-	}
-
-	return port, nil
 }
