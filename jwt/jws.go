@@ -28,7 +28,7 @@ import (
 	"math/big"
 )
 
-func HashFunction(alg string) (crypto.Hash, error) {
+func HashGenerator(alg string) (crypto.Hash, error) {
 	switch alg {
 	case "none":
 		return 0, nil
