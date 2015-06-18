@@ -61,8 +61,8 @@ func hsVerify(key jwk.Key, hGen crypto.Hash, sig []byte, data []byte) error {
 	if key == nil {
 		return erro.New("no key")
 	}
-	h := hash.Hashing(hmac.New(hGen.New, key.Common()), data)
-	if !hmac.Equal(h, sig) {
+	hVal := hash.Hashing(hmac.New(hGen.New, key.Common()), data)
+	if !hmac.Equal(hVal, sig) {
 		return erro.New("verification failed")
 	}
 	return nil

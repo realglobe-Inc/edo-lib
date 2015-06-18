@@ -45,9 +45,9 @@ func encryptAesCbcHmacSha2(key []byte, hGen crypto.Hash, plain, authData, initVe
 	encrypter.CryptBlocks(encrypted, plain)
 
 	// 署名？
-	h := hash.Hashing(hmac.New(hGen.New, macKey), authData, initVec, encrypted, bigEndian(int64(8*len(authData)), authDataLenByteSize))
+	hVal := hash.Hashing(hmac.New(hGen.New, macKey), authData, initVec, encrypted, bigEndian(int64(8*len(authData)), authDataLenByteSize))
 
-	return encrypted, h[:authTagLen], nil
+	return encrypted, hVal[:authTagLen], nil
 }
 
 // AES_CBC_HMAC_SHA2 復号。
@@ -72,8 +72,8 @@ func decryptAesCbcHmacSha2(key []byte, hGen crypto.Hash, authData, initVec, encr
 	}
 
 	// 検証。
-	h := hash.Hashing(hmac.New(hGen.New, macKey), authData, initVec, encrypted, bigEndian(int64(8*len(authData)), authDataLenByteSize))
-	if !hmac.Equal(authTag, h[:authTagLen]) {
+	hVal := hash.Hashing(hmac.New(hGen.New, macKey), authData, initVec, encrypted, bigEndian(int64(8*len(authData)), authDataLenByteSize))
+	if !hmac.Equal(authTag, hVal[:authTagLen]) {
 		return nil, erro.New("verification error")
 	}
 

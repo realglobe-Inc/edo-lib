@@ -66,12 +66,12 @@ func TestHashing(t *testing.T) {
 		hFun.Write([]byte{byte(i)})
 		data = append(data, []byte{byte(i)})
 	}
-	h := hFun.Sum(nil)
+	hVal := hFun.Sum(nil)
 
 	hFun.Reset()
-	h2 := Hashing(hFun, data...)
-	if !bytes.Equal(h2, h) {
-		t.Error(h)
-		t.Fatal(h2)
+	hVal2 := Hashing(hFun, data...)
+	if !bytes.Equal(hVal2, hVal) {
+		t.Error(hVal)
+		t.Fatal(hVal2)
 	}
 }
