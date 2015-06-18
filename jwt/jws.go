@@ -30,13 +30,13 @@ import (
 
 func HashGenerator(alg string) crypto.Hash {
 	switch alg {
-	case algNone:
+	case tagNone:
 		return 0
-	case algHs256, algRs256, algEs256, algPs256:
+	case tagHs256, tagRs256, tagEs256, tagPs256:
 		return crypto.SHA256
-	case algHs384, algRs384, algEs384, algPs384:
+	case tagHs384, tagRs384, tagEs384, tagPs384:
 		return crypto.SHA384
-	case algHs512, algRs512, algEs512, algPs512:
+	case tagHs512, tagRs512, tagEs512, tagPs512:
 		return crypto.SHA512
 	default:
 		return 0
