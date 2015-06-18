@@ -125,32 +125,32 @@ func (this *Jwt) Sign(keys []jwk.Key) error {
 
 	var sig []byte
 	switch alg {
-	case algNone:
+	case tagNone:
 		sig = []byte{}
-	case algHs256:
-		sig, err = hsSign(findKey(keys, kid, ktyOct, useSig, opSign, alg), crypto.SHA256, headBodyPart)
-	case algHs384:
-		sig, err = hsSign(findKey(keys, kid, ktyOct, useSig, opSign, alg), crypto.SHA384, headBodyPart)
-	case algHs512:
-		sig, err = hsSign(findKey(keys, kid, ktyOct, useSig, opSign, alg), crypto.SHA512, headBodyPart)
-	case algRs256:
-		sig, err = rsSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA256, headBodyPart)
-	case algRs384:
-		sig, err = rsSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA384, headBodyPart)
-	case algRs512:
-		sig, err = rsSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA512, headBodyPart)
-	case algEs256:
-		sig, err = esSign(findKey(keys, kid, ktyEc, useSig, opSign, alg), crypto.SHA256, headBodyPart)
-	case algEs384:
-		sig, err = esSign(findKey(keys, kid, ktyEc, useSig, opSign, alg), crypto.SHA384, headBodyPart)
-	case algEs512:
-		sig, err = esSign(findKey(keys, kid, ktyEc, useSig, opSign, alg), crypto.SHA512, headBodyPart)
-	case algPs256:
-		sig, err = psSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA256, headBodyPart)
-	case algPs384:
-		sig, err = psSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA384, headBodyPart)
-	case algPs512:
-		sig, err = psSign(findKey(keys, kid, ktyRsa, useSig, opSign, alg), crypto.SHA512, headBodyPart)
+	case tagHs256:
+		sig, err = hsSign(findKey(keys, kid, tagOct, tagSig, tagSign, alg), crypto.SHA256, headBodyPart)
+	case tagHs384:
+		sig, err = hsSign(findKey(keys, kid, tagOct, tagSig, tagSign, alg), crypto.SHA384, headBodyPart)
+	case tagHs512:
+		sig, err = hsSign(findKey(keys, kid, tagOct, tagSig, tagSign, alg), crypto.SHA512, headBodyPart)
+	case tagRs256:
+		sig, err = rsSign(findKey(keys, kid, tagRsa, tagSig, tagSign, alg), crypto.SHA256, headBodyPart)
+	case tagRs384:
+		sig, err = rsSign(findKey(keys, kid, tagRsa, tagSig, tagSign, alg), crypto.SHA384, headBodyPart)
+	case tagRs512:
+		sig, err = rsSign(findKey(keys, kid, tagRsa, tagSig, tagSign, alg), crypto.SHA512, headBodyPart)
+	case tagEs256:
+		sig, err = esSign(findKey(keys, kid, tagEc, tagSig, tagSign, alg), crypto.SHA256, headBodyPart)
+	case tagEs384:
+		sig, err = esSign(findKey(keys, kid, tagEc, tagSig, tagSign, alg), crypto.SHA384, headBodyPart)
+	case tagEs512:
+		sig, err = esSign(findKey(keys, kid, tagEc, tagSig, tagSign, alg), crypto.SHA512, headBodyPart)
+	case tagPs256:
+		sig, err = psSign(findKey(keys, kid, tagRsa, tagSig, tagSign, alg), crypto.SHA256, headBodyPart)
+	case tagPs384:
+		sig, err = psSign(findKey(keys, kid, tagRsa, tagSig, tagSign, alg), crypto.SHA384, headBodyPart)
+	case tagPs512:
+		sig, err = psSign(findKey(keys, kid, tagRsa, tagSig, tagSign, alg), crypto.SHA512, headBodyPart)
 	default:
 		return erro.New("unsupported sign algorithm " + alg)
 	}
@@ -178,7 +178,7 @@ func (this *Jwt) Encrypt(keys []jwk.Key) error {
 	enc, _ := this.Header(tagEnc).(string)
 
 	var contKey []byte
-	if alg != algDir {
+	if alg != tagDir {
 		contKey, err = secrand.Bytes(keySizes[enc])
 		if err != nil {
 			return erro.Wrap(err)
@@ -191,20 +191,20 @@ func (this *Jwt) Encrypt(keys []jwk.Key) error {
 
 	var encedKey []byte
 	switch alg {
-	case algRsa1_5:
-		encedKey, err = rsa15Encrypt(findKey(keys, kid, ktyRsa, useEnc, opWrapKey, alg), contKey)
-	case algRsa_oaep:
-		encedKey, err = rsaOaepEncrypt(findKey(keys, kid, ktyRsa, useEnc, opWrapKey, alg), crypto.SHA1, contKey)
-	case algRsa_oaep_256:
-		encedKey, err = rsaOaepEncrypt(findKey(keys, kid, ktyRsa, useEnc, opWrapKey, alg), crypto.SHA256, contKey)
-	case algA128Kw:
-		encedKey, err = aKwEncrypt(findKey(keys, kid, ktyOct, useEnc, opWrapKey, alg), 16, contKey)
-	case algA192Kw:
-		encedKey, err = aKwEncrypt(findKey(keys, kid, ktyOct, useEnc, opWrapKey, alg), 24, contKey)
-	case algA256Kw:
-		encedKey, err = aKwEncrypt(findKey(keys, kid, ktyOct, useEnc, opWrapKey, alg), 32, contKey)
-	case algDir:
-		key := findKey(keys, kid, ktyOct, useEnc, opEncrypt)
+	case tagRsa1_5:
+		encedKey, err = rsa15Encrypt(findKey(keys, kid, tagRsa, tagEnc, tagWrapKey, alg), contKey)
+	case tagRsa_oaep:
+		encedKey, err = rsaOaepEncrypt(findKey(keys, kid, tagRsa, tagEnc, tagWrapKey, alg), crypto.SHA1, contKey)
+	case tagRsa_oaep_256:
+		encedKey, err = rsaOaepEncrypt(findKey(keys, kid, tagRsa, tagEnc, tagWrapKey, alg), crypto.SHA256, contKey)
+	case tagA128Kw:
+		encedKey, err = aKwEncrypt(findKey(keys, kid, tagOct, tagEnc, tagWrapKey, alg), 16, contKey)
+	case tagA192Kw:
+		encedKey, err = aKwEncrypt(findKey(keys, kid, tagOct, tagEnc, tagWrapKey, alg), 24, contKey)
+	case tagA256Kw:
+		encedKey, err = aKwEncrypt(findKey(keys, kid, tagOct, tagEnc, tagWrapKey, alg), 32, contKey)
+	case tagDir:
+		key := findKey(keys, kid, tagOct, tagEnc, tagEncrypt)
 		if key == nil {
 			return erro.New("no key")
 		} else if len(key.Common()) != keySizes[enc] {
@@ -212,27 +212,27 @@ func (this *Jwt) Encrypt(keys []jwk.Key) error {
 		}
 		contKey = key.Common()
 		encedKey = []byte{}
-	case algEcdh_es:
-		encedKey, err = ecdhEsEncrypt(findKey(keys, kid, ktyEc, useEnc, opWrapKey, alg), contKey)
-	case algEcdh_es_a128Kw:
-		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, ktyEc, useEnc, opWrapKey, alg), 16, contKey)
-	case algEcdh_es_a192Kw:
-		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, ktyEc, useEnc, opWrapKey, alg), 24, contKey)
-	case algEcdh_es_a256Kw:
-		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, ktyEc, useEnc, opWrapKey, alg), 32, contKey)
-	case algA128Gcmkw, algA192Gcmkw, algA256Gcmkw:
+	case tagEcdh_es:
+		encedKey, err = ecdhEsEncrypt(findKey(keys, kid, tagEc, tagEnc, tagWrapKey, alg), contKey)
+	case tagEcdh_es_a128Kw:
+		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, tagEc, tagEnc, tagWrapKey, alg), 16, contKey)
+	case tagEcdh_es_a192Kw:
+		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, tagEc, tagEnc, tagWrapKey, alg), 24, contKey)
+	case tagEcdh_es_a256Kw:
+		encedKey, err = ecdhEsAKwEncrypt(findKey(keys, kid, tagEc, tagEnc, tagWrapKey, alg), 32, contKey)
+	case tagA128Gcmkw, tagA192Gcmkw, tagA256Gcmkw:
 		var initVec, authTag []byte
-		initVec, encedKey, authTag, err = aGcmKwEncrypt(findKey(keys, kid, ktyOct, useEnc, opWrapKey, alg), keySizes[alg], contKey)
+		initVec, encedKey, authTag, err = aGcmKwEncrypt(findKey(keys, kid, tagOct, tagEnc, tagWrapKey, alg), keySizes[alg], contKey)
 		if err == nil {
 			this.SetHeader("iv", base64url.EncodeToString(initVec))  // 副作用注意。
 			this.SetHeader("tag", base64url.EncodeToString(authTag)) // 副作用注意。
 		}
-	case algPbes2_hs256_a128Kw:
-		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", useEnc, opWrapKey, alg), crypto.SHA256, 16, contKey)
-	case algPbes2_hs384_a192Kw:
-		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", useEnc, opWrapKey, alg), crypto.SHA384, 24, contKey)
-	case algPbes2_hs512_a256Kw:
-		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", useEnc, opWrapKey, alg), crypto.SHA512, 32, contKey)
+	case tagPbes2_hs256_a128Kw:
+		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", tagEnc, tagWrapKey, alg), crypto.SHA256, 16, contKey)
+	case tagPbes2_hs384_a192Kw:
+		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", tagEnc, tagWrapKey, alg), crypto.SHA384, 24, contKey)
+	case tagPbes2_hs512_a256Kw:
+		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", tagEnc, tagWrapKey, alg), crypto.SHA512, 32, contKey)
 	default:
 		return erro.New("unsupported key wrapping " + alg)
 	}
@@ -243,7 +243,7 @@ func (this *Jwt) Encrypt(keys []jwk.Key) error {
 	switch zip {
 	case "":
 		plain = rawBody
-	case zipDef:
+	case tagDef:
 		plain, err = defCompress(rawBody)
 	default:
 		return erro.New("Unsupported compression " + zip)
@@ -260,17 +260,17 @@ func (this *Jwt) Encrypt(keys []jwk.Key) error {
 
 	var initVec, enced, authTag []byte
 	switch enc {
-	case encA128Cbc_Hs256:
+	case tagA128Cbc_Hs256:
 		initVec, enced, authTag, err = aCbcHsEncrypt(contKey, 32, crypto.SHA256, plain, headPart)
-	case encA192Cbc_Hs384:
+	case tagA192Cbc_Hs384:
 		initVec, enced, authTag, err = aCbcHsEncrypt(contKey, 48, crypto.SHA384, plain, headPart)
-	case encA256Cbc_Hs512:
+	case tagA256Cbc_Hs512:
 		initVec, enced, authTag, err = aCbcHsEncrypt(contKey, 64, crypto.SHA512, plain, headPart)
-	case encA128Gcm:
+	case tagA128Gcm:
 		initVec, enced, authTag, err = aGcmEncrypt(contKey, 16, plain, headPart)
-	case encA192Gcm:
+	case tagA192Gcm:
 		initVec, enced, authTag, err = aGcmEncrypt(contKey, 24, plain, headPart)
-	case encA256Gcm:
+	case tagA256Gcm:
 		initVec, enced, authTag, err = aGcmEncrypt(contKey, 32, plain, headPart)
 	default:
 		return erro.New("unsupported encryption" + enc)
@@ -445,32 +445,32 @@ func (this *Jwt) Verify(keys []jwk.Key) (err error) {
 	alg, _ := this.Header(tagAlg).(string)
 
 	switch alg {
-	case algNone:
+	case tagNone:
 		err = noneVerify(this.sig)
-	case algHs256:
-		err = hsVerify(findKey(keys, kid, ktyOct, useSig, opVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
-	case algHs384:
-		err = hsVerify(findKey(keys, kid, ktyOct, useSig, opVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
-	case algHs512:
-		err = hsVerify(findKey(keys, kid, ktyOct, useSig, opVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
-	case algRs256:
-		err = rsVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
-	case algRs384:
-		err = rsVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
-	case algRs512:
-		err = rsVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
-	case algEs256:
-		err = esVerify(findKey(keys, kid, ktyEc, useSig, opVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
-	case algEs384:
-		err = esVerify(findKey(keys, kid, ktyEc, useSig, opVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
-	case algEs512:
-		err = esVerify(findKey(keys, kid, ktyEc, useSig, opVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
-	case algPs256:
-		err = psVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
-	case algPs384:
-		err = psVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
-	case algPs512:
-		err = psVerify(findKey(keys, kid, ktyRsa, useSig, opVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
+	case tagHs256:
+		err = hsVerify(findKey(keys, kid, tagOct, tagSig, tagVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
+	case tagHs384:
+		err = hsVerify(findKey(keys, kid, tagOct, tagSig, tagVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
+	case tagHs512:
+		err = hsVerify(findKey(keys, kid, tagOct, tagSig, tagVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
+	case tagRs256:
+		err = rsVerify(findKey(keys, kid, tagRsa, tagSig, tagVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
+	case tagRs384:
+		err = rsVerify(findKey(keys, kid, tagRsa, tagSig, tagVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
+	case tagRs512:
+		err = rsVerify(findKey(keys, kid, tagRsa, tagSig, tagVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
+	case tagEs256:
+		err = esVerify(findKey(keys, kid, tagEc, tagSig, tagVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
+	case tagEs384:
+		err = esVerify(findKey(keys, kid, tagEc, tagSig, tagVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
+	case tagEs512:
+		err = esVerify(findKey(keys, kid, tagEc, tagSig, tagVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
+	case tagPs256:
+		err = psVerify(findKey(keys, kid, tagRsa, tagSig, tagVerify, alg), crypto.SHA256, this.sig, this.headBodyPart)
+	case tagPs384:
+		err = psVerify(findKey(keys, kid, tagRsa, tagSig, tagVerify, alg), crypto.SHA384, this.sig, this.headBodyPart)
+	case tagPs512:
+		err = psVerify(findKey(keys, kid, tagRsa, tagSig, tagVerify, alg), crypto.SHA512, this.sig, this.headBodyPart)
 	default:
 		return erro.New("unsupported sign " + alg)
 	}
@@ -491,40 +491,40 @@ func (this *Jwt) Decrypt(keys []jwk.Key) (err error) {
 
 	var contKey []byte
 	switch alg {
-	case algRsa1_5:
-		contKey, err = rsa15Decrypt(findKey(keys, kid, ktyRsa, useEnc, opUnwrapKey, alg), this.encedKey)
-	case algRsa_oaep:
-		contKey, err = rsaOaepDecrypt(findKey(keys, kid, ktyRsa, useEnc, opUnwrapKey, alg), crypto.SHA1, this.encedKey)
-	case algRsa_oaep_256:
-		contKey, err = rsaOaepDecrypt(findKey(keys, kid, ktyRsa, useEnc, opUnwrapKey, alg), crypto.SHA256, this.encedKey)
-	case algA128Kw:
-		contKey, err = aKwDecrypt(findKey(keys, kid, ktyOct, useEnc, opUnwrapKey, alg), 16, this.encedKey)
-	case algA192Kw:
-		contKey, err = aKwDecrypt(findKey(keys, kid, ktyOct, useEnc, opUnwrapKey, alg), 24, this.encedKey)
-	case algA256Kw:
-		contKey, err = aKwDecrypt(findKey(keys, kid, ktyOct, useEnc, opUnwrapKey, alg), 32, this.encedKey)
-	case algDir:
-		contKey, err = dirDecrypt(findKey(keys, kid, ktyOct, useEnc, opDecrypt, alg), this.encedKey)
-	case algEcdh_es:
-		contKey, err = ecdhEsDecrypt(findKey(keys, kid, ktyEc, useEnc, opUnwrapKey, alg), this.encedKey)
-	case algEcdh_es_a128Kw:
-		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, ktyEc, useEnc, opUnwrapKey, alg), 16, this.encedKey)
-	case algEcdh_es_a192Kw:
-		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, ktyEc, useEnc, opUnwrapKey, alg), 24, this.encedKey)
-	case algEcdh_es_a256Kw:
-		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, ktyEc, useEnc, opUnwrapKey, alg), 32, this.encedKey)
-	case algA128Gcmkw, algA192Gcmkw, algA256Gcmkw:
+	case tagRsa1_5:
+		contKey, err = rsa15Decrypt(findKey(keys, kid, tagRsa, tagEnc, tagUnwrapKey, alg), this.encedKey)
+	case tagRsa_oaep:
+		contKey, err = rsaOaepDecrypt(findKey(keys, kid, tagRsa, tagEnc, tagUnwrapKey, alg), crypto.SHA1, this.encedKey)
+	case tagRsa_oaep_256:
+		contKey, err = rsaOaepDecrypt(findKey(keys, kid, tagRsa, tagEnc, tagUnwrapKey, alg), crypto.SHA256, this.encedKey)
+	case tagA128Kw:
+		contKey, err = aKwDecrypt(findKey(keys, kid, tagOct, tagEnc, tagUnwrapKey, alg), 16, this.encedKey)
+	case tagA192Kw:
+		contKey, err = aKwDecrypt(findKey(keys, kid, tagOct, tagEnc, tagUnwrapKey, alg), 24, this.encedKey)
+	case tagA256Kw:
+		contKey, err = aKwDecrypt(findKey(keys, kid, tagOct, tagEnc, tagUnwrapKey, alg), 32, this.encedKey)
+	case tagDir:
+		contKey, err = dirDecrypt(findKey(keys, kid, tagOct, tagEnc, tagDecrypt, alg), this.encedKey)
+	case tagEcdh_es:
+		contKey, err = ecdhEsDecrypt(findKey(keys, kid, tagEc, tagEnc, tagUnwrapKey, alg), this.encedKey)
+	case tagEcdh_es_a128Kw:
+		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, tagEc, tagEnc, tagUnwrapKey, alg), 16, this.encedKey)
+	case tagEcdh_es_a192Kw:
+		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, tagEc, tagEnc, tagUnwrapKey, alg), 24, this.encedKey)
+	case tagEcdh_es_a256Kw:
+		contKey, err = ecdhEsAKwDecrypt(findKey(keys, kid, tagEc, tagEnc, tagUnwrapKey, alg), 32, this.encedKey)
+	case tagA128Gcmkw, tagA192Gcmkw, tagA256Gcmkw:
 		var initVec, authTag []byte
 		initVec, authTag, err = this.getInitVecAndAuthTagFromHeader()
 		if err == nil {
-			contKey, err = aGcmKwDecrypt(findKey(keys, kid, ktyOct, useEnc, opUnwrapKey, alg), keySizes[alg], initVec, this.encedKey, authTag)
+			contKey, err = aGcmKwDecrypt(findKey(keys, kid, tagOct, tagEnc, tagUnwrapKey, alg), keySizes[alg], initVec, this.encedKey, authTag)
 		}
-	case algPbes2_hs256_a128Kw:
-		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", useEnc, opUnwrapKey, alg), crypto.SHA256, 16, this.encedKey)
-	case algPbes2_hs384_a192Kw:
-		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", useEnc, opUnwrapKey, alg), crypto.SHA384, 24, this.encedKey)
-	case algPbes2_hs512_a256Kw:
-		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", useEnc, opUnwrapKey, alg), crypto.SHA512, 32, this.encedKey)
+	case tagPbes2_hs256_a128Kw:
+		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", tagEnc, tagUnwrapKey, alg), crypto.SHA256, 16, this.encedKey)
+	case tagPbes2_hs384_a192Kw:
+		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", tagEnc, tagUnwrapKey, alg), crypto.SHA384, 24, this.encedKey)
+	case tagPbes2_hs512_a256Kw:
+		contKey, err = pbes2HsAKwDecrypt(findKey(keys, kid, "", tagEnc, tagUnwrapKey, alg), crypto.SHA512, 32, this.encedKey)
 	default:
 		return erro.New("unsupported key wrapping " + alg)
 	}
@@ -536,17 +536,17 @@ func (this *Jwt) Decrypt(keys []jwk.Key) (err error) {
 
 	var plain []byte
 	switch enc {
-	case encA128Cbc_Hs256:
+	case tagA128Cbc_Hs256:
 		plain, err = aCbcHsDecrypt(contKey, 32, crypto.SHA256, this.headPart, this.initVec, this.enced, this.authTag)
-	case encA192Cbc_Hs384:
+	case tagA192Cbc_Hs384:
 		plain, err = aCbcHsDecrypt(contKey, 48, crypto.SHA384, this.headPart, this.initVec, this.enced, this.authTag)
-	case encA256Cbc_Hs512:
+	case tagA256Cbc_Hs512:
 		plain, err = aCbcHsDecrypt(contKey, 64, crypto.SHA512, this.headPart, this.initVec, this.enced, this.authTag)
-	case encA128Gcm:
+	case tagA128Gcm:
 		plain, err = aGcmDecrypt(contKey, 16, this.headPart, this.initVec, this.enced, this.authTag)
-	case encA192Gcm:
+	case tagA192Gcm:
 		plain, err = aGcmDecrypt(contKey, 24, this.headPart, this.initVec, this.enced, this.authTag)
-	case encA256Gcm:
+	case tagA256Gcm:
 		plain, err = aGcmDecrypt(contKey, 32, this.headPart, this.initVec, this.enced, this.authTag)
 	default:
 		return erro.New("unsupported encryption " + enc)

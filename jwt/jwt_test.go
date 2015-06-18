@@ -17,6 +17,8 @@ package jwt
 import (
 	"bytes"
 	"github.com/realglobe-Inc/edo-lib/jwk"
+	"github.com/realglobe-Inc/edo-lib/strset/strsetutil"
+	"reflect"
 	"testing"
 )
 
@@ -255,6 +257,9 @@ func TestJwt(t *testing.T) {
 		t.Fatal(jt.Claim("exp"))
 	} else if jt.Claim("http://example.com/is_root") != true {
 		t.Fatal(jt.Claim("http://example.com/is_root"))
+	} else if clms, clms2 := strsetutil.New("iss", "exp", "http://example.com/is_root"), strsetutil.New(jt.ClaimNames()...); !reflect.DeepEqual(clms2, clms) {
+		t.Error(clms2)
+		t.Fatal(clms)
 	}
 
 	jt2 := New()
@@ -270,6 +275,9 @@ func TestJwt(t *testing.T) {
 		t.Fatal(jt2.Claim("exp"))
 	} else if jt2.Claim("http://example.com/is_root") != true {
 		t.Fatal(jt2.Claim("http://example.com/is_root"))
+	} else if clms, clms2 := strsetutil.New("iss", "exp", "http://example.com/is_root"), strsetutil.New(jt2.ClaimNames()...); !reflect.DeepEqual(clms2, clms) {
+		t.Error(clms2)
+		t.Fatal(clms)
 	}
 }
 
@@ -543,5 +551,21 @@ func TestJweZip(t *testing.T) {
 		} else if jt2.Claim("http://example.com/is_root") != true {
 			t.Fatal(jt2.Claim("http://example.com/is_root"))
 		}
+	}
+}
+
+func TestJwtClaimNames(t *testing.T) {
+	rawHead := []byte(`{"alg":"none"}`)
+	rawBody := []byte(`{"iss":"joe",
+ "exp":1300819380,
+ "http://example.com/is_root":true}`)
+
+	jt := New()
+	jt.SetRawHeader(rawHead)
+	jt.SetRawBody(rawBody)
+
+	if clms, clms2 := strsetutil.New("iss", "exp", "http://example.com/is_root"), strsetutil.New(jt.ClaimNames()...); !reflect.DeepEqual(clms2, clms) {
+		t.Error(clms2)
+		t.Fatal(clms)
 	}
 }

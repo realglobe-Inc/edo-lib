@@ -16,6 +16,7 @@
 package password
 
 import (
+	"github.com/realglobe-Inc/edo-lib/hash"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"golang.org/x/crypto/pbkdf2"
 	"strconv"
@@ -44,9 +45,9 @@ func Calculate(alg string, params ...interface{}) ([]byte, error) {
 			return nil, erro.New("no " + parts[0] + " password")
 		}
 
-		hGen, err := hashFunction(parts[1])
-		if err != nil {
-			return nil, erro.Wrap(err)
+		hGen := hash.Generator(parts[1])
+		if hGen == 0 {
+			return nil, erro.New("unsupported hash algorithm " + parts[1])
 		}
 		iter, err := strconv.Atoi(parts[2])
 		if err != nil {

@@ -12,22 +12,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package password
+package driver
 
 import (
-	"crypto"
+	"database/sql"
 	"github.com/realglobe-Inc/go-lib/erro"
 )
 
-func hashFunction(alg string) (crypto.Hash, error) {
-	switch alg {
-	case "sha256":
-		return crypto.SHA256, nil
-	case "sha384":
-		return crypto.SHA384, nil
-	case "sha512":
-		return crypto.SHA512, nil
-	default:
-		return 0, erro.New("unsupported algorithm " + alg)
+// sql のコネクションプール集。
+type SqlPoolSet struct {
+	driverName string
+	pools      map[string]*sql.DB
+}
+
+func NewSqlPoolSet(driverName string) *SqlPoolSet {
+	return &SqlPoolSet{
+		driverName,
+		map[string]*sql.DB{},
+	}
+}
+
+func (this *SqlPoolSet) Get(addr string) (*sql.DB, error) {
+	pool := this.pools[addr]
+	if pool != nil {
+		return pool, nil
+	}
+
+	pool, err := sql.Open(this.driverName, addr)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	this.pools[addr] = pool
+	return pool, nil
+}
+
+func (this *SqlPoolSet) Close() {
+	for _, pool := range this.pools {
+		pool.Close()
 	}
 }

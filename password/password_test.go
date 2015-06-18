@@ -20,11 +20,11 @@ import (
 )
 
 func TestCalculate(t *testing.T) {
-	if hash, err := Calculate("pbkdf2:sha256:1000", test_salt, test_passwd); err != nil {
+	if hVal, err := Calculate("pbkdf2:sha256:1000", test_salt, test_passwd); err != nil {
 		t.Fatal(err)
-	} else if !bytes.Equal(hash, test_pbkdf2Hash) {
-		t.Error(hash)
-		t.Fatal(test_pbkdf2Hash)
+	} else if !bytes.Equal(hVal, test_pbkdf2HVal) {
+		t.Error(hVal)
+		t.Fatal(test_pbkdf2HVal)
 	}
 }
 

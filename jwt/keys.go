@@ -101,42 +101,42 @@ func matchTypeAndAlgorithm(kty, alg string) bool {
 	}
 
 	switch kty {
-	case ktyEc:
+	case tagEc:
 		switch alg {
-		case algEs256,
-			algEs384,
-			algEs512,
-			algEcdh_es,
-			algEcdh_es_a128Kw,
-			algEcdh_es_a192Kw,
-			algEcdh_es_a256Kw:
+		case tagEs256,
+			tagEs384,
+			tagEs512,
+			tagEcdh_es,
+			tagEcdh_es_a128Kw,
+			tagEcdh_es_a192Kw,
+			tagEcdh_es_a256Kw:
 			return true
 		}
-	case ktyRsa:
+	case tagRsa:
 		switch alg {
-		case algRs256,
-			algRs384,
-			algRs512,
-			algPs256,
-			algPs384,
-			algPs512,
-			algRsa1_5,
-			algRsa_oaep,
-			algRsa_oaep_256:
+		case tagRs256,
+			tagRs384,
+			tagRs512,
+			tagPs256,
+			tagPs384,
+			tagPs512,
+			tagRsa1_5,
+			tagRsa_oaep,
+			tagRsa_oaep_256:
 			return true
 		}
-	case ktyOct:
+	case tagOct:
 		switch alg {
-		case algHs256,
-			algHs384,
-			algHs512,
-			algA128Kw,
-			algA192Kw,
-			algA256Kw,
-			algDir,
-			algA128Gcmkw,
-			algA192Gcmkw,
-			algA256Gcmkw:
+		case tagHs256,
+			tagHs384,
+			tagHs512,
+			tagA128Kw,
+			tagA192Kw,
+			tagA256Kw,
+			tagDir,
+			tagA128Gcmkw,
+			tagA192Gcmkw,
+			tagA256Gcmkw:
 			return true
 		}
 	}
@@ -158,20 +158,20 @@ func matchUseAndOperation(use, op string) bool {
 	}
 
 	switch use {
-	case useSig:
+	case tagSig:
 		switch op {
-		case opSign,
-			opVerify:
+		case tagSign,
+			tagVerify:
 			return true
 		}
-	case useEnc:
+	case tagEnc:
 		switch op {
-		case opEncrypt,
-			opDecrypt,
-			opWrapKey,
-			opUnwrapKey,
-			opDeriveKey,
-			opDeriveBits:
+		case tagEncrypt,
+			tagDecrypt,
+			tagWrapKey,
+			tagUnwrapKey,
+			tagDeriveKey,
+			tagDeriveBits:
 			return true
 		}
 	}
@@ -185,42 +185,42 @@ func matchUseAndAlgorithm(use, alg string) bool {
 	}
 
 	switch use {
-	case useSig:
+	case tagSig:
 		switch alg {
-		case algHs256,
-			algHs384,
-			algHs512,
-			algRs256,
-			algRs384,
-			algRs512,
-			algEs256,
-			algEs384,
-			algEs512,
-			algPs256,
-			algPs384,
-			algPs512,
-			algNone:
+		case tagHs256,
+			tagHs384,
+			tagHs512,
+			tagRs256,
+			tagRs384,
+			tagRs512,
+			tagEs256,
+			tagEs384,
+			tagEs512,
+			tagPs256,
+			tagPs384,
+			tagPs512,
+			tagNone:
 			return true
 		}
-	case useEnc:
+	case tagEnc:
 		switch alg {
-		case algRsa1_5,
-			algRsa_oaep,
-			algRsa_oaep_256,
-			algA128Kw,
-			algA192Kw,
-			algA256Kw,
-			algDir,
-			algEcdh_es,
-			algEcdh_es_a128Kw,
-			algEcdh_es_a192Kw,
-			algEcdh_es_a256Kw,
-			algA128Gcmkw,
-			algA192Gcmkw,
-			algA256Gcmkw,
-			algPbes2_hs256_a128Kw,
-			algPbes2_hs384_a192Kw,
-			algPbes2_hs512_a256Kw:
+		case tagRsa1_5,
+			tagRsa_oaep,
+			tagRsa_oaep_256,
+			tagA128Kw,
+			tagA192Kw,
+			tagA256Kw,
+			tagDir,
+			tagEcdh_es,
+			tagEcdh_es_a128Kw,
+			tagEcdh_es_a192Kw,
+			tagEcdh_es_a256Kw,
+			tagA128Gcmkw,
+			tagA192Gcmkw,
+			tagA256Gcmkw,
+			tagPbes2_hs256_a128Kw,
+			tagPbes2_hs384_a192Kw,
+			tagPbes2_hs512_a256Kw:
 			return true
 		}
 	}
@@ -246,46 +246,46 @@ func matchOperationAndAlgorithm(op, alg string) bool {
 	}
 
 	switch op {
-	case opSign, opVerify:
+	case tagSign, tagVerify:
 		switch alg {
-		case algHs256,
-			algHs384,
-			algHs512,
-			algRs256,
-			algRs384,
-			algRs512,
-			algEs256,
-			algEs384,
-			algEs512,
-			algPs256,
-			algPs384,
-			algPs512,
-			algNone:
+		case tagHs256,
+			tagHs384,
+			tagHs512,
+			tagRs256,
+			tagRs384,
+			tagRs512,
+			tagEs256,
+			tagEs384,
+			tagEs512,
+			tagPs256,
+			tagPs384,
+			tagPs512,
+			tagNone:
 			return true
 		}
-	case opEncrypt, opDecrypt:
+	case tagEncrypt, tagDecrypt:
 		switch alg {
-		case algDir:
+		case tagDir:
 			return true
 		}
-	case opWrapKey, opUnwrapKey:
+	case tagWrapKey, tagUnwrapKey:
 		switch alg {
-		case algRsa1_5,
-			algRsa_oaep,
-			algRsa_oaep_256,
-			algA128Kw,
-			algA192Kw,
-			algA256Kw,
-			algEcdh_es,
-			algEcdh_es_a128Kw,
-			algEcdh_es_a192Kw,
-			algEcdh_es_a256Kw,
-			algA128Gcmkw,
-			algA192Gcmkw,
-			algA256Gcmkw,
-			algPbes2_hs256_a128Kw,
-			algPbes2_hs384_a192Kw,
-			algPbes2_hs512_a256Kw:
+		case tagRsa1_5,
+			tagRsa_oaep,
+			tagRsa_oaep_256,
+			tagA128Kw,
+			tagA192Kw,
+			tagA256Kw,
+			tagEcdh_es,
+			tagEcdh_es_a128Kw,
+			tagEcdh_es_a192Kw,
+			tagEcdh_es_a256Kw,
+			tagA128Gcmkw,
+			tagA192Gcmkw,
+			tagA256Gcmkw,
+			tagPbes2_hs256_a128Kw,
+			tagPbes2_hs384_a192Kw,
+			tagPbes2_hs512_a256Kw:
 			return true
 		}
 	}
@@ -311,9 +311,9 @@ func matchAlgorithmAndAlgorithm(alg, alg2 string) bool {
 
 func matchDetail(key jwk.Key, kty, use, op, alg string) bool {
 	switch key.Type() {
-	case ktyRsa, ktyEc:
+	case tagRsa, tagEc:
 		switch op {
-		case opSign, opUnwrapKey:
+		case tagSign, tagUnwrapKey:
 			if key.Private() == nil {
 				// 署名・復号には秘密鍵が必要。
 				return false
@@ -322,17 +322,17 @@ func matchDetail(key jwk.Key, kty, use, op, alg string) bool {
 	}
 
 	switch alg {
-	case algEs256, algEs384, algEs512:
+	case tagEs256, tagEs384, tagEs512:
 		// JWA の仕様で ESxxx は鍵のサイズが決められている。
 		if pub, ok := key.Public().(*ecdsa.PublicKey); !ok || (pub.Params().BitSize+7)/8 != keySizes[alg] {
 			return false
 		}
-	case algA128Kw,
-		algA192Kw,
-		algA256Kw,
-		algA128Gcmkw,
-		algA192Gcmkw,
-		algA256Gcmkw:
+	case tagA128Kw,
+		tagA192Kw,
+		tagA256Kw,
+		tagA128Gcmkw,
+		tagA192Gcmkw,
+		tagA256Gcmkw:
 		if len(key.Common()) != keySizes[alg] {
 			return false
 		}

@@ -30,7 +30,7 @@ var (
 	}
 	// "pbkdf2:sha256:1000" test_salt, test_passwd
 	// base64url で MQZoSIrxyBwdSFFXW3geZpjBAJi0qPrFR1h84DDPD48。
-	test_pbkdf2Hash = []byte{
+	test_pbkdf2HVal = []byte{
 		49, 6, 104, 72, 138, 241, 200, 28,
 		29, 72, 81, 87, 91, 120, 30, 102,
 		152, 193, 0, 152, 180, 168, 250, 197,

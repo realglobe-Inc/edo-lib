@@ -20,6 +20,22 @@ import (
 	"testing"
 )
 
+func TestHashGenerator(t *testing.T) {
+	for hGen, algs := range map[crypto.Hash][]string{
+		crypto.SHA256: {"HS256", "ES256", "RS256", "PS256"},
+		crypto.SHA384: {"HS384", "ES384", "RS384", "PS384"},
+		crypto.SHA512: {"HS512", "ES512", "RS512", "PS512"},
+	} {
+		for _, alg := range algs {
+			if hGen2 := HashGenerator(alg); hGen2 != hGen {
+				t.Error(alg)
+				t.Error(hGen2)
+				t.Fatal(hGen)
+			}
+		}
+	}
+}
+
 func TestHs(t *testing.T) {
 	buff := []byte{}
 	for ; len(buff) < 50; buff = append(buff, byte(len(buff))) {

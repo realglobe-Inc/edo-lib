@@ -12,34 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package password
+package driver
 
 import (
-	"crypto"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
 	"testing"
 )
 
-func TestHashFunction(t *testing.T) {
-	if hGen, err := hashFunction("sha256"); err != nil {
-		t.Fatal(err)
-	} else if hGen != crypto.SHA256 {
-		t.Error(hGen)
-		t.Fatal(crypto.SHA256)
-	} else if hGen, err := hashFunction("sha384"); err != nil {
-		t.Fatal(err)
-	} else if hGen != crypto.SHA384 {
-		t.Error(hGen)
-		t.Fatal(crypto.SHA384)
-	} else if hGen, err := hashFunction("sha512"); err != nil {
-		t.Fatal(err)
-	} else if hGen != crypto.SHA512 {
-		t.Error(hGen)
-		t.Fatal(crypto.SHA512)
+// テストするなら、mysql を立てる必要あり。
+// 立ってなかったらテストはスキップ。
+func TestSqlPoolSet(t *testing.T) {
+	addr := "root@tcp(localhost:3306)"
+	var sqlPool, _ = sql.Open("mysql", addr)
+	if sqlPool == nil {
+		t.SkipNow()
 	}
-}
 
-func TestUnknownHashFunction(t *testing.T) {
-	if _, err := hashFunction("unknown"); err == nil {
-		t.Fatal("no error")
+	poolSet := NewSqlPoolSet("mysql")
+	defer poolSet.Close()
+
+	if pool, err := poolSet.Get(addr); err != nil {
+		t.Fatal(err)
+	} else if pool2, err := poolSet.Get(addr); err != nil {
+		t.Fatal(err)
+	} else if pool2 != pool {
+		t.Error("cannot reuse")
+		t.Error(pool2)
+		t.Fatal(pool)
 	}
 }

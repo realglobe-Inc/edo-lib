@@ -28,18 +28,18 @@ import (
 	"math/big"
 )
 
-func HashFunction(alg string) (crypto.Hash, error) {
+func HashGenerator(alg string) crypto.Hash {
 	switch alg {
-	case "none":
-		return 0, nil
-	case "HS256", "RS256", "ES256", "PS256":
-		return crypto.SHA256, nil
-	case "HS384", "RS384", "ES384", "PS384":
-		return crypto.SHA384, nil
-	case "HS512", "RS512", "ES512", "PS512":
-		return crypto.SHA512, nil
+	case tagNone:
+		return 0
+	case tagHs256, tagRs256, tagEs256, tagPs256:
+		return crypto.SHA256
+	case tagHs384, tagRs384, tagEs384, tagPs384:
+		return crypto.SHA384
+	case tagHs512, tagRs512, tagEs512, tagPs512:
+		return crypto.SHA512
 	default:
-		return 0, erro.New("unsupported algorithm " + alg)
+		return 0
 	}
 }
 
@@ -61,8 +61,8 @@ func hsVerify(key jwk.Key, hGen crypto.Hash, sig []byte, data []byte) error {
 	if key == nil {
 		return erro.New("no key")
 	}
-	h := hash.Hashing(hmac.New(hGen.New, key.Common()), data)
-	if !hmac.Equal(h, sig) {
+	hVal := hash.Hashing(hmac.New(hGen.New, key.Common()), data)
+	if !hmac.Equal(hVal, sig) {
 		return erro.New("verification failed")
 	}
 	return nil

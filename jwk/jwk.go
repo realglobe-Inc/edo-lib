@@ -61,21 +61,21 @@ func New(rawKey interface{}, m map[string]interface{}) Key {
 	key := baseFromMap(m)
 	switch k := rawKey.(type) {
 	case *ecdsa.PrivateKey:
-		key.kty = ktyEc
+		key.kty = tagEc
 		key.pri = k
 		key.pub = &k.PublicKey
 	case *ecdsa.PublicKey:
-		key.kty = ktyEc
+		key.kty = tagEc
 		key.pub = k
 	case *rsa.PrivateKey:
-		key.kty = ktyRsa
+		key.kty = tagRsa
 		key.pri = k
 		key.pub = &k.PublicKey
 	case *rsa.PublicKey:
-		key.kty = ktyRsa
+		key.kty = tagRsa
 		key.pub = k
 	case []byte:
-		key.kty = ktyOct
+		key.kty = tagOct
 		key.com = k
 	default:
 	}
@@ -86,23 +86,23 @@ func New(rawKey interface{}, m map[string]interface{}) Key {
 func FromMap(m map[string]interface{}) (k Key, err error) {
 	key := baseFromMap(m)
 	switch key.kty {
-	case ktyEc:
+	case tagEc:
 		key.pri, key.pub, err = ecFromMap(m)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-	case ktyRsa:
+	case tagRsa:
 		key.pri, key.pub, err = rsaFromMap(m)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-	case ktyOct:
+	case tagOct:
 		key.com, err = commonFromMap(m)
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
 	default:
-		return nil, erro.New("kty " + key.kty + " is unsupported")
+		return nil, erro.New("unsupported key type " + key.kty)
 	}
 	return key, nil
 }
@@ -129,7 +129,7 @@ func baseFromMap(m map[string]interface{}) *keyImpl {
 }
 
 func ecFromMap(m map[string]interface{}) (crypto.PrivateKey, crypto.PublicKey, error) {
-	pub, err := _ecPublicFromMap(m)
+	pub, err := ecPublicFromMap(m)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
@@ -148,23 +148,19 @@ func ecFromMap(m map[string]interface{}) (crypto.PrivateKey, crypto.PublicKey, e
 	return &pri, &pri.PublicKey, nil
 }
 
-func ecPublicFromMap(m map[string]interface{}) (crypto.PublicKey, error) {
-	return _ecPublicFromMap(m)
-}
-
-func _ecPublicFromMap(m map[string]interface{}) (*ecdsa.PublicKey, error) {
+func ecPublicFromMap(m map[string]interface{}) (*ecdsa.PublicKey, error) {
 	var pub ecdsa.PublicKey
 	switch crv, _ := m[tagCrv].(string); crv {
 	case "":
-		return nil, erro.New("no crv")
-	case "P-256":
+		return nil, erro.New("no elliptic curve")
+	case tagP_256:
 		pub.Curve = elliptic.P256()
-	case "P-384":
+	case tagP_384:
 		pub.Curve = elliptic.P384()
-	case "P-521":
+	case tagP_521:
 		pub.Curve = elliptic.P521()
 	default:
-		return nil, erro.New("unsupoorted crv " + crv)
+		return nil, erro.New("unsupoorted elliptic curve " + crv)
 	}
 
 	if xStr, _ := m["x"].(string); xStr == "" {
@@ -184,7 +180,7 @@ func _ecPublicFromMap(m map[string]interface{}) (*ecdsa.PublicKey, error) {
 }
 
 func rsaFromMap(m map[string]interface{}) (crypto.PrivateKey, crypto.PublicKey, error) {
-	pub, err := _rsaPublicFromMap(m)
+	pub, err := rsaPublicFromMap(m)
 	if err != nil {
 		return nil, nil, erro.Wrap(err)
 	}
@@ -252,11 +248,7 @@ func rsaFromMap(m map[string]interface{}) (crypto.PrivateKey, crypto.PublicKey, 
 	return &pri, pub, nil
 }
 
-func rsaPublicFromMap(m map[string]interface{}) (crypto.PublicKey, error) {
-	return _rsaPublicFromMap(m)
-}
-
-func _rsaPublicFromMap(m map[string]interface{}) (*rsa.PublicKey, error) {
+func rsaPublicFromMap(m map[string]interface{}) (*rsa.PublicKey, error) {
 	var pub rsa.PublicKey
 	if nStr, _ := m["n"].(string); nStr == "" {
 		return nil, erro.New("no n")
@@ -314,19 +306,19 @@ func (this *keyImpl) ToMap() map[string]interface{} {
 	}
 
 	switch this.kty {
-	case ktyEc:
+	case tagEc:
 		if this.pri != nil {
 			return ecToMap(this.pri.(*ecdsa.PrivateKey), m)
 		} else {
 			return ecPublicToMap(this.pub.(*ecdsa.PublicKey), m)
 		}
-	case ktyRsa:
+	case tagRsa:
 		if this.pri != nil {
 			return rsaToMap(this.pri.(*rsa.PrivateKey), m)
 		} else {
 			return rsaPublicToMap(this.pub.(*rsa.PublicKey), m)
 		}
-	case ktyOct:
+	case tagOct:
 		return commonToMap(this.com, m)
 	default:
 		return nil
@@ -371,11 +363,11 @@ func ecToMap(key *ecdsa.PrivateKey, m map[string]interface{}) map[string]interfa
 func ecPublicToMap(key *ecdsa.PublicKey, m map[string]interface{}) map[string]interface{} {
 	switch key.Params().BitSize {
 	case 256:
-		m[tagCrv] = "P-256"
+		m[tagCrv] = tagP_256
 	case 384:
-		m[tagCrv] = "P-384"
+		m[tagCrv] = tagP_384
 	case 521:
-		m[tagCrv] = "P-521"
+		m[tagCrv] = tagP_521
 	default:
 		return nil
 	}

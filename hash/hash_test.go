@@ -16,9 +16,48 @@ package hash
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/sha256"
 	"testing"
 )
+
+func TestGeneratorAndAlgorithm(t *testing.T) {
+	for _, hGen := range []crypto.Hash{
+		crypto.MD4,
+		crypto.MD5,
+		crypto.SHA1,
+		crypto.SHA224,
+		crypto.SHA256,
+		crypto.SHA384,
+		crypto.SHA512,
+		crypto.MD5SHA1,
+		crypto.RIPEMD160,
+		crypto.SHA3_224,
+		crypto.SHA3_256,
+		crypto.SHA3_384,
+		crypto.SHA3_512,
+	} {
+		alg := Algorithm(hGen)
+		hGen2 := Generator(alg)
+		if hGen2 != hGen {
+			t.Error(hGen2)
+			t.Error(alg)
+			t.Fatal(hGen)
+		}
+	}
+}
+
+func TestUnknownGenerator(t *testing.T) {
+	if hGen := Generator("unknown"); hGen != 0 {
+		t.Fatal(hGen)
+	}
+}
+
+func TestUnknownAlgorithm(t *testing.T) {
+	if alg := Algorithm(crypto.Hash(1000000)); alg != "" {
+		t.Fatal(alg)
+	}
+}
 
 func TestHashing(t *testing.T) {
 	hFun := sha256.New()
@@ -27,12 +66,12 @@ func TestHashing(t *testing.T) {
 		hFun.Write([]byte{byte(i)})
 		data = append(data, []byte{byte(i)})
 	}
-	h := hFun.Sum(nil)
+	hVal := hFun.Sum(nil)
 
 	hFun.Reset()
-	h2 := Hashing(hFun, data...)
-	if !bytes.Equal(h2, h) {
-		t.Error(h)
-		t.Fatal(h2)
+	hVal2 := Hashing(hFun, data...)
+	if !bytes.Equal(hVal2, hVal) {
+		t.Error(hVal)
+		t.Fatal(hVal2)
 	}
 }

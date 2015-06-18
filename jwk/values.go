@@ -17,18 +17,19 @@ package jwk
 import ()
 
 const (
-	tagKty     = "kty"
-	tagUse     = "use"
-	tagKey_ops = "key_ops"
 	tagAlg     = "alg"
+	tagCrv     = "crv"
+	tagKey_ops = "key_ops"
 	tagKid     = "kid"
+	tagKty     = "kty"
+	tagOct     = "oct"
+	tagOth     = "oth"
+	tagUse     = "use"
 
-	tagCrv = "crv"
-	tagOth = "oth"
-)
-
-const (
-	ktyEc  = "EC"
-	ktyRsa = "RSA"
-	ktyOct = "oct"
+	// 大文字。
+	tagEc    = "EC"
+	tagP_256 = "P-256"
+	tagP_384 = "P-384"
+	tagP_521 = "P-521"
+	tagRsa   = "RSA"
 )
