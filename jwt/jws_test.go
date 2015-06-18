@@ -27,10 +27,8 @@ func TestHashGenerator(t *testing.T) {
 		crypto.SHA512: {"HS512", "ES512", "RS512", "PS512"},
 	} {
 		for _, alg := range algs {
-			if hGen2, err := HashGenerator(alg); err != nil {
+			if hGen2 := HashGenerator(alg); hGen2 != hGen {
 				t.Error(alg)
-				t.Fatal(err)
-			} else if hGen2 != hGen {
 				t.Error(hGen2)
 				t.Fatal(hGen)
 			}

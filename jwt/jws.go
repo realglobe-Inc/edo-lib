@@ -28,18 +28,18 @@ import (
 	"math/big"
 )
 
-func HashGenerator(alg string) (crypto.Hash, error) {
+func HashGenerator(alg string) crypto.Hash {
 	switch alg {
-	case "none":
-		return 0, nil
-	case "HS256", "RS256", "ES256", "PS256":
-		return crypto.SHA256, nil
-	case "HS384", "RS384", "ES384", "PS384":
-		return crypto.SHA384, nil
-	case "HS512", "RS512", "ES512", "PS512":
-		return crypto.SHA512, nil
+	case algNone:
+		return 0
+	case algHs256, algRs256, algEs256, algPs256:
+		return crypto.SHA256
+	case algHs384, algRs384, algEs384, algPs384:
+		return crypto.SHA384
+	case algHs512, algRs512, algEs512, algPs512:
+		return crypto.SHA512
 	default:
-		return 0, erro.New("unsupported algorithm " + alg)
+		return 0
 	}
 }
 
