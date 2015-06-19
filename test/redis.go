@@ -99,7 +99,7 @@ func NewRedisServer() (*RedisServer, error) {
 	failed = false
 	return &RedisServer{&redis.Pool{
 		MaxIdle:     5,
-		IdleTimeout: time.Second,
+		IdleTimeout: time.Minute,
 		Dial: func() (redis.Conn, error) {
 			return redis.Dial("tcp", ":"+strconv.Itoa(port))
 		},

@@ -22,14 +22,20 @@ import (
 
 // テストするなら、mongodb を立てる必要あり。
 // 立ってなかったらテストはスキップ。
-var monPool, _ = mgo.DialWithTimeout("localhost", time.Second)
+var monPool, _ = mgo.DialWithTimeout("localhost", time.Minute)
+
+func init() {
+	if monPool != nil {
+		monPool.SetSyncTimeout(time.Minute)
+	}
+}
 
 func TestMongoPoolSet(t *testing.T) {
 	if monPool == nil {
 		t.SkipNow()
 	}
 
-	poolSet := NewMongoPoolSet(time.Second)
+	poolSet := NewMongoPoolSet(time.Minute)
 	defer poolSet.Close()
 
 	addr := monPool.LiveServers()[0]
