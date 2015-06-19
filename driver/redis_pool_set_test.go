@@ -39,7 +39,7 @@ func TestRedisPoolSet(t *testing.T) {
 	defer red2.Close()
 	addr2 := red2.Address()
 
-	poolSet := NewRedisPoolSet(time.Second, 2, time.Second)
+	poolSet := NewRedisPoolSet(time.Minute, 2, time.Minute)
 	defer poolSet.Close()
 
 	if pool, pool2 := poolSet.Get(addr), poolSet.Get(addr); pool2 != pool {
