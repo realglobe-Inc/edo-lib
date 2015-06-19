@@ -69,36 +69,27 @@ func TestNestedJson(t *testing.T) {
 	}
 }
 
-// テストするなら、mongodb をたてる必要あり。
-const (
-	testMongoDb   = "edo-test"
-	testMongoColl = "strset-test"
-)
-
-var testMongoAddr = "localhost"
+// テストするなら、mongodb を立てる必要あり。
+// 立ってなかったらテストはスキップ。
+var monPool, _ = mgo.DialWithTimeout("localhost", time.Minute)
 
 func init() {
-	if testMongoAddr != "" {
-		// 実際にサーバーが立っているかどうか調べる。
-		// 立ってなかったらテストはスキップ。
-		conn, err := mgo.Dial(testMongoAddr)
-		if err != nil {
-			testMongoAddr = ""
-		} else {
-			conn.Close()
-		}
+	if monPool != nil {
+		monPool.SetSyncTimeout(time.Minute)
 	}
 }
 
+const (
+	test_coll = "test-collection"
+)
+
 func TestBson(t *testing.T) {
-	if testMongoAddr == "" {
+	if monPool == nil {
 		t.SkipNow()
 	}
 
-	conn, err := mgo.Dial(testMongoAddr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	test_db := "test-db-" + strconv.FormatInt(time.Now().UnixNano(), 16)
+	conn := monPool.New()
 	defer conn.Close()
 
 	type testType struct {
@@ -110,12 +101,13 @@ func TestBson(t *testing.T) {
 	a.K = strconv.FormatInt(time.Now().UnixNano(), 16)
 	a.S = Set(map[string]bool{"a": true, "b": true, "c": true})
 
-	if err := conn.DB(testMongoDb).C(testMongoColl).Insert(&a); err != nil {
+	if err := conn.DB(test_db).C(test_coll).Insert(&a); err != nil {
 		t.Fatal(err)
 	}
+	defer conn.DB(test_db).DropDatabase()
 
 	var b testType
-	if err := conn.DB(testMongoDb).C(testMongoColl).Find(bson.M{"key": a.K}).One(&b); err != nil {
+	if err := conn.DB(test_db).C(test_coll).Find(bson.M{"key": a.K}).One(&b); err != nil {
 		t.Fatal(err)
 	}
 

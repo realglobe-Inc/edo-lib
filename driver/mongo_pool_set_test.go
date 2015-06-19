@@ -24,6 +24,12 @@ import (
 // 立ってなかったらテストはスキップ。
 var monPool, _ = mgo.DialWithTimeout("localhost", time.Minute)
 
+func init() {
+	if monPool != nil {
+		monPool.SetSyncTimeout(time.Minute)
+	}
+}
+
 func TestMongoPoolSet(t *testing.T) {
 	if monPool == nil {
 		t.SkipNow()
