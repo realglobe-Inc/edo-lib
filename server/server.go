@@ -79,7 +79,8 @@ func Serve(param Parameter, handler http.Handler) error {
 	var shutCh chan struct{}
 	if p, ok := param.(DebugParameter); ok {
 		shutCh = p.ShutdownChannel()
-	} else {
+	}
+	if shutCh == nil {
 		shutCh = make(chan struct{}, 10) // 余裕を持って。
 	}
 
