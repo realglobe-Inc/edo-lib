@@ -81,7 +81,7 @@ func Serve(param Parameter, handler http.Handler) error {
 		shutCh = p.ShutdownChannel()
 	}
 	if shutCh == nil {
-		shutCh = make(chan struct{}, 10) // 余裕を持って。
+		shutCh = make(chan struct{}, 5) // 余裕を持って。
 	}
 
 	var lis net.Listener
