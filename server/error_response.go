@@ -27,18 +27,18 @@ import (
 )
 
 // JSON でエラーを返す。
-func RespondErrorJson(w http.ResponseWriter, r *http.Request, origErr error, logPrefix string) {
+func RespondErrorJson(w http.ResponseWriter, r *http.Request, origErr error, logPrefs ...interface{}) {
 	e := ErrorFrom(origErr)
-	log.Err(logPrefix, e.Status(), " "+http.StatusText(e.Status())+": "+e.Message())
-	log.Debug(logPrefix, origErr)
+	log.Err(append(logPrefs, e.Status(), " "+http.StatusText(e.Status())+": "+e.Message())...)
+	log.Debug(append(logPrefs, origErr)...)
 
 	buff, err := json.Marshal(map[string]interface{}{
 		tagStatus:  e.Status(),
 		tagMessage: e.Message(),
 	})
 	if err != nil {
-		log.Err(logPrefix, erro.Unwrap(err))
-		log.Debug(logPrefix, erro.Wrap(err))
+		log.Err(append(logPrefs, erro.Unwrap(err))...)
+		log.Debug(append(logPrefs, erro.Wrap(err))...)
 		// 最後の手段。たぶん正しい変換。
 		buff = []byte(`{` +
 			tagStatus + `=` + strconv.Itoa(e.Status()) + `,` +
@@ -49,7 +49,7 @@ func RespondErrorJson(w http.ResponseWriter, r *http.Request, origErr error, log
 	w.Header().Set(tagContent_type, contTypeJson)
 	w.WriteHeader(e.Status())
 	if _, err := w.Write(buff); err != nil {
-		log.Err(logPrefix, erro.Wrap(err))
+		log.Err(append(logPrefs, erro.Wrap(err))...)
 	}
 }
 
@@ -59,18 +59,18 @@ func RespondErrorJson(w http.ResponseWriter, r *http.Request, origErr error, log
 // {{.StatusText}}: HTTP ステータスコード。Not Found とか
 // {{.Error}}: エラー内容
 // {{.Debug}}: エラー詳細
-func RespondErrorHtml(w http.ResponseWriter, r *http.Request, origErr error, errTmpl *template.Template, logPrefix string) {
+func RespondErrorHtml(w http.ResponseWriter, r *http.Request, origErr error, errTmpl *template.Template, logPrefs ...interface{}) {
 	e := ErrorFrom(origErr)
-	log.Err(logPrefix, e.Status(), " "+http.StatusText(e.Status())+": "+e.Message())
-	log.Debug(logPrefix, origErr)
+	log.Err(append(logPrefs, e.Status(), " "+http.StatusText(e.Status())+": "+e.Message())...)
+	log.Debug(append(logPrefs, origErr)...)
 
 	var data []byte
 	if errTmpl != nil {
 		// テンプレートからユーザー向けの HTML をつくる。
 		buff := &bytes.Buffer{}
 		if err := errTmpl.Execute(buff, &templateData{base: e}); err != nil {
-			log.Warn(logPrefix, erro.Unwrap(err))
-			log.Debug(logPrefix, erro.Wrap(err))
+			log.Warn(append(logPrefs, erro.Unwrap(err))...)
+			log.Debug(append(logPrefs, erro.Wrap(err))...)
 		} else {
 			data = buff.Bytes()
 		}
@@ -91,7 +91,7 @@ func RespondErrorHtml(w http.ResponseWriter, r *http.Request, origErr error, err
 	w.Header().Set(tagContent_type, contTypeHtml)
 	w.WriteHeader(e.Status())
 	if _, err := w.Write(data); err != nil {
-		log.Err(logPrefix, erro.Wrap(err))
+		log.Err(append(logPrefs, erro.Wrap(err))...)
 	}
 }
 

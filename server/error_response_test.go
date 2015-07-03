@@ -31,7 +31,7 @@ func TestRespondErrorJson(t *testing.T) {
 	origErr := NewError(http.StatusBadRequest, "invalid request", nil)
 
 	w := httptest.NewRecorder()
-	RespondErrorJson(w, nil, erro.Wrap(origErr), "")
+	RespondErrorJson(w, nil, erro.Wrap(origErr))
 
 	if w.Code != origErr.Status() {
 		t.Error(w.Code)
@@ -63,7 +63,7 @@ func TestRespondErrorHtml(t *testing.T) {
 	origErr := NewError(http.StatusBadRequest, "invalid request", nil)
 
 	w := httptest.NewRecorder()
-	RespondErrorHtml(w, nil, erro.Wrap(origErr), nil, "")
+	RespondErrorHtml(w, nil, erro.Wrap(origErr), nil)
 
 	if w.Code != origErr.Status() {
 		t.Error(w.Code)
@@ -95,7 +95,7 @@ func TestRespondErrorHtmlTemplate(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	RespondErrorHtml(w, nil, erro.Wrap(origErr), tmpl, "")
+	RespondErrorHtml(w, nil, erro.Wrap(origErr), tmpl)
 
 	if w.Code != origErr.Status() {
 		t.Error(w.Code)
@@ -135,7 +135,7 @@ func TestRespondErrorHtmlTemplateFunction(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	RespondErrorHtml(w, nil, erro.Wrap(origErr), tmpl, "")
+	RespondErrorHtml(w, nil, erro.Wrap(origErr), tmpl)
 
 	if w.Code != origErr.Status() {
 		t.Error(w.Code)
