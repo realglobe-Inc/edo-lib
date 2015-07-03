@@ -30,8 +30,8 @@ func LogRequest(lv level.Level, r *http.Request, useBody bool, prefs ...interfac
 	if log.IsLoggable(lv) {
 		buff, err := httputil.DumpRequest(r, useBody)
 		if err != nil {
-			log.Warn(append(prefs, erro.Unwrap(err)))
-			log.Debug(append(prefs, erro.Wrap(err)))
+			log.Warn(append(prefs, erro.Unwrap(err))...)
+			log.Debug(append(prefs, erro.Wrap(err))...)
 			return
 		}
 		log.Log(lv, append(prefs, "Request: ", string(buff))...)
@@ -42,8 +42,8 @@ func LogResponse(lv level.Level, r *http.Response, useBody bool, prefs ...interf
 	if log.IsLoggable(lv) {
 		buff, err := httputil.DumpResponse(r, useBody)
 		if err != nil {
-			log.Warn(append(prefs, erro.Unwrap(err)))
-			log.Debug(append(prefs, erro.Wrap(err)))
+			log.Warn(append(prefs, erro.Unwrap(err))...)
+			log.Debug(append(prefs, erro.Wrap(err))...)
 			return
 		}
 		log.Log(lv, append(prefs, "Response: ", string(buff))...)
