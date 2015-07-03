@@ -30,10 +30,6 @@ type HandlerFunc func(http.ResponseWriter, *http.Request) error
 // 処理がパニックやエラーで終わったら、適当なレスポンスを HTML で返す。
 func WrapPage(stopper *Stopper, f HandlerFunc, errTmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if stopper != nil {
-			stopper.Stop()
-			defer stopper.Unstop()
-		}
 
 		// panic 対策。
 		defer func() {
@@ -42,6 +38,11 @@ func WrapPage(stopper *Stopper, f HandlerFunc, errTmpl *template.Template) http.
 				return
 			}
 		}()
+
+		if stopper != nil {
+			stopper.Stop()
+			defer stopper.Unstop()
+		}
 
 		//////////////////////////////
 		LogRequest(level.DEBUG, r, Debug)
@@ -57,10 +58,6 @@ func WrapPage(stopper *Stopper, f HandlerFunc, errTmpl *template.Template) http.
 // 処理がパニックやエラーで終わったら、適当なレスポンスを JSON で返す。
 func WrapApi(stopper *Stopper, f HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if stopper != nil {
-			stopper.Stop()
-			defer stopper.Unstop()
-		}
 
 		// panic 対策。
 		defer func() {
@@ -69,6 +66,11 @@ func WrapApi(stopper *Stopper, f HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}()
+
+		if stopper != nil {
+			stopper.Stop()
+			defer stopper.Unstop()
+		}
 
 		//////////////////////////////
 		LogRequest(level.DEBUG, r, Debug)
