@@ -22,7 +22,9 @@ import (
 	"net/http/httputil"
 )
 
-var log = rglog.Logger("github.com/realglobe-Inc/edo-lib/server")
+const logRoot = "github.com/realglobe-Inc"
+
+var log = rglog.Logger(logRoot + "/edo-lib/server")
 
 func LogRequest(lv level.Level, r *http.Request, useBody bool, prefs ...interface{}) {
 	if log.IsLoggable(lv) {

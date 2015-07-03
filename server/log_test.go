@@ -24,8 +24,8 @@ import (
 )
 
 func TestLogRequest(t *testing.T) {
-	logutil.SetupConsole("github.com/realglobe-Inc", level.ALL)
-	defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
+	logutil.SetupConsole(logRoot, level.ALL)
+	defer logutil.SetupConsole(logRoot, level.OFF)
 
 	req, err := http.NewRequest("GET", "http://example.org/", nil)
 	if err != nil {
@@ -36,8 +36,8 @@ func TestLogRequest(t *testing.T) {
 }
 
 func TestLogResponse(t *testing.T) {
-	logutil.SetupConsole("github.com/realglobe-Inc", level.ALL)
-	defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
+	logutil.SetupConsole(logRoot, level.ALL)
+	defer logutil.SetupConsole(logRoot, level.OFF)
 
 	resp, err := http.ReadResponse(bufio.NewReader(strings.NewReader(`HTTP/1.1 200 OK
 Server: nginx/1.7.9

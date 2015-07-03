@@ -22,7 +22,9 @@ import (
 	"github.com/realglobe-Inc/go-lib/rglog/level"
 )
 
-var log = rglog.Logger("github.com/realglobe-Inc/edo-lib/log")
+const logRoot = "github.com/realglobe-Inc"
+
+var log = rglog.Logger(logRoot + "/edo-lib/log")
 
 const (
 	TypeConsole = "console"

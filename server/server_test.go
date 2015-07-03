@@ -27,7 +27,7 @@ import (
 )
 
 func init() {
-	logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
+	logutil.SetupConsole(logRoot, level.OFF)
 }
 
 type testParameter struct {
@@ -87,8 +87,8 @@ func TestServe(t *testing.T) {
 
 func TestServeRetry(t *testing.T) {
 	////////////////////////////////
-	logutil.SetupConsole("github.com/realglobe-Inc", level.ALL)
-	defer logutil.SetupConsole("github.com/realglobe-Inc", level.OFF)
+	logutil.SetupConsole(logRoot, level.ALL)
+	defer logutil.SetupConsole(logRoot, level.OFF)
 	////////////////////////////////
 
 	port, err := test.FreePort()
