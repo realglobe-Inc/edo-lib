@@ -30,11 +30,12 @@ type HandlerFunc func(http.ResponseWriter, *http.Request) error
 // 処理がパニックやエラーで終わったら、適当なレスポンスを HTML で返す。
 func WrapPage(stopper *Stopper, f HandlerFunc, errTmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var logPref string
 
 		// panic 対策。
 		defer func() {
 			if rcv := recover(); rcv != nil {
-				RespondErrorHtml(w, r, erro.New(rcv), errTmpl, ParseSender(r)+":")
+				RespondErrorHtml(w, r, erro.New(rcv), errTmpl, logPref)
 				return
 			}
 		}()
@@ -44,12 +45,12 @@ func WrapPage(stopper *Stopper, f HandlerFunc, errTmpl *template.Template) http.
 			defer stopper.Unstop()
 		}
 
-		//////////////////////////////
-		LogRequest(level.DEBUG, r, Debug)
-		//////////////////////////////
+		logPref = ParseSender(r) + ": "
+
+		LogRequest(level.DEBUG, r, Debug, logPref)
 
 		if err := f(w, r); err != nil {
-			RespondErrorHtml(w, r, erro.Wrap(err), errTmpl, ParseSender(r)+":")
+			RespondErrorHtml(w, r, erro.Wrap(err), errTmpl, logPref)
 			return
 		}
 	}
@@ -58,11 +59,12 @@ func WrapPage(stopper *Stopper, f HandlerFunc, errTmpl *template.Template) http.
 // 処理がパニックやエラーで終わったら、適当なレスポンスを JSON で返す。
 func WrapApi(stopper *Stopper, f HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var logPref string
 
 		// panic 対策。
 		defer func() {
 			if rcv := recover(); rcv != nil {
-				RespondErrorJson(w, r, erro.New(rcv), ParseSender(r)+":")
+				RespondErrorJson(w, r, erro.New(rcv), logPref)
 				return
 			}
 		}()
@@ -72,12 +74,12 @@ func WrapApi(stopper *Stopper, f HandlerFunc) http.HandlerFunc {
 			defer stopper.Unstop()
 		}
 
-		//////////////////////////////
-		LogRequest(level.DEBUG, r, Debug)
-		//////////////////////////////
+		logPref = ParseSender(r) + ": "
+
+		LogRequest(level.DEBUG, r, Debug, logPref)
 
 		if err := f(w, r); err != nil {
-			RespondErrorJson(w, r, erro.Wrap(err), ParseSender(r)+":")
+			RespondErrorJson(w, r, erro.Wrap(err), logPref)
 			return
 		}
 	}
