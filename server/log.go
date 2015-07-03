@@ -22,14 +22,16 @@ import (
 	"net/http/httputil"
 )
 
-var log = rglog.Logger("github.com/realglobe-Inc/edo-lib/http")
+const logRoot = "github.com/realglobe-Inc"
+
+var log = rglog.Logger(logRoot + "/edo-lib/server")
 
 func LogRequest(lv level.Level, r *http.Request, useBody bool, prefs ...interface{}) {
 	if log.IsLoggable(lv) {
 		buff, err := httputil.DumpRequest(r, useBody)
 		if err != nil {
-			log.Warn(append(prefs, erro.Unwrap(err)))
-			log.Debug(append(prefs, erro.Wrap(err)))
+			log.Warn(append(prefs, erro.Unwrap(err))...)
+			log.Debug(append(prefs, erro.Wrap(err))...)
 			return
 		}
 		log.Log(lv, append(prefs, "Request: ", string(buff))...)
@@ -40,8 +42,8 @@ func LogResponse(lv level.Level, r *http.Response, useBody bool, prefs ...interf
 	if log.IsLoggable(lv) {
 		buff, err := httputil.DumpResponse(r, useBody)
 		if err != nil {
-			log.Warn(append(prefs, erro.Unwrap(err)))
-			log.Debug(append(prefs, erro.Wrap(err)))
+			log.Warn(append(prefs, erro.Unwrap(err))...)
+			log.Debug(append(prefs, erro.Wrap(err))...)
 			return
 		}
 		log.Log(lv, append(prefs, "Response: ", string(buff))...)

@@ -53,7 +53,7 @@ var testOpt = &testOption{}
 func TestSetup(t *testing.T) {
 	for _, lv := range level.Values() {
 		for _, typ := range []string{TypeConsole, TypeFile, TypeFluentd} {
-			if err := Setup("github.com/realglobe-Inc", typ, lv, testOpt); err != nil {
+			if err := Setup(logRoot, typ, lv, testOpt); err != nil {
 				t.Fatal(err)
 			}
 		}

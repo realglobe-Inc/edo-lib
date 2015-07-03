@@ -37,11 +37,11 @@ func NewError(stat int, msg string, cause error) *Error {
 }
 
 func (this *Error) Error() string {
-	prefix := ""
+	pref := ""
 	if this.cause != nil {
-		prefix += this.cause.Error() + "\ncaused "
+		pref += this.cause.Error() + "\ncaused "
 	}
-	return prefix + strconv.Itoa(this.status) + " " + http.StatusText(this.status) + ": " + this.msg
+	return pref + strconv.Itoa(this.status) + " " + http.StatusText(this.status) + ": " + this.msg
 }
 
 func (this *Error) Status() int {
