@@ -87,13 +87,13 @@ func SetupFluentd(root string, lv level.Level, addr, tag string) {
 	return
 }
 
-type FileOption interface {
+type FileParameter interface {
 	LogFilePath() string
 	LogFileLimit() int64
 	LogFileNumber() int
 }
 
-type FluentdOption interface {
+type FluentdParameter interface {
 	LogFluentdAddress() string
 	LogFluentdTag() string
 }
@@ -104,13 +104,13 @@ func Setup(root, logType string, logLv level.Level, opt interface{}) error {
 	case TypeConsole:
 		SetupConsole(root, logLv)
 	case TypeFile:
-		o, ok := opt.(FileOption)
+		o, ok := opt.(FileParameter)
 		if !ok {
 			return erro.New("log type " + logType + " requires option")
 		}
 		SetupFile(root, logLv, o.LogFilePath(), o.LogFileLimit(), o.LogFileNumber())
 	case TypeFluentd:
-		o, ok := opt.(FluentdOption)
+		o, ok := opt.(FluentdParameter)
 		if !ok {
 			return erro.New("log type " + logType + " requires option")
 		}
