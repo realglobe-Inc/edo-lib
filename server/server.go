@@ -29,14 +29,6 @@ import (
 	"time"
 )
 
-// Serve に入力するパラメータ。
-type Parameter interface {
-	// ソケットの種類。tcp か unix。
-	SocketType() string
-	// プロトコルの種類。http か fcgi。
-	ProtocolType() string
-}
-
 // SocketType が tcp のときに追加で必要な関数。
 type TcpParameter interface {
 	// tcp のポート番号。
@@ -61,19 +53,19 @@ var MaxSleepTime = time.Minute
 var ResetInterval = time.Minute
 
 // サーバーを立てる。
-func Serve(param Parameter, handler http.Handler) error {
+func Serve(handler http.Handler, socType, protType string, param interface{}) error {
 	// 冷却期間の揺らぎの最大値。
 	// 冷却期間は前回の 2 倍に一様乱数の揺らぎを加えたものになる。
 	const fluct = 100 * time.Millisecond
 
 	var serv func(net.Listener, http.Handler) error
-	switch param.ProtocolType() {
+	switch protType {
 	case "http":
 		serv = http.Serve
 	case "fcgi":
 		serv = fcgi.Serve
 	default:
-		return erro.New("invalid protocol type " + param.ProtocolType())
+		return erro.New("invalid protocol type " + protType)
 	}
 
 	var shutCh chan struct{}
@@ -123,7 +115,7 @@ func Serve(param Parameter, handler http.Handler) error {
 				}
 			}()
 
-			switch param.SocketType() {
+			switch socType {
 			case "unix":
 				p, ok := param.(UnixParameter)
 				if !ok {
@@ -147,7 +139,7 @@ func Serve(param Parameter, handler http.Handler) error {
 				}
 				log.Info("Wait on TCP socket ", p.SocketPort())
 			default:
-				return false, erro.New("invalid socket type " + param.SocketType())
+				return false, erro.New("invalid socket type " + socType)
 			}
 
 			lisLock.Lock()

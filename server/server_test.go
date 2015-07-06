@@ -42,14 +42,6 @@ func newTestParameter(port int) *testParameter {
 	}
 }
 
-func (this *testParameter) SocketType() string {
-	return "tcp"
-}
-
-func (this *testParameter) ProtocolType() string {
-	return "http"
-}
-
 func (this *testParameter) SocketPort() int {
 	return this.port
 }
@@ -80,7 +72,7 @@ func TestServe(t *testing.T) {
 		param.shutCh <- struct{}{}
 	}()
 
-	if err := Serve(param, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})); err != nil {
+	if err := Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), "tcp", "http", param); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -99,7 +91,7 @@ func TestServeRetry(t *testing.T) {
 	param2 := newTestParameter(port)
 
 	// param1 で稼動させる。
-	go Serve(param1, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	go Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), "tcp", "http", param1)
 
 	// param1 で稼動しているのを確認する。
 	for {
@@ -146,7 +138,7 @@ func TestServeRetry(t *testing.T) {
 		param1.shutCh <- struct{}{}
 	}()
 
-	if err := Serve(param2, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write(body) })); err != nil {
+	if err := Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write(body) }), "tcp", "http", param2); err != nil {
 		t.Fatal(err)
 	}
 }
