@@ -18,8 +18,9 @@ package crypto
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/realglobe-Inc/go-lib/erro"
 	"io/ioutil"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 func perseBlock(block *pem.Block) (interface{}, error) {

@@ -15,11 +15,12 @@
 package server
 
 import (
+	"net/http"
+	"net/http/httputil"
+
 	"github.com/realglobe-Inc/go-lib/erro"
 	"github.com/realglobe-Inc/go-lib/rglog"
 	"github.com/realglobe-Inc/go-lib/rglog/level"
-	"net/http"
-	"net/http/httputil"
 )
 
 const logRoot = "github.com/realglobe-Inc"

@@ -15,13 +15,14 @@
 package test
 
 import (
-	"github.com/garyburd/redigo/redis"
-	"github.com/realglobe-Inc/go-lib/erro"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
+
+	"github.com/garyburd/redigo/redis"
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 var (

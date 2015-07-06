@@ -17,6 +17,7 @@ package jwt
 import (
 	"bytes"
 	"crypto/aes"
+
 	"github.com/realglobe-Inc/go-lib/erro"
 )
 

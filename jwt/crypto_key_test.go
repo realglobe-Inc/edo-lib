@@ -16,8 +16,9 @@ package jwt
 
 import (
 	"bytes"
-	"github.com/realglobe-Inc/edo-lib/jwk"
 	"testing"
+
+	"github.com/realglobe-Inc/edo-lib/jwk"
 )
 
 func TestAes128Kw(t *testing.T) {

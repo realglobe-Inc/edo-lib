@@ -20,9 +20,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
+	"math/big"
+
 	"github.com/realglobe-Inc/edo-lib/base64url"
 	"github.com/realglobe-Inc/go-lib/erro"
-	"math/big"
 )
 
 type Key interface {

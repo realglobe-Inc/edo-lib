@@ -16,12 +16,13 @@ package strset
 
 import (
 	"encoding/json"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"reflect"
 	"strconv"
 	"testing"
 	"time"
+
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func TestJson(t *testing.T) {

@@ -16,9 +16,10 @@
 package test
 
 import (
-	"github.com/realglobe-Inc/go-lib/erro"
 	"net"
 	"strconv"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 func FreePort() (port int, err error) {

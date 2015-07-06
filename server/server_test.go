@@ -16,14 +16,15 @@ package server
 
 import (
 	"bytes"
-	logutil "github.com/realglobe-Inc/edo-lib/log"
-	"github.com/realglobe-Inc/edo-lib/test"
-	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 	"time"
+
+	logutil "github.com/realglobe-Inc/edo-lib/log"
+	"github.com/realglobe-Inc/edo-lib/test"
+	"github.com/realglobe-Inc/go-lib/rglog/level"
 )
 
 func init() {

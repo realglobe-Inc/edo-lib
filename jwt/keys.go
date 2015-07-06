@@ -16,6 +16,7 @@ package jwt
 
 import (
 	"crypto/ecdsa"
+
 	"github.com/realglobe-Inc/edo-lib/jwk"
 )
 

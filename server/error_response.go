@@ -17,13 +17,14 @@ package server
 import (
 	"bytes"
 	"encoding/json"
-	jsonutil "github.com/realglobe-Inc/edo-lib/json"
-	"github.com/realglobe-Inc/go-lib/erro"
 	"html"
 	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
+
+	jsonutil "github.com/realglobe-Inc/edo-lib/json"
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 // JSON でエラーを返す。

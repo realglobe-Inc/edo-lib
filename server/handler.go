@@ -15,10 +15,11 @@
 package server
 
 import (
-	"github.com/realglobe-Inc/go-lib/erro"
-	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"html/template"
 	"net/http"
+
+	"github.com/realglobe-Inc/go-lib/erro"
+	"github.com/realglobe-Inc/go-lib/rglog/level"
 )
 
 // デバッグログにリクエストボディを記録するかどうか。

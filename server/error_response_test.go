@@ -16,7 +16,6 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/realglobe-Inc/go-lib/erro"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -25,6 +24,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 func TestRespondErrorJson(t *testing.T) {

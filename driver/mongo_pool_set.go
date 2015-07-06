@@ -16,9 +16,10 @@
 package driver
 
 import (
+	"time"
+
 	"github.com/realglobe-Inc/go-lib/erro"
 	"gopkg.in/mgo.v2"
-	"time"
 )
 
 // mongodb のコネクションプール集。

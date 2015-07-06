@@ -19,9 +19,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
-	cryptoutil "github.com/realglobe-Inc/edo-lib/crypto"
 	"reflect"
 	"testing"
+
+	cryptoutil "github.com/realglobe-Inc/edo-lib/crypto"
 )
 
 func TestSample1(t *testing.T) {

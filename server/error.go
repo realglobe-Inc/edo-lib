@@ -15,9 +15,10 @@
 package server
 
 import (
-	"github.com/realglobe-Inc/go-lib/erro"
 	"net/http"
 	"strconv"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 // HTTP のステータスコードを付加したエラー。

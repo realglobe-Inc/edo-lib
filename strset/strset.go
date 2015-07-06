@@ -17,6 +17,7 @@ package strset
 
 import (
 	"encoding/json"
+
 	"github.com/realglobe-Inc/go-lib/erro"
 	"gopkg.in/mgo.v2/bson"
 )

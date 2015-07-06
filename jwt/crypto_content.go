@@ -19,9 +19,10 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
+	"math/big"
+
 	hash "github.com/realglobe-Inc/edo-lib/hash"
 	"github.com/realglobe-Inc/go-lib/erro"
-	"math/big"
 )
 
 // AES_CBC_HMAC_SHA2 暗号。

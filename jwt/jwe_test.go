@@ -17,8 +17,9 @@ package jwt
 import (
 	"bytes"
 	"crypto"
-	"github.com/realglobe-Inc/edo-lib/jwk"
 	"testing"
+
+	"github.com/realglobe-Inc/edo-lib/jwk"
 )
 
 func TestRsa15Sample(t *testing.T) {

@@ -16,8 +16,9 @@ package driver
 
 import (
 	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
 	"testing"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // テストするなら、mysql を立てる必要あり。

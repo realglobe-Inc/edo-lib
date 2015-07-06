@@ -15,11 +15,12 @@
 package log
 
 import (
-	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"net"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/realglobe-Inc/go-lib/rglog/level"
 )
 
 const testLabel = "edo-test"

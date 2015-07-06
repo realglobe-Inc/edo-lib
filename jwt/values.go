@@ -14,8 +14,6 @@
 
 package jwt
 
-import ()
-
 const (
 	tagAlg        = "alg"
 	tagDecrypt    = "decrypt"

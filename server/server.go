@@ -16,7 +16,6 @@
 package server
 
 import (
-	"github.com/realglobe-Inc/go-lib/erro"
 	"math/rand"
 	"net"
 	"net/http"
@@ -27,6 +26,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 // SocketType が tcp のときに追加で必要な関数。

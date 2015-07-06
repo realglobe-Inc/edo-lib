@@ -16,10 +16,11 @@
 package rand
 
 import (
+	"time"
+
 	"github.com/realglobe-Inc/edo-lib/prand"
 	"github.com/realglobe-Inc/edo-lib/secrand"
 	"github.com/realglobe-Inc/go-lib/erro"
-	"time"
 )
 
 type Generator interface {

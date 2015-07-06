@@ -15,8 +15,6 @@
 // JSON 関係。
 package json
 
-import ()
-
 func StringEscape(s string) string {
 	return string(Escape([]byte(s)))
 }

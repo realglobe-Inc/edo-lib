@@ -17,8 +17,9 @@ package jwt
 import (
 	"bytes"
 	"compress/flate"
-	"github.com/realglobe-Inc/go-lib/erro"
 	"io/ioutil"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 func defCompress(data []byte) ([]byte, error) {

@@ -22,10 +22,11 @@ import (
 	"crypto/rsa"
 	_ "crypto/sha256"
 	_ "crypto/sha512"
+	"math/big"
+
 	hash "github.com/realglobe-Inc/edo-lib/hash"
 	"github.com/realglobe-Inc/edo-lib/jwk"
 	"github.com/realglobe-Inc/go-lib/erro"
-	"math/big"
 )
 
 func HashGenerator(alg string) crypto.Hash {
