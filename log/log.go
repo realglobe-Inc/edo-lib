@@ -98,23 +98,23 @@ type FluentdParameter interface {
 	LogFluentdTag() string
 }
 
-func Setup(root, logType string, logLv level.Level, opt interface{}) error {
+func Setup(root, logType string, logLv level.Level, param interface{}) error {
 	switch logType {
 	case "":
 	case TypeConsole:
 		SetupConsole(root, logLv)
 	case TypeFile:
-		o, ok := opt.(FileParameter)
+		p, ok := param.(FileParameter)
 		if !ok {
 			return erro.New("log type " + logType + " requires option")
 		}
-		SetupFile(root, logLv, o.LogFilePath(), o.LogFileLimit(), o.LogFileNumber())
+		SetupFile(root, logLv, p.LogFilePath(), p.LogFileLimit(), p.LogFileNumber())
 	case TypeFluentd:
-		o, ok := opt.(FluentdParameter)
+		p, ok := param.(FluentdParameter)
 		if !ok {
 			return erro.New("log type " + logType + " requires option")
 		}
-		SetupFluentd(root, logLv, o.LogFluentdAddress(), o.LogFluentdTag())
+		SetupFluentd(root, logLv, p.LogFluentdAddress(), p.LogFluentdTag())
 	default:
 		return erro.New("log type " + logType + " is unsupported")
 	}
