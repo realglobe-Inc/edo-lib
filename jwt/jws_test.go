@@ -16,8 +16,9 @@ package jwt
 
 import (
 	"crypto"
-	"github.com/realglobe-Inc/edo-lib/jwk"
 	"testing"
+
+	"github.com/realglobe-Inc/edo-lib/jwk"
 )
 
 func TestHashGenerator(t *testing.T) {

@@ -14,8 +14,6 @@
 
 package server
 
-import ()
-
 const (
 	tagStatus  = "status"
 	tagDebug   = "debug"

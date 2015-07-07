@@ -15,8 +15,6 @@
 // 文字列集合関係。
 package strsetutil
 
-import ()
-
 // 文字列集合をつくる。
 func New(strs ...string) map[string]bool {
 	s := map[string]bool{}

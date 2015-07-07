@@ -15,9 +15,10 @@
 package driver
 
 import (
-	"gopkg.in/mgo.v2"
 	"testing"
 	"time"
+
+	"gopkg.in/mgo.v2"
 )
 
 // テストするなら、mongodb を立てる必要あり。

@@ -16,11 +16,12 @@
 package password
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/realglobe-Inc/edo-lib/hash"
 	"github.com/realglobe-Inc/go-lib/erro"
 	"golang.org/x/crypto/pbkdf2"
-	"strconv"
-	"strings"
 )
 
 const algSep = ":"

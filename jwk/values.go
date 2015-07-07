@@ -14,8 +14,6 @@
 
 package jwk
 
-import ()
-
 const (
 	tagAlg     = "alg"
 	tagCrv     = "crv"

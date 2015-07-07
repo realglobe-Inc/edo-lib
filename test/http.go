@@ -16,11 +16,12 @@ package test
 
 import (
 	"bytes"
-	"github.com/realglobe-Inc/go-lib/erro"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"time"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 // テスト用の HTTP サーバー。

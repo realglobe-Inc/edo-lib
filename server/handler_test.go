@@ -15,10 +15,11 @@
 package server
 
 import (
-	"github.com/realglobe-Inc/go-lib/erro"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 func TestWrapPagePanic(t *testing.T) {

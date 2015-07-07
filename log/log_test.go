@@ -15,11 +15,12 @@
 package log
 
 import (
-	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"net"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/realglobe-Inc/go-lib/rglog/level"
 )
 
 const testLabel = "edo-test"
@@ -40,20 +41,20 @@ func init() {
 	}
 }
 
-type testOption struct{}
+type testParameter struct{}
 
-func (opt *testOption) LogFilePath() string       { return filepath.Join(os.TempDir(), testLabel+".log") }
-func (opt *testOption) LogFileLimit() int64       { return 10 * (1 << 20) }
-func (opt *testOption) LogFileNumber() int        { return 10 }
-func (opt *testOption) LogFluentdAddress() string { return testFluAddr }
-func (opt *testOption) LogFluentdTag() string     { return testLabel }
+func (opt *testParameter) LogFilePath() string       { return filepath.Join(os.TempDir(), testLabel+".log") }
+func (opt *testParameter) LogFileLimit() int64       { return 10 * (1 << 20) }
+func (opt *testParameter) LogFileNumber() int        { return 10 }
+func (opt *testParameter) LogFluentdAddress() string { return testFluAddr }
+func (opt *testParameter) LogFluentdTag() string     { return testLabel }
 
-var testOpt = &testOption{}
+var testParam = &testParameter{}
 
 func TestSetup(t *testing.T) {
 	for _, lv := range level.Values() {
 		for _, typ := range []string{TypeConsole, TypeFile, TypeFluentd} {
-			if err := Setup(logRoot, typ, lv, testOpt); err != nil {
+			if err := Setup(logRoot, typ, lv, testParam); err != nil {
 				t.Fatal(err)
 			}
 		}

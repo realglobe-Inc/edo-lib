@@ -17,8 +17,9 @@ package secrand
 
 import (
 	"crypto/rand"
-	"github.com/realglobe-Inc/go-lib/erro"
 	"io"
+
+	"github.com/realglobe-Inc/go-lib/erro"
 )
 
 func Bytes(length int) ([]byte, error) {

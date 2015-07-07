@@ -15,9 +15,10 @@
 package driver
 
 import (
-	"github.com/realglobe-Inc/edo-lib/test"
 	"testing"
 	"time"
+
+	"github.com/realglobe-Inc/edo-lib/test"
 )
 
 func TestRedisPoolSet(t *testing.T) {

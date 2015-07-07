@@ -16,11 +16,12 @@ package server
 
 import (
 	"bufio"
-	logutil "github.com/realglobe-Inc/edo-lib/log"
-	"github.com/realglobe-Inc/go-lib/rglog/level"
 	"net/http"
 	"strings"
 	"testing"
+
+	logutil "github.com/realglobe-Inc/edo-lib/log"
+	"github.com/realglobe-Inc/go-lib/rglog/level"
 )
 
 func TestLogRequest(t *testing.T) {

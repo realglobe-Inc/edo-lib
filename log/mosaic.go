@@ -14,8 +14,6 @@
 
 package log
 
-import ()
-
 var DisplayLength = 8
 
 // ログにそのまま書くのが憚られるので隠す。

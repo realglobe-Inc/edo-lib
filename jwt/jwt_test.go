@@ -16,10 +16,11 @@ package jwt
 
 import (
 	"bytes"
-	"github.com/realglobe-Inc/edo-lib/jwk"
-	"github.com/realglobe-Inc/edo-lib/strset/strsetutil"
 	"reflect"
 	"testing"
+
+	"github.com/realglobe-Inc/edo-lib/jwk"
+	"github.com/realglobe-Inc/edo-lib/strset/strsetutil"
 )
 
 func TestParseJwsNoneSample(t *testing.T) {

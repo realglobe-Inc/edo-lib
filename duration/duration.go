@@ -17,8 +17,9 @@ package duration
 
 import (
 	"encoding/json"
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Duration time.Duration

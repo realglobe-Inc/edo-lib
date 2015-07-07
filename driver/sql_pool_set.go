@@ -16,6 +16,7 @@ package driver
 
 import (
 	"database/sql"
+
 	"github.com/realglobe-Inc/go-lib/erro"
 )
 
