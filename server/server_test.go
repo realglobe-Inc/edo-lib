@@ -64,7 +64,7 @@ func TestServe(t *testing.T) {
 
 			r, _ := http.NewRequest("GET", "http://localhost:"+strconv.Itoa(port)+"/", nil)
 			r.Header.Set("Connection", "close")
-			resp, err := (&http.Client{}).Do(r)
+			resp, err := http.DefaultClient.Do(r)
 			if err == nil {
 				resp.Body.Close()
 				break
@@ -100,7 +100,7 @@ func TestServeRetry(t *testing.T) {
 
 		r, _ := http.NewRequest("GET", "http://localhost:"+strconv.Itoa(port)+"/", nil)
 		r.Header.Set("Connection", "close")
-		_, err := (&http.Client{}).Do(r)
+		_, err := http.DefaultClient.Do(r)
 		if err == nil {
 			break
 		}
@@ -115,7 +115,7 @@ func TestServeRetry(t *testing.T) {
 
 				r, _ := http.NewRequest("GET", "http://localhost:"+strconv.Itoa(port)+"/", nil)
 				r.Header.Set("Connection", "close")
-				resp, err := (&http.Client{}).Do(r)
+				resp, err := http.DefaultClient.Do(r)
 				if err != nil {
 					return false
 				}
