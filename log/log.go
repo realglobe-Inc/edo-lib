@@ -106,17 +106,17 @@ func Setup(root, logType string, logLv level.Level, param interface{}) error {
 	case TypeFile:
 		p, ok := param.(FileParameter)
 		if !ok {
-			return erro.New("log type " + logType + " requires option")
+			return erro.New("LogFilePath and LogFileLimit and LogFileNumber functions are not implemented")
 		}
 		SetupFile(root, logLv, p.LogFilePath(), p.LogFileLimit(), p.LogFileNumber())
 	case TypeFluentd:
 		p, ok := param.(FluentdParameter)
 		if !ok {
-			return erro.New("log type " + logType + " requires option")
+			return erro.New("LogFluentdAddress and LogFluentdTag are not implemented")
 		}
 		SetupFluentd(root, logLv, p.LogFluentdAddress(), p.LogFluentdTag())
 	default:
-		return erro.New("log type " + logType + " is unsupported")
+		return erro.New("unsupported log type " + logType)
 	}
 	return nil
 }

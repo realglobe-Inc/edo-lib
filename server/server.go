@@ -65,7 +65,7 @@ func Serve(handler http.Handler, socType, protType string, param interface{}) er
 	case "fcgi":
 		serv = fcgi.Serve
 	default:
-		return erro.New("invalid protocol type " + protType)
+		return erro.New("unsupported protocol type " + protType)
 	}
 
 	var shutCh chan struct{}
@@ -139,7 +139,7 @@ func Serve(handler http.Handler, socType, protType string, param interface{}) er
 				}
 				log.Info("Wait on TCP socket ", p.SocketPort())
 			default:
-				return false, erro.New("invalid socket type " + socType)
+				return false, erro.New("unsupported socket type " + socType)
 			}
 
 			lisLock.Lock()
