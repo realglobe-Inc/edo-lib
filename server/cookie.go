@@ -14,18 +14,18 @@
 
 package server
 
-const (
-	tagStatus  = "status"
-	tagDebug   = "debug"
-	tagMessage = "message"
-
-	tagContent_type    = "Content-Type"
-	tagCookie          = "Cookie"
-	tagX_forwarded_for = "X-Forwarded-For"
+import (
+	"net/http"
 )
 
-const (
-	contTypeForm = "application/x-www-form-urlencoded"
-	contTypeHtml = "text/html"
-	contTypeJson = "application/json"
-)
+// リクエストから指定した cookie を削除する。
+func DeleteCookie(r *http.Request, label string) {
+	cooks := r.Cookies()
+	r.Header.Del(tagCookie)
+	for _, cook := range cooks {
+		if cook.Name != label {
+			r.AddCookie(cook)
+		}
+	}
+	return
+}
