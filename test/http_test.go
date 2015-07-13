@@ -35,7 +35,7 @@ func TestHttpServer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
