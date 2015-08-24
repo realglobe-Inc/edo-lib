@@ -20,9 +20,9 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
+	"encoding/base64"
 	"math/big"
 
-	"github.com/realglobe-Inc/edo-lib/base64url"
 	"github.com/realglobe-Inc/go-lib/erro"
 )
 
@@ -139,7 +139,7 @@ func ecFromMap(m map[string]interface{}) (crypto.PrivateKey, crypto.PublicKey, e
 	if dStr, _ := m["d"].(string); dStr == "" {
 		// 公開鍵だった。
 		return nil, pub, nil
-	} else if dRaw, err := base64url.DecodeString(dStr); err != nil {
+	} else if dRaw, err := base64.RawURLEncoding.DecodeString(dStr); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else {
 		pri.PublicKey = *pub
@@ -166,11 +166,11 @@ func ecPublicFromMap(m map[string]interface{}) (*ecdsa.PublicKey, error) {
 
 	if xStr, _ := m["x"].(string); xStr == "" {
 		return nil, erro.New("no x")
-	} else if xRaw, err := base64url.DecodeString(xStr); err != nil {
+	} else if xRaw, err := base64.RawURLEncoding.DecodeString(xStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if yStr, _ := m["y"].(string); yStr == "" {
 		return nil, erro.New("no y")
-	} else if yRaw, err := base64url.DecodeString(yStr); err != nil {
+	} else if yRaw, err := base64.RawURLEncoding.DecodeString(yStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		pub.X = (&big.Int{}).SetBytes(xRaw)
@@ -190,27 +190,27 @@ func rsaFromMap(m map[string]interface{}) (crypto.PrivateKey, crypto.PublicKey, 
 	if dStr, _ := m["d"].(string); dStr == "" {
 		// 公開鍵だった。
 		return nil, pub, nil
-	} else if dRaw, err := base64url.DecodeString(dStr); err != nil {
+	} else if dRaw, err := base64.RawURLEncoding.DecodeString(dStr); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if pStr, _ := m["p"].(string); pStr == "" {
 		return nil, nil, erro.New("no p")
-	} else if pRaw, err := base64url.DecodeString(pStr); err != nil {
+	} else if pRaw, err := base64.RawURLEncoding.DecodeString(pStr); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if qStr, _ := m["q"].(string); qStr == "" {
 		return nil, nil, erro.New("no q")
-	} else if qRaw, err := base64url.DecodeString(qStr); err != nil {
+	} else if qRaw, err := base64.RawURLEncoding.DecodeString(qStr); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if dpStr, _ := m["dp"].(string); dpStr == "" {
 		return nil, nil, erro.New("no dp")
-	} else if dpRaw, err := base64url.DecodeString(dpStr); err != nil {
+	} else if dpRaw, err := base64.RawURLEncoding.DecodeString(dpStr); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if dqStr, _ := m["dq"].(string); dqStr == "" {
 		return nil, nil, erro.New("no dq")
-	} else if dqRaw, err := base64url.DecodeString(dqStr); err != nil {
+	} else if dqRaw, err := base64.RawURLEncoding.DecodeString(dqStr); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if qiStr, _ := m["qi"].(string); qiStr == "" {
 		return nil, nil, erro.New("no qi")
-	} else if qiRaw, err := base64url.DecodeString(qiStr); err != nil {
+	} else if qiRaw, err := base64.RawURLEncoding.DecodeString(qiStr); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else {
 		pri.PublicKey = *pub
@@ -226,15 +226,15 @@ func rsaFromMap(m map[string]interface{}) (crypto.PrivateKey, crypto.PublicKey, 
 		for _, crt := range crts {
 			if rStr, _ := crt["r"].(string); rStr == "" {
 				return nil, nil, erro.New("no r")
-			} else if rRaw, err := base64url.DecodeString(rStr); err != nil {
+			} else if rRaw, err := base64.RawURLEncoding.DecodeString(rStr); err != nil {
 				return nil, nil, erro.Wrap(err)
 			} else if dStr, _ := m["d"].(string); dStr == "" {
 				return nil, nil, erro.New("no d")
-			} else if dRaw, err := base64url.DecodeString(dStr); err != nil {
+			} else if dRaw, err := base64.RawURLEncoding.DecodeString(dStr); err != nil {
 				return nil, nil, erro.Wrap(err)
 			} else if tStr, _ := m["t"].(string); tStr == "" {
 				return nil, nil, erro.New("no t")
-			} else if tRaw, err := base64url.DecodeString(tStr); err != nil {
+			} else if tRaw, err := base64.RawURLEncoding.DecodeString(tStr); err != nil {
 				return nil, nil, erro.Wrap(err)
 			} else {
 				pri.Precomputed.CRTValues = append(pri.Precomputed.CRTValues, rsa.CRTValue{
@@ -253,11 +253,11 @@ func rsaPublicFromMap(m map[string]interface{}) (*rsa.PublicKey, error) {
 	var pub rsa.PublicKey
 	if nStr, _ := m["n"].(string); nStr == "" {
 		return nil, erro.New("no n")
-	} else if nRaw, err := base64url.DecodeString(nStr); err != nil {
+	} else if nRaw, err := base64.RawURLEncoding.DecodeString(nStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else if eStr, _ := m["e"].(string); eStr == "" {
 		return nil, erro.New("no e")
-	} else if eRaw, err := base64url.DecodeString(eStr); err != nil {
+	} else if eRaw, err := base64.RawURLEncoding.DecodeString(eStr); err != nil {
 		return nil, erro.Wrap(err)
 	} else {
 		pub.N = (&big.Int{}).SetBytes(nRaw)
@@ -271,7 +271,7 @@ func commonFromMap(m map[string]interface{}) ([]byte, error) {
 	if kStr, _ := m["k"].(string); kStr == "" {
 		return nil, erro.New("no k")
 	} else {
-		return base64url.DecodeString(kStr)
+		return base64.RawURLEncoding.DecodeString(kStr)
 	}
 }
 
@@ -328,19 +328,19 @@ func (this *keyImpl) ToMap() map[string]interface{} {
 
 func rsaToMap(key *rsa.PrivateKey, m map[string]interface{}) map[string]interface{} {
 	m = rsaPublicToMap(&key.PublicKey, m)
-	m["d"] = base64url.EncodeToString(key.D.Bytes())
-	m["p"] = base64url.EncodeToString(key.Primes[0].Bytes())
-	m["q"] = base64url.EncodeToString(key.Primes[1].Bytes())
-	m["dp"] = base64url.EncodeToString(key.Precomputed.Dp.Bytes())
-	m["dq"] = base64url.EncodeToString(key.Precomputed.Dq.Bytes())
-	m["qi"] = base64url.EncodeToString(key.Precomputed.Qinv.Bytes())
+	m["d"] = base64.RawURLEncoding.EncodeToString(key.D.Bytes())
+	m["p"] = base64.RawURLEncoding.EncodeToString(key.Primes[0].Bytes())
+	m["q"] = base64.RawURLEncoding.EncodeToString(key.Primes[1].Bytes())
+	m["dp"] = base64.RawURLEncoding.EncodeToString(key.Precomputed.Dp.Bytes())
+	m["dq"] = base64.RawURLEncoding.EncodeToString(key.Precomputed.Dq.Bytes())
+	m["qi"] = base64.RawURLEncoding.EncodeToString(key.Precomputed.Qinv.Bytes())
 	if len(key.Precomputed.CRTValues) > 0 {
 		var crts []map[string]interface{}
 		for _, crt := range key.Precomputed.CRTValues {
 			crts = append(crts, map[string]interface{}{
-				"r": base64url.EncodeToString(crt.R.Bytes()),
-				"d": base64url.EncodeToString(crt.Exp.Bytes()),
-				"t": base64url.EncodeToString(crt.Coeff.Bytes()),
+				"r": base64.RawURLEncoding.EncodeToString(crt.R.Bytes()),
+				"d": base64.RawURLEncoding.EncodeToString(crt.Exp.Bytes()),
+				"t": base64.RawURLEncoding.EncodeToString(crt.Coeff.Bytes()),
 			})
 		}
 		m[tagOth] = crts
@@ -349,15 +349,15 @@ func rsaToMap(key *rsa.PrivateKey, m map[string]interface{}) map[string]interfac
 }
 
 func rsaPublicToMap(key *rsa.PublicKey, m map[string]interface{}) map[string]interface{} {
-	m["n"] = base64url.EncodeToString(key.N.Bytes())
-	m["e"] = base64url.EncodeToString(big.NewInt(int64(key.E)).Bytes())
+	m["n"] = base64.RawURLEncoding.EncodeToString(key.N.Bytes())
+	m["e"] = base64.RawURLEncoding.EncodeToString(big.NewInt(int64(key.E)).Bytes())
 	return m
 }
 
 func ecToMap(key *ecdsa.PrivateKey, m map[string]interface{}) map[string]interface{} {
 	m = ecPublicToMap(&key.PublicKey, m)
 	size := (key.Params().BitSize + 7) / 8
-	m["d"] = base64url.EncodeToString(pad0(key.D.Bytes(), size))
+	m["d"] = base64.RawURLEncoding.EncodeToString(pad0(key.D.Bytes(), size))
 	return m
 }
 
@@ -374,14 +374,14 @@ func ecPublicToMap(key *ecdsa.PublicKey, m map[string]interface{}) map[string]in
 	}
 
 	size := (key.Params().BitSize + 7) / 8
-	m["x"] = base64url.EncodeToString(pad0(key.X.Bytes(), size))
-	m["y"] = base64url.EncodeToString(pad0(key.Y.Bytes(), size))
+	m["x"] = base64.RawURLEncoding.EncodeToString(pad0(key.X.Bytes(), size))
+	m["y"] = base64.RawURLEncoding.EncodeToString(pad0(key.Y.Bytes(), size))
 
 	return m
 }
 
 func commonToMap(key []byte, m map[string]interface{}) map[string]interface{} {
-	m["k"] = base64url.EncodeToString(key)
+	m["k"] = base64.RawURLEncoding.EncodeToString(key)
 	return m
 }
 
