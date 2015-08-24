@@ -22,9 +22,9 @@ import (
 	_ "crypto/sha1"
 	_ "crypto/sha256"
 	_ "crypto/sha512"
+	"encoding/base64"
 	"encoding/json"
 
-	"github.com/realglobe-Inc/edo-lib/base64url"
 	"github.com/realglobe-Inc/edo-lib/jwk"
 	"github.com/realglobe-Inc/edo-lib/secrand"
 	"github.com/realglobe-Inc/go-lib/erro"
@@ -117,9 +117,9 @@ func (this *Jwt) Sign(keys []jwk.Key) error {
 		return erro.Wrap(err)
 	}
 
-	headBodyPart := base64url.Encode(rawHead)
+	headBodyPart := base64UrlEncode(rawHead)
 	headBodyPart = append(headBodyPart, '.')
-	headBodyPart = append(headBodyPart, base64url.Encode(rawBody)...)
+	headBodyPart = append(headBodyPart, base64UrlEncode(rawBody)...)
 
 	kid, _ := this.Header(tagKid).(string)
 	alg, _ := this.Header(tagAlg).(string)
@@ -225,8 +225,8 @@ func (this *Jwt) Encrypt(keys []jwk.Key) error {
 		var initVec, authTag []byte
 		initVec, encedKey, authTag, err = aGcmKwEncrypt(findKey(keys, kid, tagOct, tagEnc, tagWrapKey, alg), keySizes[alg], contKey)
 		if err == nil {
-			this.SetHeader("iv", base64url.EncodeToString(initVec))  // 副作用注意。
-			this.SetHeader("tag", base64url.EncodeToString(authTag)) // 副作用注意。
+			this.SetHeader("iv", base64.RawURLEncoding.EncodeToString(initVec))  // 副作用注意。
+			this.SetHeader("tag", base64.RawURLEncoding.EncodeToString(authTag)) // 副作用注意。
 		}
 	case tagPbes2_hs256_a128Kw:
 		encedKey, err = pbes2HsAKwEncrypt(findKey(keys, kid, "", tagEnc, tagWrapKey, alg), crypto.SHA256, 16, contKey)
@@ -257,7 +257,7 @@ func (this *Jwt) Encrypt(keys []jwk.Key) error {
 	if err != nil {
 		return erro.Wrap(err)
 	}
-	headPart := base64url.Encode(rawHead)
+	headPart := base64UrlEncode(rawHead)
 
 	var initVec, enced, authTag []byte
 	switch enc {
@@ -294,17 +294,17 @@ func (this *Jwt) Encode() ([]byte, error) {
 	if this.sig != nil {
 		// JWS.
 		buff := append(this.headBodyPart, '.')
-		this.compact = append(buff, base64url.Encode(this.sig)...)
+		this.compact = append(buff, base64UrlEncode(this.sig)...)
 	} else if this.enced != nil {
 		// JWE.
 		buff := append(this.headPart, '.')
-		buff = append(buff, base64url.Encode(this.encedKey)...)
+		buff = append(buff, base64UrlEncode(this.encedKey)...)
 		buff = append(buff, '.')
-		buff = append(buff, base64url.Encode(this.initVec)...)
+		buff = append(buff, base64UrlEncode(this.initVec)...)
 		buff = append(buff, '.')
-		buff = append(buff, base64url.Encode(this.enced)...)
+		buff = append(buff, base64UrlEncode(this.enced)...)
 		buff = append(buff, '.')
-		this.compact = append(buff, base64url.Encode(this.authTag)...)
+		this.compact = append(buff, base64UrlEncode(this.authTag)...)
 	} else {
 		// 無署名 JWS
 		rawHead, err := this.getRawHeader()
@@ -316,8 +316,8 @@ func (this *Jwt) Encode() ([]byte, error) {
 			return nil, erro.Wrap(err)
 		}
 
-		buff := append(base64url.Encode(rawHead), '.')
-		buff = append(buff, base64url.Encode(rawBody)...)
+		buff := append(base64UrlEncode(rawHead), '.')
+		buff = append(buff, base64UrlEncode(rawBody)...)
 		this.compact = append(buff, '.')
 	}
 	return this.compact, nil
@@ -328,15 +328,15 @@ func Parse(data []byte) (*Jwt, error) {
 	switch parts := bytes.Split(data, []byte{'.'}); len(parts) {
 	case 3:
 		// JWS.
-		rawHead, err := base64url.Decode(parts[0])
+		rawHead, err := base64UrlDecode(parts[0])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		rawBody, err := base64url.Decode(parts[1])
+		rawBody, err := base64UrlDecode(parts[1])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		sig, err := base64url.Decode(parts[2])
+		sig, err := base64UrlDecode(parts[2])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
@@ -349,23 +349,23 @@ func Parse(data []byte) (*Jwt, error) {
 		}, nil
 	case 5:
 		// JWE.
-		rawHead, err := base64url.Decode(parts[0])
+		rawHead, err := base64UrlDecode(parts[0])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		encedKey, err := base64url.Decode(parts[1])
+		encedKey, err := base64UrlDecode(parts[1])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		initVec, err := base64url.Decode(parts[2])
+		initVec, err := base64UrlDecode(parts[2])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		enced, err := base64url.Decode(parts[3])
+		enced, err := base64UrlDecode(parts[3])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
-		authTag, err := base64url.Decode(parts[4])
+		authTag, err := base64UrlDecode(parts[4])
 		if err != nil {
 			return nil, erro.Wrap(err)
 		}
@@ -659,13 +659,28 @@ func parseJsonOrNew(data []byte) map[string]interface{} {
 func (this *Jwt) getInitVecAndAuthTagFromHeader() (initVec, authTag []byte, err error) {
 	if str, _ := this.Header(tagIv).(string); str == "" {
 		return nil, nil, erro.New("no initialization vector")
-	} else if initVec, err := base64url.DecodeString(str); err != nil {
+	} else if initVec, err := base64.RawURLEncoding.DecodeString(str); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else if str, _ := this.Header(tagTag).(string); str == "" {
 		return nil, nil, erro.New("no authentication tag")
-	} else if authTag, err := base64url.DecodeString(str); err != nil {
+	} else if authTag, err := base64.RawURLEncoding.DecodeString(str); err != nil {
 		return nil, nil, erro.Wrap(err)
 	} else {
 		return initVec, authTag, nil
 	}
+}
+
+func base64UrlEncode(src []byte) []byte {
+	dst := make([]byte, base64.RawURLEncoding.EncodedLen(len(src)))
+	base64.RawURLEncoding.Encode(dst, src)
+	return dst
+}
+
+func base64UrlDecode(src []byte) ([]byte, error) {
+	dst := make([]byte, base64.RawURLEncoding.DecodedLen(len(src)))
+	n, err := base64.RawURLEncoding.Decode(dst, src)
+	if err != nil {
+		return nil, erro.Wrap(err)
+	}
+	return dst[:n], nil
 }
